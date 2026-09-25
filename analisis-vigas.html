@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Análisis de Viga · t · m</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--bg2:#161922;--bg3:#1e2230;
+  --border:#2a3040;--border2:#3a4560;
+  --text:#e8eaf0;--text2:#8892a4;--text3:#4a5568;
+  --amber:#f59e0b;--amber2:#fbbf24;
+  --cyan:#06b6d4;--cyan2:#22d3ee;
+  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;
+  --mono:'Courier New',monospace;--sans:system-ui,-apple-system,sans-serif;
+  --grid-line:#1a2030;--zero-line:#2a3a50;
+}
+body.light{
+  --bg:#f4f5f7;--bg2:#ffffff;--bg3:#eef0f3;
+  --border:#d0d5de;--border2:#b0b8c8;
+  --text:#1a202c;--text2:#4a5568;--text3:#a0aec0;
+  --grid-line:#e2e5eb;--zero-line:#c4cad6;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;display:flex;flex-direction:column;transition:background .2s,color .2s}
+header{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg2);flex-shrink:0}
+header h1{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);font-family:var(--mono);flex:1}
+.theme-btn{background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.theme-btn:hover{border-color:var(--amber);color:var(--amber)}
+.layout{display:flex;flex:1;overflow:hidden;min-height:0}
+.sidebar{width:292px;min-width:292px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.sec{border-bottom:1px solid var(--border);padding:11px 13px}
+.stitle{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);font-family:var(--mono);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.stitle::before{content:'';width:3px;height:10px;background:var(--amber);border-radius:2px;flex-shrink:0}
+.stitle.blue::before{background:var(--cyan)}
+.stitle.purple::before{background:var(--purple)}
+label{display:block;font-size:11px;color:var(--text2);font-family:var(--mono);margin-bottom:2px;margin-top:7px}
+label:first-of-type{margin-top:0}
+input[type=number],select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;font-family:var(--mono);font-size:12px;border-radius:4px;outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--amber)}
+select option{background:var(--bg3)}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.btn{display:block;width:100%;padding:6px 10px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;border-radius:4px;text-align:left;transition:all .15s;margin-top:5px}
+.btn:hover{border-color:var(--amber);color:var(--amber);background:rgba(245,158,11,.06)}
+.btn.primary{background:var(--amber);color:#0f1117;border-color:var(--amber);font-weight:700;text-align:center;font-size:12px;margin-top:9px}
+.btn.primary:hover{background:var(--amber2);border-color:var(--amber2)}
+.btn.danger{color:var(--red);border-color:#3a2020;text-align:center}
+body.light .btn.danger{border-color:#fcc}
+.btn.danger:hover{border-color:var(--red);background:rgba(239,68,68,.08)}
+.btn.tog-on{border-color:var(--cyan);color:var(--cyan2)}
+.icard{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:6px;font-family:var(--mono);font-size:11px}
+.id{color:var(--text)}.is{color:var(--text2);font-size:10px}
+.tag{font-size:9px;padding:2px 5px;border-radius:3px;font-family:var(--mono);font-weight:700;white-space:nowrap}
+.ts{background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.tl{background:rgba(16,185,129,.2);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.th{background:rgba(168,85,247,.2);color:#d8b4fe;border:1px solid rgba(168,85,247,.3)}
+.del{background:transparent;border:1px solid #3a2020;color:var(--red);font-family:var(--mono);font-size:10px;padding:2px 5px;border-radius:3px;cursor:pointer;flex-shrink:0}
+.del:hover{border-color:var(--red);background:rgba(239,68,68,.1)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.ca{flex:1;padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+.dlabel{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:.09em;text-transform:uppercase;margin-bottom:4px;padding-left:68px}
+canvas{display:block;width:100%;cursor:crosshair;border-radius:3px}
+.sep{height:14px;flex-shrink:0}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:9px;color:var(--text3);font-family:var(--mono);font-size:12px;text-align:center;padding:30px}
+.empty .big{font-size:32px}
+.rg{display:grid;gap:5px;padding:7px 18px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+.metric{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 8px}
+.ml{font-size:9px;font-family:var(--mono);color:var(--text2);margin-bottom:2px;letter-spacing:.06em}
+.mv{font-size:13px;font-family:var(--mono);font-weight:700}
+.mv.a{color:var(--amber2)}.mv.c{color:var(--cyan2)}.mv.p{color:#a78bfa}.mv.g{color:var(--green)}
+.sb{padding:6px 18px;border-top:1px solid var(--border);background:var(--bg2);font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.sd.ok{background:var(--green)}.sd.loading{background:var(--amber);animation:pulse 1s infinite}.sd.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.tt{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;padding:8px 12px;font-family:var(--mono);font-size:12px;pointer-events:none;z-index:999;display:none;min-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.ttr{display:flex;justify-content:space-between;gap:14px;margin-top:3px}
+.ttl{color:var(--text2)}
+.tx{color:var(--text);font-weight:700}.tm{color:var(--amber2);font-weight:700}.tv{color:var(--cyan2);font-weight:700}.td{color:#a78bfa;font-weight:700}
+.hw{background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:4px;padding:5px 8px;font-size:10px;font-family:var(--mono);color:#d8b4fe;margin-top:5px}
+.sinfo{font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:5px;line-height:1.5}
+.warn{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:4px;padding:5px 8px;font-size:10px;font-family:var(--mono);color:#fca5a5;margin-top:5px;display:none}
+.alert-banner{display:none;align-items:center;gap:10px;padding:9px 18px;background:rgba(239,68,68,.12);border-bottom:2px solid var(--red);font-family:var(--mono);font-size:12px;color:#fca5a5;flex-shrink:0}
+.alert-banner.show{display:flex}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-text{flex:1;line-height:1.5}
+.alert-text strong{color:#f87171;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <h1>Análisis de Viga · t · m</h1>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀ Fondo blanco</button>
+</header>
+<div class="layout">
+<div class="sidebar">
+<div class="sec">
+  <div class="stitle">Geometría</div>
+  <label>Longitud total (m)</label>
+  <input type="number" id="beamLen" value="8" min="0.5" step="0.5">
+</div>
+<div class="sec">
+  <div class="stitle">Agregar vínculo</div>
+  <label>Tipo</label>
+  <select id="supType">
+    <option value="roller">Apoyo simple (↕ vertical)</option>
+    <option value="pinned">Apoyo doble (↕↔ V+H)</option>
+    <option value="fixed">Empotramiento (↕↔↻ V+H+M)</option>
+  </select>
+  <label>Posición (m)</label>
+  <input type="number" id="supPos" value="0" min="0" step="0.1">
+  <button class="btn" onclick="addSupport()">+ Agregar vínculo</button>
+</div>
+<div class="sec">
+  <div class="stitle">Agregar carga</div>
+  <label>Tipo</label>
+  <select id="loadType" onchange="updateLoadInputs()">
+    <option value="point-v">Puntual vertical (t)</option>
+    <option value="point-h">Puntual horizontal (t)</option>
+    <option value="udl">Distribuida uniforme vertical (t/m)</option>
+    <option value="partial">Distribuida parcial vertical (t/m)</option>
+    <option value="moment">Momento externo (t·m)</option>
+  </select>
+  <div id="loadInputs"></div>
+  <button class="btn" onclick="addLoad()">+ Agregar carga</button>
+</div>
+<div class="sec">
+  <div class="stitle purple">Articulación interna</div>
+  <label>Posición (m)</label>
+  <input type="number" id="hingePos" value="4" step="0.1">
+  <button class="btn" onclick="addHinge()">+ Agregar articulación</button>
+  <div class="hw">M = 0 en la sección articulada</div>
+  <div class="warn" id="warnHinge">Verificá que la estructura sea estable con esta articulación.</div>
+</div>
+<div class="sec">
+  <div class="stitle">Deformada</div>
+  <button class="btn" id="deflToggle" onclick="toggleDefl()" style="text-align:center;margin-top:0">☐ Calcular deformada</button>
+</div>
+<div class="sec" id="secSection" style="opacity:.35;pointer-events:none">
+  <div class="stitle blue">Sección transversal</div>
+  <div class="r2">
+    <div><label>b (cm)</label><input type="number" id="secB" value="30" step="1" min="1"></div>
+    <div><label>H (cm)</label><input type="number" id="secH" value="50" step="1" min="1"></div>
+  </div>
+  <div class="r2">
+    <div><label>E (t/cm²)</label><input type="number" id="secE" value="217" step="1"></div>
+    <div><label>I (cm⁴)</label><input type="number" id="secI" value="" step="any" placeholder="auto"></div>
+  </div>
+  <div class="sinfo" id="secInfo">I = b·H³/12</div>
+</div>
+<div class="sec">
+  <div class="stitle">Modelo actual</div>
+  <div id="modelItems"><p style="color:var(--text3);font-family:var(--mono);font-size:10px;">Sin elementos.</p></div>
+</div>
+<div style="padding:11px 13px">
+  <button class="btn primary" onclick="analyze()">▶ CALCULAR</button>
+  <button class="btn danger" onclick="clearAll()">✕ Limpiar todo</button>
+</div>
+</div>
+
+<div class="main">
+  <div class="alert-banner" id="alertBanner">
+    <span class="alert-icon">⚠</span>
+    <span class="alert-text" id="alertText"></span>
+  </div>
+  <div class="ca" id="ca">
+    <div class="empty" id="emptyState"><div class="big">⌗</div><div>Definí la viga, vínculos y cargas<br>luego presioná CALCULAR</div></div>
+    <div id="diagrams" style="display:none;flex-direction:column;gap:0">
+      <div class="dlabel">ESQUEMA — VÍNCULOS · CARGAS · REACCIONES</div>
+      <canvas id="cBeam"></canvas>
+      <div style="height:14px"></div>
+      <div class="dlabel">MOMENTO FLECTOR M (t·m) · positivo hacia abajo</div>
+      <canvas id="cMoment"></canvas>
+      <div style="height:14px"></div>
+      <div class="dlabel">FUERZA CORTANTE V (t) · cara izq. arriba = positivo</div>
+      <canvas id="cShear"></canvas>
+      <div id="deflBlock" style="display:none;flex-direction:column;gap:0">
+        <div style="height:14px"></div>
+        <div class="dlabel">DEFORMADA v (cm)</div>
+        <canvas id="cDefl"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="rg" id="rg" style="display:none;grid-template-columns:repeat(5,1fr)">
+    <div class="metric"><div class="ml">M MÁX</div><div class="mv a" id="rMmax">—</div></div>
+    <div class="metric"><div class="ml">M MÍN</div><div class="mv a" id="rMmin">—</div></div>
+    <div class="metric"><div class="ml">V MÁX</div><div class="mv c" id="rVmax">—</div></div>
+    <div class="metric"><div class="ml">V MÍN</div><div class="mv c" id="rVmin">—</div></div>
+    <div class="metric"><div class="ml">ΣFy</div><div class="mv g" id="rSumF">—</div></div>
+    <div class="metric" id="mDmax" style="display:none"><div class="ml">δ MÁX</div><div class="mv p" id="rDmax">—</div></div>
+    <div class="metric" id="mDmin" style="display:none"><div class="ml">δ MÍN</div><div class="mv p" id="rDmin">—</div></div>
+  </div>
+  <div class="sb"><div class="sd" id="statusDot"></div><span id="statusTxt">Listo.</span></div>
+</div>
+</div>
+
+<div class="tt" id="tooltip">
+  <div class="ttr"><span class="ttl">x</span><span class="tx" id="ttx">—</span></div>
+  <div class="ttr"><span class="ttl">M</span><span class="tm" id="ttm">—</span></div>
+  <div class="ttr"><span class="ttl">V</span><span class="tv" id="ttv">—</span></div>
+  <div class="ttr" id="ttdRow" style="display:none"><span class="ttl">δ</span><span class="td" id="ttd">—</span></div>
+</div>
+
+<script>
+function gaussSolve(A,b){const n=b.length;const M=A.map((row,i)=>[...row,b[i]]);for(let c=0;c<n;c++){let pivot=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[pivot][c]))pivot=r;[M[c],M[pivot]]=[M[pivot],M[c]];if(Math.abs(M[c][c])<1e-14)continue;const inv=1/M[c][c];for(let j=c;j<=n;j++)M[c][j]*=inv;for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c];for(let j=c;j<=n;j++)M[r][j]-=f*M[c][j];}}return M.map(row=>row[n]);}
+
+function solveBeam(L,supports,loads,hinges,EI){
+  const psSet=new Set([0,L].map(v=>+v.toFixed(9)));
+  supports.forEach(s=>psSet.add(+s.pos.toFixed(9)));
+  loads.forEach(l=>{if(l.pos!==undefined)psSet.add(+l.pos.toFixed(9));if(l.start!==undefined){psSet.add(+l.start.toFixed(9));psSet.add(+l.end.toFixed(9));}});
+  hinges.forEach(h=>psSet.add(+h.pos.toFixed(9)));
+  const criticalPos=new Set([...psSet]);
+  const sorted0=[...psSet].sort((a,b)=>a-b);
+  for(let i=0;i<sorted0.length-1;i++)psSet.add(+((sorted0[i]+sorted0[i+1])/2).toFixed(9));
+  criticalPos.forEach(p=>psSet.add(+p.toFixed(9)));
+  const nodes=[...psSet].sort((a,b)=>a-b);
+  const nN=nodes.length;
+  const hingeSet=new Set(hinges.map(h=>nodes.findIndex(n=>Math.abs(n-h.pos)<1e-7)).filter(i=>i>=0));
+  let nDof=0;
+  const vDof=Array.from({length:nN},()=>nDof++);
+  const nodeRot=Array(nN).fill(-1);
+  for(let i=0;i<nN;i++)if(!hingeSet.has(i))nodeRot[i]=nDof++;
+  const elemTL=new Array(nN-1),elemTR=new Array(nN-1);
+  for(let e=0;e<nN-1;e++){elemTL[e]=hingeSet.has(e)?nDof++:nodeRot[e];elemTR[e]=hingeSet.has(e+1)?nDof++:nodeRot[e+1];}
+  const K=Array.from({length:nDof},()=>new Float64Array(nDof));
+  const Fa=new Float64Array(nDof);
+  for(let e=0;e<nN-1;e++){
+    const x1=nodes[e],x2=nodes[e+1],Le=x2-x1;
+    const c=EI/(Le*Le*Le),Le2=Le*Le;
+    const ke=[[12*c,6*c*Le,-12*c,6*c*Le],[6*c*Le,4*c*Le2,-6*c*Le,2*c*Le2],[-12*c,-6*c*Le,12*c,-6*c*Le],[6*c*Le,2*c*Le2,-6*c*Le,4*c*Le2]];
+    const d=[vDof[e],elemTL[e],vDof[e+1],elemTR[e]];
+    for(let i=0;i<4;i++)for(let j=0;j<4;j++)K[d[i]][d[j]]+=ke[i][j];
+    loads.forEach(ld=>{
+      if(ld.type==='udl'){const w=ld.mag;Fa[d[0]]+=w*Le/2;Fa[d[1]]+=w*Le2/12;Fa[d[2]]+=w*Le/2;Fa[d[3]]-=w*Le2/12;}
+      else if(ld.type==='partial'){const aG=Math.max(ld.start,x1)-x1,bG=Math.min(ld.end,x2)-x1;if(bG>aG+1e-9){const w=ld.mag,ns=32,dx=(bG-aG)/ns;for(let s=0;s<=ns;s++){const xi=aG+s*dx,wt=dx*(s===0||s===ns?0.5:1.0),P=w*wt,a=Math.max(0,Math.min(Le,xi)),b=Le-a;Fa[d[0]]+=P*b*b*(3*a+b)/(Le*Le*Le);Fa[d[1]]+=P*a*b*b/(Le*Le);Fa[d[2]]+=P*a*a*(a+3*b)/(Le*Le*Le);Fa[d[3]]-=P*a*a*b/(Le*Le);}}}
+    });
+  }
+  loads.forEach(ld=>{
+    if(ld.type==='point-v'){const ni=nearestNode(nodes,ld.pos);Fa[vDof[ni]]+=ld.mag;}
+    else if(ld.type==='moment'){const ni=nearestNode(nodes,ld.pos);if(nodeRot[ni]>=0)Fa[nodeRot[ni]]+=ld.mag;}
+  });
+  const restrained=new Set();
+  supports.forEach(s=>{
+    let ni=-1;for(let i=0;i<nodes.length;i++)if(Math.abs(nodes[i]-s.pos)<1e-7){ni=i;break;}
+    if(ni<0)ni=nearestNode(nodes,s.pos);
+    restrained.add(vDof[ni]);
+    if(s.type==='fixed'){if(nodeRot[ni]>=0){restrained.add(nodeRot[ni]);}else{if(ni>0)restrained.add(elemTR[ni-1]);if(ni<nN-1)restrained.add(elemTL[ni]);}}
+  });
+  const free=[];for(let i=0;i<nDof;i++)if(!restrained.has(i))free.push(i);
+  const D=new Float64Array(nDof);
+  if(free.length>0){const Kff=free.map(i=>free.map(j=>K[i][j]));const ff=free.map(i=>Fa[i]);const Df=gaussSolve(Kff,ff);free.forEach((gi,li)=>D[gi]=Df[li]);}
+  const reactions=[];
+  supports.forEach(s=>{
+    let ni=-1;for(let i=0;i<nodes.length;i++)if(Math.abs(nodes[i]-s.pos)<1e-7){ni=i;break;}
+    if(ni<0)ni=nearestNode(nodes,s.pos);
+    let Ry=0,Mx=0;
+    for(let j=0;j<nDof;j++)Ry+=K[vDof[ni]][j]*D[j];Ry-=Fa[vDof[ni]];
+    if(s.type==='fixed'&&nodeRot[ni]>=0){let tmp=0;for(let j=0;j<nDof;j++)tmp+=K[nodeRot[ni]][j]*D[j];Mx=-(tmp-Fa[nodeRot[ni]]);}
+    let Rx=0;const totalHx=loads.filter(l=>l.type==='point-h').reduce((a,l)=>a+l.mag,0);
+    const nH=supports.filter(s2=>s2.type==='pinned'||s2.type==='fixed').length;
+    if((s.type==='pinned'||s.type==='fixed')&&nH>0)Rx=-totalHx/nH;
+    reactions.push({pos:s.pos,Ry,Rx,Mx,type:s.type});
+  });
+  const sumRy=reactions.reduce((a,r)=>a+r.Ry,0);
+  let loadFy=0;
+  loads.forEach(l=>{if(l.type==='point-v')loadFy+=l.mag;else if(l.type==='udl')loadFy+=l.mag*L;else if(l.type==='partial')loadFy+=l.mag*(l.end-l.start);});
+  const residual=Math.abs(sumRy+loadFy),ref=Math.max(1,Math.abs(loadFy)),stable=residual<0.01*ref;
+  return{reactions,nodes,D,vDof,nodeRot,elemTL,elemTR,stable,residual};
+}
+
+function nearestNode(nodes,x){for(let i=0;i<nodes.length;i++)if(Math.abs(nodes[i]-x)<1e-7)return i;let best=0,bd=Infinity;nodes.forEach((n,i)=>{const d=Math.abs(n-x);if(d<bd){bd=d;best=i;}});return best;}
+
+function getEI(){const E=parseFloat(document.getElementById('secE').value)||217;const Iv=document.getElementById('secI').value;let I;if(Iv&&Iv.trim()!==''){I=parseFloat(Iv);}else{const b=parseFloat(document.getElementById('secB').value)||30,H=parseFloat(document.getElementById('secH').value)||50;I=b*H*H*H/12;}return(E*1e4)*(I/1e8);}
+
+function computeDiagrams(L,supports,loads,hinges,nPts=500){
+  const EI=getEI(),sol=solveBeam(L,supports,loads,hinges,EI);
+  const{reactions,D,nodes,vDof,elemTL,elemTR,stable,residual}=sol;
+  const xsSet=new Set();
+  for(let i=0;i<=nPts;i++)xsSet.add(+(i/nPts*L).toFixed(6));
+  supports.forEach(s=>{for(const o of[-1e-4,0,1e-4])xsSet.add(+(s.pos+o).toFixed(6));});
+  loads.forEach(l=>{if(l.pos!==undefined)for(const o of[-1e-4,0,1e-4])xsSet.add(+(l.pos+o).toFixed(6));if(l.start!==undefined){xsSet.add(+l.start.toFixed(6));xsSet.add(+l.end.toFixed(6));}});
+  hinges.forEach(h=>xsSet.add(+h.pos.toFixed(6)));
+  const xa=[...xsSet].sort((a,b)=>a-b).filter(x=>x>=-1e-9&&x<=L+1e-9).map(x=>Math.max(0,Math.min(L,x)));
+  function getV(x){let V=0;reactions.forEach(r=>{if(r.pos<=x+1e-9)V+=r.Ry;});loads.forEach(l=>{if(l.type==='point-v'&&l.pos<x-1e-9)V+=l.mag;else if(l.type==='udl')V+=l.mag*Math.min(x,L);else if(l.type==='partial'&&x>l.start+1e-9)V+=l.mag*Math.min(x-l.start,l.end-l.start);});return V;}
+  function getM(x){let M=0;reactions.forEach(r=>{if(r.pos<=x+1e-9){M+=r.Ry*(x-r.pos);if(r.Mx)M+=r.Mx;}});loads.forEach(l=>{if(l.type==='point-v'&&l.pos<x-1e-9)M+=l.mag*(x-l.pos);else if(l.type==='udl')M+=l.mag*x*x/2;else if(l.type==='partial'&&x>l.start+1e-9){const eff=Math.min(x,l.end)-l.start,cen=l.start+eff/2;M+=l.mag*eff*(x-cen);}else if(l.type==='moment'&&l.pos<x-1e-9)M+=l.mag;});return M;}
+  function getDefl(x){let ei=-1;for(let i=0;i<nodes.length-1;i++)if(nodes[i]-1e-9<=x&&x<=nodes[i+1]+1e-9){ei=i;break;}if(ei<0)return 0;const x1=nodes[ei],Le=nodes[ei+1]-x1;if(Le<1e-12)return D[vDof[ei]];const t=Math.max(0,Math.min(1,(x-x1)/Le)),v1=D[vDof[ei]],th1=D[elemTL[ei]],v2=D[vDof[ei+1]],th2=D[elemTR[ei]];const N1=1-3*t*t+2*t*t*t,N2=Le*t*(1-t)*(1-t),N3=3*t*t-2*t*t*t,N4=Le*t*t*(t-1);return N1*v1+N2*th1+N3*v2+N4*th2;}
+  const points=xa.map(x=>({x:+x.toFixed(6),M:+getM(x).toFixed(5),V:+getV(x).toFixed(5),d:+(getDefl(x)*100).toFixed(5)}));
+  let nR=0;supports.forEach(s=>nR+=s.type==='fixed'?3:s.type==='pinned'?2:1);
+  const doi=Math.max(0,nR-(3+hinges.length));
+  return{reactions,points,isHyperstatic:doi>0,degreesOfIndeterminacy:doi,EI,stable,residual};
+}
+
+const state={length:8,supports:[],loads:[],hinges:[],results:null,deflEnabled:false};
+const PL=68,PR=28,PT=48,PB=44;
+const supLbl={pinned:'Apoyo doble',roller:'Apoyo simple',fixed:'Empotramiento'};
+const loadLbl={'point-v':'Puntual V','point-h':'Puntual H',udl:'Dist. unif.',partial:'Dist. parcial',moment:'Momento'};
+let lightMode=false;
+
+function toggleTheme(){lightMode=!lightMode;document.body.classList.toggle('light',lightMode);document.getElementById('themeBtn').textContent=lightMode?'🌙 Fondo oscuro':'☀ Fondo blanco';if(state.results)requestAnimationFrame(drawAll);}
+function gc(v){return getComputedStyle(document.body).getPropertyValue(v).trim();}
+function setStatus(m,t='idle'){document.getElementById('statusTxt').textContent=m;const d=document.getElementById('statusDot');d.className='sd'+(t==='ok'?' ok':t==='loading'?' loading':t==='error'?' error':'');}
+function updateSecInfo(){const b=parseFloat(document.getElementById('secB').value)||30,H=parseFloat(document.getElementById('secH').value)||50,I=b*H*H*H/12,E=parseFloat(document.getElementById('secE').value)||217,Iv=document.getElementById('secI').value,Iu=(Iv&&Iv.trim()!=='')?parseFloat(Iv):I;document.getElementById('secInfo').textContent=`I = ${I.toFixed(0)} cm⁴  |  EI = ${((E*1e4)*(Iu/1e8)).toFixed(1)} t·m²`;}
+['secB','secH','secE','secI'].forEach(id=>document.getElementById(id).addEventListener('input',updateSecInfo));
+
+function updateLoadInputs(){const t=document.getElementById('loadType').value,L=parseFloat(document.getElementById('beamLen').value)||8,mid=(L/2).toFixed(1);let h='';if(t==='point-v')h=`<label>Magnitud (t, ↑+)</label><input type="number" id="loadMag" value="-10" step="1"><label>Posición (m)</label><input type="number" id="loadPos" value="${mid}" step="0.1">`;else if(t==='point-h')h=`<label>Magnitud (t, →+)</label><input type="number" id="loadMag" value="5" step="1"><label>Posición (m)</label><input type="number" id="loadPos" value="${mid}" step="0.1">`;else if(t==='udl')h=`<label>Magnitud (t/m, ↑+)</label><input type="number" id="loadMag" value="-2" step="0.5">`;else if(t==='partial')h=`<label>Magnitud (t/m, ↑+)</label><input type="number" id="loadMag" value="-2" step="0.5"><div class="r2"><div><label>Inicio (m)</label><input type="number" id="loadStart" value="0" step="0.1"></div><div><label>Fin (m)</label><input type="number" id="loadEnd" value="${mid}" step="0.1"></div></div>`;else if(t==='moment')h=`<label>Magnitud (t·m, ↺+)</label><input type="number" id="loadMag" value="5" step="1"><label>Posición (m)</label><input type="number" id="loadPos" value="${mid}" step="0.1">`;document.getElementById('loadInputs').innerHTML=h;}
+
+function addSupport(){const type=document.getElementById('supType').value,pos=parseFloat(document.getElementById('supPos').value),L=parseFloat(document.getElementById('beamLen').value)||8;if(isNaN(pos)||pos<0||pos>L){alert('Posición fuera de la viga.');return;}state.length=L;state.supports.push({type,pos});renderModel();}
+function addLoad(){const type=document.getElementById('loadType').value,mag=parseFloat(document.getElementById('loadMag').value),L=parseFloat(document.getElementById('beamLen').value)||8;if(isNaN(mag)){alert('Magnitud inválida.');return;}state.length=L;let ld={type,mag};if(type==='point-v'||type==='point-h'||type==='moment'){const pos=parseFloat(document.getElementById('loadPos').value);if(isNaN(pos)||pos<0||pos>L){alert('Posición fuera de la viga.');return;}ld.pos=pos;}else if(type==='partial'){const s=parseFloat(document.getElementById('loadStart').value),e=parseFloat(document.getElementById('loadEnd').value);if(isNaN(s)||isNaN(e)||s>=e||s<0||e>L){alert('Rango inválido.');return;}ld.start=s;ld.end=e;}state.loads.push(ld);renderModel();}
+function addHinge(){const pos=parseFloat(document.getElementById('hingePos').value),L=parseFloat(document.getElementById('beamLen').value)||8;if(isNaN(pos)||pos<=0||pos>=L){alert('La articulación debe estar en el interior de la viga.');return;}state.length=L;state.hinges.push({pos});const nR=state.supports.reduce((a,s)=>a+(s.type==='fixed'?3:s.type==='pinned'?2:1),0);document.getElementById('warnHinge').style.display=nR<3+state.hinges.length?'block':'none';renderModel();}
+function remove(cat,idx){if(cat==='s')state.supports.splice(idx,1);else if(cat==='l')state.loads.splice(idx,1);else if(cat==='h')state.hinges.splice(idx,1);renderModel();}
+
+function renderModel(){state.length=parseFloat(document.getElementById('beamLen').value)||8;let h='';state.supports.forEach((s,i)=>h+=`<div class="icard"><div><div class="id">${supLbl[s.type]}</div><div class="is">x = ${s.pos.toFixed(2)} m</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag ts">VÍNCULO</span><button class="del" onclick="remove('s',${i})">✕</button></div></div>`);state.hinges.forEach((hg,i)=>h+=`<div class="icard"><div><div class="id">Articulación</div><div class="is">x = ${hg.pos.toFixed(2)} m</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag th">BISAG.</span><button class="del" onclick="remove('h',${i})">✕</button></div></div>`);state.loads.forEach((l,i)=>{let sub=`${l.mag>0?'+':''}${l.mag} ${l.type==='moment'?'t·m':l.type==='point-h'?'t(H)':'t'}`;if(l.pos!==undefined)sub+=` @ ${l.pos.toFixed(2)} m`;if(l.start!==undefined)sub+=` [${l.start.toFixed(1)}–${l.end.toFixed(1)} m]`;h+=`<div class="icard"><div><div class="id">${loadLbl[l.type]||l.type}</div><div class="is">${sub}</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag tl">CARGA</span><button class="del" onclick="remove('l',${i})">✕</button></div></div>`;});if(!h)h='<p style="color:var(--text3);font-family:var(--mono);font-size:10px;">Sin elementos.</p>';document.getElementById('modelItems').innerHTML=h;}
+
+function toggleDefl(){state.deflEnabled=!state.deflEnabled;const btn=document.getElementById('deflToggle'),sec=document.getElementById('secSection');btn.textContent=state.deflEnabled?'☑ Calcular deformada':'☐ Calcular deformada';btn.className=state.deflEnabled?'btn tog-on':'btn';sec.style.opacity=state.deflEnabled?'1':'.35';sec.style.pointerEvents=state.deflEnabled?'auto':'none';if(state.results)requestAnimationFrame(()=>{drawAll();updateMetrics();});}
+
+function clearAll(){state.supports=[];state.loads=[];state.hinges=[];state.results=null;renderModel();document.getElementById('diagrams').style.display='none';document.getElementById('emptyState').style.display='flex';document.getElementById('rg').style.display='none';document.getElementById('warnHinge').style.display='none';document.getElementById('alertBanner').classList.remove('show');setStatus('Listo.');}
+
+function analyze(){
+  state.length=parseFloat(document.getElementById('beamLen').value)||8;
+  if(!state.supports.length){alert('Agregá al menos un vínculo.');return;}
+  if(!state.loads.length){alert('Agregá al menos una carga.');return;}
+  setStatus('Calculando...','loading');
+  setTimeout(()=>{
+    try{
+      const r=computeDiagrams(state.length,state.supports,state.loads,state.hinges);
+      state.results=r;
+      document.getElementById('emptyState').style.display='none';
+      document.getElementById('diagrams').style.display='flex';
+      document.getElementById('rg').style.display='grid';
+      requestAnimationFrame(()=>{drawAll();updateMetrics();});
+      const banner=document.getElementById('alertBanner'),alertTx=document.getElementById('alertText');
+      let nR=0;state.supports.forEach(s=>nR+=s.type==='fixed'?3:s.type==='pinned'?2:1);
+      const minR=3+state.hinges.length,hypoD=minR-nR;
+      if(!r.stable||hypoD>0){const motivo=hypoD>0?`<strong>Estructura hipostática</strong> — faltan ${hypoD} vínculo(s). Tiene ${nR} reacción(es) y necesita al menos ${minR}.`:`<strong>Modelo inestable</strong> — residuo ΣFy = ${r.residual.toFixed(4)} t.`;alertTx.innerHTML=motivo;banner.classList.add('show');setStatus('⚠ Estructura inestable — diagramas no válidos.','error');}
+      else{banner.classList.remove('show');const tipo=r.isHyperstatic?`Hiperestática grado ${r.degreesOfIndeterminacy}`:'Isostática';const ei=state.deflEnabled?` | EI = ${r.EI.toFixed(1)} t·m²`:'';let hingeInfo='';if(state.hinges.length){const checks=state.hinges.map(h=>{const pts=r.points,near=pts.reduce((best,p)=>Math.abs(p.x-h.pos)<Math.abs(best.x-h.pos)?p:best,pts[0]);return`M(${h.pos.toFixed(1)}m)=${near.M.toFixed(3)}`;});hingeInfo=' | '+checks.join('  ');}setStatus(`${tipo}${ei}${hingeInfo}`,'ok');}
+    }catch(e){setStatus('Error: '+e.message,'error');console.error(e);}
+  },10);
+}
+
+function updateMetrics(){const pts=state.results.points,Mv=pts.map(p=>p.M),Vv=pts.map(p=>p.V);document.getElementById('rMmax').textContent=Math.max(...Mv).toFixed(3)+' t·m';document.getElementById('rMmin').textContent=Math.min(...Mv).toFixed(3)+' t·m';document.getElementById('rVmax').textContent=Math.max(...Vv).toFixed(3)+' t';document.getElementById('rVmin').textContent=Math.min(...Vv).toFixed(3)+' t';let sumFy=0;state.results.reactions.forEach(r=>sumFy+=r.Ry);state.loads.forEach(l=>{if(l.type==='point-v')sumFy+=l.mag;else if(l.type==='udl')sumFy+=l.mag*state.length;else if(l.type==='partial')sumFy+=l.mag*(l.end-l.start);});const el=document.getElementById('rSumF'),ok=Math.abs(sumFy)<0.01;el.textContent=ok?'≈ 0':sumFy.toFixed(3)+' t';el.style.color=ok?'var(--green)':'var(--red)';const dm=document.getElementById('mDmax'),dn=document.getElementById('mDmin');if(state.deflEnabled){const Dv=pts.map(p=>p.d);document.getElementById('rDmax').textContent=Math.max(...Dv).toFixed(3)+' cm';document.getElementById('rDmin').textContent=Math.min(...Dv).toFixed(3)+' cm';dm.style.display='';dn.style.display='';document.getElementById('rg').style.gridTemplateColumns='repeat(7,1fr)';}else{dm.style.display='none';dn.style.display='none';document.getElementById('rg').style.gridTemplateColumns='repeat(5,1fr)';}}
+
+function CW(cv){return cv.parentElement.clientWidth;}
+
+function autoScale(pts,field,ph){const vals=pts.map(p=>p[field]),peak=Math.max(Math.abs(Math.max(...vals)),Math.abs(Math.min(...vals)))||1;return(ph/2*0.68)/peak;}
+
+function drawDiagram(cvId,field,xMark){
+  const cv=document.getElementById(cvId),w=CW(cv);if(!w)return;
+  const pts=state.results.points,L=state.length,isM=field==='M',isD=field==='d';
+  const col=isM?'#f59e0b':isD?'#a855f7':'#06b6d4',fillCol=isM?'rgba(245,158,11,.13)':isD?'rgba(167,139,250,.13)':'rgba(6,182,212,.13)',unit=isM?'t·m':isD?'cm':'t';
+  const H=260;cv.width=w;cv.height=H;const ctx=cv.getContext('2d'),pw=w-PL-PR,ph=H-PT-PB;
+  const sc=autoScale(pts,field,ph),xOf=x=>PL+(x/L)*pw,yOf=isM?v=>PT+ph/2+v*sc:v=>PT+ph/2-v*sc,zeroY=PT+ph/2;
+  ctx.clearRect(0,0,w,H);
+  ctx.strokeStyle=gc('--grid-line');ctx.lineWidth=.5;
+  for(let i=0;i<=5;i++){const gy=PT+(i/5)*ph;ctx.beginPath();ctx.moveTo(PL,gy);ctx.lineTo(PL+pw,gy);ctx.stroke();}
+  for(let i=0;i<=10;i++){const gx=PL+(i/10)*pw;ctx.beginPath();ctx.moveTo(gx,PT);ctx.lineTo(gx,PT+ph);ctx.stroke();}
+  ctx.strokeStyle=gc('--zero-line');ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(PL,zeroY);ctx.lineTo(PL+pw,zeroY);ctx.stroke();
+  ctx.save();ctx.beginPath();ctx.rect(PL,PT,pw,ph);ctx.clip();
+  ctx.beginPath();ctx.moveTo(xOf(pts[0].x),zeroY);pts.forEach(p=>ctx.lineTo(xOf(p.x),yOf(p[field])));ctx.lineTo(xOf(pts[pts.length-1].x),zeroY);ctx.closePath();ctx.fillStyle=fillCol;ctx.fill();
+  ctx.beginPath();pts.forEach((p,i)=>{const px=xOf(p.x),py=yOf(p[field]);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});ctx.strokeStyle=col;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle=gc('--text3');ctx.font='10px monospace';ctx.textAlign='right';
+  const tickV=(ph/2*0.68)/sc;
+  ctx.fillText(isM?tickV.toFixed(2):(-tickV).toFixed(2),PL-4,PT+ph*0.1+4);
+  ctx.fillText('0',PL-4,zeroY+4);
+  ctx.fillText(isM?(-tickV).toFixed(2):tickV.toFixed(2),PL-4,PT+ph*0.9+4);
+  ctx.fillStyle=col;ctx.font='10px monospace';ctx.textAlign='left';ctx.fillText(unit,PL+4,PT+13);
+  ctx.fillStyle=gc('--text3');ctx.font='10px monospace';ctx.textAlign='center';
+  for(let i=0;i<=10;i++)ctx.fillText((i/10*L).toFixed(1),PL+(i/10)*pw,PT+ph+22);
+  const vals=pts.map(p=>p[field]),vmax=Math.max(...vals),vmin=Math.min(...vals),span=(vmax-vmin)||1,annotated=[];
+  function tryAnnot(p){
+    const v=p[field];if(Math.abs(v)<span*0.02)return;
+    const px=xOf(p.x);if(annotated.some(a=>Math.abs(a-px)<70))return;
+    const py=yOf(v);if(py<PT-10||py>PT+ph+10)return;
+    annotated.push(px);
+    const lbl=`${v.toFixed(3)} ${unit}`,out=isM?(v>0?1:-1):(v>0?-1:1),LBLH=18,LBLOFF=26;
+    ctx.font='bold 13px monospace';const tw=ctx.measureText(lbl).width;
+    const lx=Math.max(PL+2,Math.min(PL+pw-tw-4,px-tw/2));let ly=py+out*LBLOFF;
+    ly=Math.max(PT+LBLH,Math.min(PT+ph+PB-6,ly));
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,Math.max(PT,Math.min(PT+ph,py)),4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=lightMode?'rgba(244,245,247,0.92)':'rgba(15,17,23,0.88)';ctx.fillRect(lx-4,ly-LBLH+4,tw+8,LBLH+2);
+    ctx.fillStyle=col;ctx.textAlign='left';ctx.fillText(lbl,lx,ly);
+  }
+  let pmx=pts[0],pmn=pts[0];pts.forEach(p=>{if(p[field]>pmx[field])pmx=p;if(p[field]<pmn[field])pmn=p;});
+  tryAnnot(pmx);tryAnnot(pmn);tryAnnot(pts[0]);tryAnnot(pts[pts.length-1]);
+  for(let i=1;i<pts.length-1;i++){const v=pts[i][field],vp=pts[i-1][field],vn=pts[i+1][field];if((v>vp&&v>vn)||(v<vp&&v<vn))tryAnnot(pts[i]);}
+  if(xMark!==undefined){const gx=xOf(xMark);ctx.strokeStyle=lightMode?'rgba(0,0,0,.2)':'rgba(255,255,255,.2)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(gx,PT);ctx.lineTo(gx,PT+ph);ctx.stroke();ctx.setLineDash([]);}
+}
+
+function drawAll(){drawBeam();drawDiagram('cMoment','M');drawDiagram('cShear','V');const db=document.getElementById('deflBlock');if(state.deflEnabled){db.style.display='flex';document.getElementById('ttdRow').style.display='';drawDiagram('cDefl','d');}else{db.style.display='none';document.getElementById('ttdRow').style.display='none';}}
+
+function drawBeam(){
+  const cv=document.getElementById('cBeam'),w=CW(cv);if(!w)return;
+  const H=190;cv.width=w;cv.height=H;const ctx=cv.getContext('2d'),L=state.length,pw=w-PL-PR,bY=94,xOf=x=>PL+(x/L)*pw;
+  ctx.clearRect(0,0,w,H);
+  ctx.strokeStyle=gc('--grid-line');ctx.lineWidth=.5;for(let i=0;i<=10;i++){const gx=PL+(i/10)*pw;ctx.beginPath();ctx.moveTo(gx,4);ctx.lineTo(gx,H-4);ctx.stroke();}
+  state.loads.forEach(l=>drawLoadSym(ctx,l,xOf,bY,L));
+  ctx.strokeStyle=lightMode?'#374151':'#d1d5db';ctx.lineWidth=5;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(PL,bY);ctx.lineTo(PL+pw,bY);ctx.stroke();
+  state.hinges.forEach(h=>{const hx=xOf(h.pos);ctx.fillStyle=gc('--bg');ctx.beginPath();ctx.arc(hx,bY,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#a855f7';ctx.lineWidth=2;ctx.beginPath();ctx.arc(hx,bY,7,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#a855f7';ctx.font='9px monospace';ctx.textAlign='center';ctx.fillText('◉',hx,bY+18);});
+  state.supports.forEach(s=>drawSupportSym(ctx,xOf(s.pos),bY,s.type));
+  ctx.fillStyle=gc('--text3');ctx.font='10px monospace';ctx.textAlign='center';for(let i=0;i<=10;i++)ctx.fillText((i/10*L).toFixed(1),PL+(i/10)*pw,H-4);
+  if(state.results){state.results.reactions.forEach(r=>{const rx=xOf(r.pos);if(Math.abs(r.Ry)>1e-4){const up=r.Ry>0;drawArrowV(ctx,rx,bY+(up?48:-48),rx,bY+(up?3:-3),up?'up':'dn','#3b82f6');ctx.fillStyle='#3b82f6';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(r.Ry.toFixed(3)+' t',rx,bY+(up?62:-60));}if(Math.abs(r.Rx)>1e-4){const rt=r.Rx>0;drawArrowH(ctx,rx+(rt?-42:42),bY+28,rx,bY+28,rt?'rt':'lt','#60a5fa');ctx.fillStyle='#60a5fa';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(r.Rx.toFixed(3)+' t',rx+(rt?-21:21),bY+44);}if(Math.abs(r.Mx)>1e-4){drawMomSym(ctx,rx,bY,r.Mx,'#3b82f6');ctx.fillStyle='#60a5fa';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(r.Mx.toFixed(3)+' t·m',rx,bY-34);}});}
+}
+
+function drawArrowV(ctx,x1,y1,x2,y2,dir,col){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const up=dir==='up',aw=5,ah=9;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-aw,y2+(up?ah:-ah));ctx.lineTo(x2+aw,y2+(up?ah:-ah));ctx.closePath();ctx.fill();}function drawArrowH(ctx,x1,y1,x2,y2,dir,col){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const rt=dir==='rt',aw=9,ah=5;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2+(rt?-aw:aw),y2-ah);ctx.lineTo(x2+(rt?-aw:aw),y2+ah);ctx.closePath();ctx.fill();}
+function drawMomSym(ctx,cx,cy,mag,col){ctx.strokeStyle=col;ctx.lineWidth=1.5;const r=12,cw=mag<0,st=cw?.45:Math.PI+.45,en=cw?Math.PI+.45:.45;ctx.beginPath();ctx.arc(cx,cy,r,st,en,cw);ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(cx+r*Math.cos(en),cy+r*Math.sin(en),3,0,Math.PI*2);ctx.fill();}
+function drawHatch(ctx,x1,x2,y){ctx.strokeStyle='#3b82f6';ctx.lineWidth=.8;for(let x=x1;x<=x2;x+=5){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-5,y+7);ctx.stroke();}}
+function drawHatchV(ctx,x,y1,y2,side){ctx.strokeStyle='#3b82f6';ctx.lineWidth=.8;for(let y=y1;y<=y2;y+=5){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+7*side,y-5);ctx.stroke();}}
+function drawSupportSym(ctx,sx,bY,type){ctx.strokeStyle='#3b82f6';ctx.lineWidth=1.5;if(type==='roller'){ctx.beginPath();ctx.moveTo(sx,bY);ctx.lineTo(sx-10,bY+17);ctx.lineTo(sx+10,bY+17);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(sx,bY+23,5,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(sx-14,bY+29);ctx.lineTo(sx+14,bY+29);ctx.stroke();drawHatch(ctx,sx-14,sx+14,bY+29);}else if(type==='pinned'){ctx.beginPath();ctx.moveTo(sx,bY);ctx.lineTo(sx-10,bY+17);ctx.lineTo(sx+10,bY+17);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(sx-14,bY+18);ctx.lineTo(sx+14,bY+18);ctx.stroke();drawHatch(ctx,sx-14,sx+14,bY+18);}else if(type==='fixed'){ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(sx,bY-20);ctx.lineTo(sx,bY+20);ctx.stroke();ctx.lineWidth=1;const side=sx<=state.length/2?-1:1;drawHatchV(ctx,sx,bY-20,bY+20,side);}}
+function drawLoadSym(ctx,ld,xOf,bY,L){const col='#10b981';if(ld.type==='point-v'){const lx=xOf(ld.pos),up=ld.mag>0;if(up){drawArrowV(ctx,lx,bY+52,lx,bY+3,'up',col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText('+'+ld.mag+' t',lx,bY+64);}else{drawArrowV(ctx,lx,bY-52,lx,bY-3,'dn',col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(ld.mag+' t',lx,bY-58);}}else if(ld.type==='point-h'){const lx=xOf(ld.pos),rt=ld.mag>0;drawArrowH(ctx,lx+(rt?-44:44),bY-10,lx,bY-10,rt?'rt':'lt',col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(Math.abs(ld.mag)+' t',lx,bY-26);}else if(ld.type==='udl'){drawUDL(ctx,xOf(0),xOf(L),bY,ld.mag,col);}else if(ld.type==='partial'){drawUDL(ctx,xOf(ld.start),xOf(ld.end),bY,ld.mag,col);}else if(ld.type==='moment'){drawMomSym(ctx,xOf(ld.pos),bY-10,ld.mag,col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(Math.abs(ld.mag)+' t·m',xOf(ld.pos),bY-30);}}
+function drawUDL(ctx,x1,x2,bY,mag,col){const up=mag>0,h=32,n=Math.max(3,Math.round((x2-x1)/18));ctx.strokeStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x1,bY-h);ctx.lineTo(x2,bY-h);ctx.stroke();for(let i=0;i<=n;i++){const ax=x1+(x2-x1)*i/n;drawArrowV(ctx,ax,bY-h,ax,bY+(up?2:-2),up?'up':'dn',col);}ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(Math.abs(mag)+' t/m',(x1+x2)/2,bY-h-7);}
+
+function showTT(cx,cy,p){const tt=document.getElementById('tooltip');tt.style.display='block';tt.style.left=(cx+14)+'px';tt.style.top=(Math.max(10,cy-14))+'px';document.getElementById('ttx').textContent=p.x.toFixed(3)+' m';document.getElementById('ttm').textContent=p.M.toFixed(3)+' t·m';document.getElementById('ttv').textContent=p.V.toFixed(3)+' t';if(state.deflEnabled)document.getElementById('ttd').textContent=p.d.toFixed(3)+' cm';}
+function hideTT(){document.getElementById('tooltip').style.display='none';}
+function getNear(xVal){const pts=state.results.points;return pts.reduce((best,p)=>Math.abs(p.x-xVal)<Math.abs(best.x-xVal)?p:best,pts[0]);}
+function setupHover(cvId,field){const cv=document.getElementById(cvId);cv.addEventListener('mousemove',e=>{if(!state.results){hideTT();return;}const rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,pw=cv.width-PL-PR;if(mx<PL||mx>PL+pw){hideTT();return;}const p=getNear((mx-PL)/pw*state.length);showTT(e.clientX,e.clientY,p);drawDiagram(cvId,field,p.x);});cv.addEventListener('mouseleave',()=>{hideTT();if(state.results)drawDiagram(cvId,field);});}
+const cB=document.getElementById('cBeam');
+cB.addEventListener('mousemove',e=>{if(!state.results){hideTT();return;}const rect=cB.getBoundingClientRect(),mx=e.clientX-rect.left,pw=cB.width-PL-PR;if(mx<PL||mx>PL+pw){hideTT();return;}showTT(e.clientX,e.clientY,getNear((mx-PL)/pw*state.length));});
+cB.addEventListener('mouseleave',hideTT);
+setupHover('cMoment','M');setupHover('cShear','V');setupHover('cDefl','d');
+window.addEventListener('resize',()=>{if(state.results)drawAll();});
+updateLoadInputs();updateSecInfo();renderModel();
+</script>
+</body>
+</html>

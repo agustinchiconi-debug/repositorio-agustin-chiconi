@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>Flexión y Flexocompresión H°A°</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+:root{
+  --bg:#EEF0EE; --surface:#FAFBFA; --ink:#1B2226; --muted:#5B656A; --line:#D3D8D6;
+  --accent:#2E5B87; --accent-soft:#DCE6F0; --steel:#A8741F; --concrete:#C9CECB; --load:#B0118A;
+  --ok:#2F7A4E; --ok-soft:#DDEFE3; --warn:#9A6A12; --warn-soft:#F5EAD2; --bad:#8E3B5A; --bad-soft:#F2DEE6;
+  --design:#5E8C3A; --neg:#7A4FA0;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#13181B; --surface:#1B2226; --ink:#E3E8E9; --muted:#9AA5AA; --line:#2E373C;
+    --accent:#86AEDB; --accent-soft:#233447; --steel:#D8A553; --concrete:#3A4449; --load:#FF5FD2;
+    --ok:#7CC49A; --ok-soft:#1E3528; --warn:#E0B460; --warn-soft:#3A2F17; --bad:#E08FAE; --bad-soft:#3D2230;
+    --design:#9CC878; --neg:#B997DE;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#13181B; --surface:#1B2226; --ink:#E3E8E9; --muted:#9AA5AA; --line:#2E373C;
+  --accent:#86AEDB; --accent-soft:#233447; --steel:#D8A553; --concrete:#3A4449; --load:#FF5FD2;
+  --ok:#7CC49A; --ok-soft:#1E3528; --warn:#E0B460; --warn-soft:#3A2F17; --bad:#E08FAE; --bad-soft:#3D2230;
+  --design:#9CC878; --neg:#B997DE;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:18px 40px}
+.wrap{max-width:1500px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;border-bottom:1px solid var(--line);padding-bottom:12px}
+h1{font-family:var(--cond);font-weight:600;font-size:26px;letter-spacing:.01em;margin:0;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:70ch}
+.grid{display:grid;grid-template-columns:minmax(360px,440px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;display:grid;gap:12px;min-width:0}
+h2{font-family:var(--cond);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.06em;margin:0;color:var(--muted)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+input,select{font:inherit;font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 7px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+select{font-family:var(--sans)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-weight:500;font-size:11px;color:var(--muted);text-align:left;padding:4px 4px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.04em}
+td{padding:3px 4px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px}
+td input{padding:3px 5px}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:4px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.x{padding:2px 7px;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.main{display:grid;gap:16px;min-width:0}
+.top{display:grid;grid-template-columns:minmax(240px,340px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.top{grid-template-columns:1fr}}
+.rhocard{display:grid;gap:8px;align-content:start;min-width:0}
+#rhoc td:first-child{font-family:var(--sans);font-size:12.5px}
+#rhoc tr.sep td{border-top:2px solid var(--line)}
+#secSvg{width:100%;height:auto;display:block}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.kv div{display:grid;gap:1px;padding:7px 9px;background:var(--bg);border-radius:4px}
+.kv span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.kv b{font-family:var(--mono);font-weight:500;font-size:15px}
+.checks{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:8px;align-items:baseline;font-size:13px}
+.pill{font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;white-space:nowrap;font-family:var(--sans)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.plot{width:100%;min-height:420px}
+#p3d{height:560px}
+@media (max-width:640px){#p3d{height:420px}}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.maintabs{display:flex;gap:4px;border-bottom:2px solid var(--line)}
+.maintabs button{font-family:var(--cond);font-weight:600;font-size:16px;letter-spacing:.02em;border:none;border-bottom:3px solid transparent;border-radius:0;background:none;color:var(--muted);padding:8px 16px;margin-bottom:-2px}
+.maintabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+body[data-tab="fl"] .only-fc{display:none!important}
+body[data-tab="fc"] .only-fl{display:none!important}
+.mfgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.mfgrid{grid-template-columns:1fr}}
+.mfh{font-family:var(--cond);font-weight:600;font-size:15px;margin:0 0 4px}
+.mfplot{min-height:340px}
+#layers{table-layout:fixed}
+#layers th:nth-child(1),#layers td:nth-child(1){width:44px}
+#layers th:nth-child(4),#layers td:nth-child(4){width:78px}
+#layers th:nth-child(5),#layers td:nth-child(5){width:36px}
+#layers td select{width:100%;min-width:66px;padding:3px 4px;font-family:var(--mono)}
+.signs{font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+.signs ul{margin:4px 0 0;padding-left:16px;display:grid;gap:2px}
+input.sw{width:34px;height:26px;padding:1px;border-radius:4px;cursor:pointer}
+#loads th:first-child,#loads td:first-child{width:42px}
+#loads td input{min-width:74px;padding:4px 5px}
+#loads td:first-child input{min-width:0}
+#loads td:nth-child(2) input{min-width:90px}
+#layers td input{min-width:50px}
+.projbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.projname{font-family:var(--cond);font-weight:600;font-size:15px;margin-right:6px}
+.projbar button{background:var(--surface)}
+#pSave{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.projpanel{max-width:760px}
+.capd{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:7px 9px;cursor:pointer}
+.capd input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.capd:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.notes{font-size:12px;color:var(--muted);display:grid;gap:4px}
+.notes p{margin:0;max-width:95ch}
+.num{text-align:right}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="row" style="gap:14px"><h1>Flexión y Flexocompresión H°A°</h1><button type="button" id="dlHtml" hidden>Descargar HTML</button><span class="hint" id="dlMsg"></span></div>
+    <p>Secciones rectangular, T y L: flexión con axial en una y dos direcciones, por compatibilidad de deformaciones. CIRSOC 201-25 / INPRES-CIRSOC 103 Parte II-2021. Unidades: t, cm, tm (g = 10).</p>
+  </header>
+  <div class="projbar" role="toolbar" aria-label="Proyecto">
+    <span class="projname" id="projName">Proyecto sin guardar</span>
+    <button type="button" id="pSave">Guardar proyecto</button>
+    <button type="button" id="pOpen">Abrir proyecto</button><input type="file" id="pFile" accept=".json,application/json" hidden>
+    <button type="button" id="pClear">Limpiar</button>
+    <span class="hint" id="pMsg" aria-live="polite"></span>
+  </div>
+  <div class="panel projpanel" id="pSavePanel" hidden>
+    <div class="row"><label style="flex:1">Nombre del proyecto<input id="pSaveName" placeholder="Ej.: Viga V12 – Edificio Norte"></label>
+    <button type="button" id="pSaveOk">Guardar</button><button type="button" id="pSaveCancel">Cancelar</button></div>
+    <p class="hint">Se descarga un archivo <b>.json</b> con todos los datos del proyecto. Para volver a usarlo, tocá "Abrir proyecto" y elegilo desde la carpeta donde lo guardaste.</p>
+  </div>
+  <div class="panel projpanel" id="pClearPanel" hidden>
+    <div class="row"><span>¿Limpiar todos los datos (sección, armadura y solicitaciones)? El proyecto guardado en la biblioteca no se borra.</span>
+    <button type="button" id="pClearOk">Sí, limpiar</button><button type="button" id="pClearCancel">Cancelar</button></div>
+  </div>
+  <nav class="maintabs" role="tablist" aria-label="Tipo de análisis">
+    <button type="button" role="tab" id="tabFl" aria-selected="true">Flexión</button>
+    <button type="button" role="tab" id="tabFc" aria-selected="false">Flexo-compresión</button>
+  </nav>
+
+  <div class="grid">
+    <aside class="panel" aria-label="Datos">
+      <h2>Sección y materiales</h2>
+      <div class="fields">
+        <label>Tipo de sección
+          <select id="tipo"><option value="R">Rectangular</option><option value="T">T</option><option value="L">L</option><option value="X">Cruz</option><option value="C">Circular</option></select>
+        </label>
+        <label class="tl onlyTL">Posición del ala
+          <select id="ala"><option value="sup">Arriba</option><option value="inf">Abajo</option></select>
+        </label>
+        <label class="notC"><span id="bLab">b (ancho, eje x) [cm]</span><input id="b" type="number" step="1" value="16"></label>
+        <label><span id="hLab">h (altura total, eje y) [cm]</span><input id="h" type="number" step="1" value="36"></label>
+        <label class="tl">bf (ancho del ala) [cm]<input id="bf" type="number" step="1" value="60"></label>
+        <label class="tl">hf (espesor del ala) [cm]<input id="hf" type="number" step="1" value="10"></label>
+        <label>f'c [MPa]<input id="fc" type="number" step="1" value="30"></label>
+        <label>fy [MPa]<input id="fy" type="number" step="10" value="420"></label>
+        <label>Es [MPa]<input id="Es" type="number" step="1000" value="200000"></label>
+        <label class="notC">Rec. lateral al eje de barra [cm]<input id="rx" type="number" step="0.5" value="4"></label>
+      </div>
+
+      <div class="onlyC" style="display:grid;gap:8px">
+        <h2>Armadura perimetral</h2>
+        <div class="fields">
+          <label>Nº de barras<input id="cN" type="number" step="1" min="3" value="8"></label>
+          <label>ø [mm]<select id="cF"><option>6</option><option>8</option><option>10</option><option>12</option><option selected>16</option><option>20</option><option>25</option><option>32</option></select></label>
+          <label>Rec. al eje de barra [cm]<input id="cR" type="number" step="0.5" value="5"></label>
+        </div>
+        <p class="hint">Barras repartidas uniformemente en una circunferencia de radio D/2 − rec, con una barra arriba.</p>
+      </div>
+      <div class="notC" style="display:grid;gap:12px">
+      <h2>Armadura por capas</h2>
+      <p class="hint">Como en el Excel: di medido desde la fibra superior al eje de la capa. Las barras de cada capa se reparten en el ancho que tiene la sección a esa profundidad (alma o ala), descontando el recubrimiento lateral; con 1 barra, va centrada en ese ancho.</p>
+      <div class="tbl-wrap">
+        <table id="layers">
+          <thead><tr><th>Capa</th><th>di [cm]</th><th>Nº</th><th>ø [mm]</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row"><button id="addLayer" type="button">Agregar capa</button></div>
+      </div>
+
+      <div class="only-fc" style="display:grid;gap:12px">
+      <h2>Criterio</h2>
+      <label>Reglamento y armadura transversal
+        <select id="crit">
+          <option value="C201E">CIRSOC 201-25 · estribos</option>
+          <option value="C201Z">CIRSOC 201-25 · zuncho</option>
+          <option value="IC103">INPRES-CIRSOC 103 P.II-2021 (sismo)</option>
+        </select>
+      </label>
+      <label class="capd"><input type="checkbox" id="capD"> <span><b>Diseño por capacidad</b> (φ = 1,00)</span></label>
+      <p class="hint" id="critTxt"></p>
+
+      <h2>Solicitaciones últimas</h2>
+      <div class="signs" aria-label="Convención de signos">
+        <b>Convención de signos</b>
+        <ul>
+          <li><b>Pu &gt; 0</b>: compresión · <b>Pu &lt; 0</b>: tracción</li>
+          <li><b>Mux &gt; 0</b> (momento positivo): comprime la cara <b>superior</b> y tracciona la inferior</li>
+          <li><b>Mux &lt; 0</b> (momento negativo): comprime la cara <b>inferior</b> y tracciona la superior</li>
+          <li><b>Muy &gt; 0</b>: comprime la cara <b>derecha</b> (+x) · <b>Muy &lt; 0</b>: comprime la <b>izquierda</b></li>
+          <li>Momentos respecto del baricentro de la sección bruta (ver dato en el panel de la sección)</li>
+        </ul>
+      </div>
+      <div class="tbl-wrap">
+        <table id="loads">
+          <thead><tr><th>Color</th><th>Caso</th><th>Pu [t]</th><th>Mux [tm]</th><th>Muy [tm]</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row"><button id="addLoad" type="button">Agregar caso</button></div>
+      </div>
+    </aside>
+
+    <section class="main">
+      <div class="panel">
+        <div class="top">
+          <div>
+            <h2>Sección</h2>
+            <svg id="secSvg" viewBox="0 0 340 340" role="img" aria-label="Sección transversal con barras"></svg>
+          </div>
+          <div class="only-fl rhocard">
+            <div class="row" style="justify-content:space-between">
+              <h2>Cuantía de flexión</h2>
+              <select id="regFl" aria-label="Reglamento para cuantías" style="width:auto">
+                <option value="IC103">INPRES-CIRSOC 103 P.II-2021</option>
+                <option value="C201">CIRSOC 201-2025</option>
+              </select>
+            </div>
+            <div class="tbl-wrap">
+              <table id="rhoc">
+                <thead><tr><th></th><th class="num">M+</th><th class="num">M−</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="hint" id="rhoRef"></p>
+          </div>
+          <div class="only-fc" style="display:grid;gap:8px;align-content:start;min-width:0">
+            <h2>Controles de columna</h2>
+            <ul class="checks" id="checks"></ul>
+          </div>
+        </div>
+        <div class="kv" id="kv"></div>
+      </div>
+
+      <div class="panel only-fc">
+        <div class="row" style="justify-content:space-between">
+          <h2>Verificación de casos</h2>
+        </div>
+        <div class="tbl-wrap">
+          <table id="res">
+            <thead><tr><th>Caso</th><th class="num">Pu</th><th class="num">Mu resultante</th><th class="num">Dirección</th><th class="num">φMn a Pu en esa dirección</th><th class="num">Mu / φMn</th><th>Resultado</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="hint">Se corta la superficie de diseño a la altura Pu y se busca la capacidad en la misma dirección del momento (método de contorno de carga exacto, sin aproximación de Bresler).</p>
+      </div>
+
+      <div class="panel only-fc">
+        <div class="row" style="justify-content:space-between">
+          <h2>Superficie de interacción 3D</h2>
+          <div class="tabs" role="group" aria-label="Superficies visibles">
+            <button type="button" id="tNom" aria-pressed="true">Nominal (Mn, Pn)</button>
+            <button type="button" id="tDes" aria-pressed="false">Diseño (φMn, φPn)</button>
+          </div>
+        </div>
+        <div id="p3d" class="plot"></div>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Nominal</span><span><i style="background:var(--design)"></i>Diseño</span><span>■ Solicitaciones: cuadrado del color elegido para cada caso</span><span><i style="background:var(--surface);border:2px solid var(--ink);height:8px;width:8px"></i>Capacidad φMn a Pu en la misma dirección (rombo blanco, sobre la línea punteada)</span></div>
+      </div>
+
+      <div class="panel only-fc">
+        <div class="row" style="justify-content:space-between">
+          <h2>Flexión con axial en una dirección</h2>
+          <div class="tabs" role="group" aria-label="Eje de flexión">
+            <button type="button" id="axX" aria-pressed="true">Mx (flexión en h)</button>
+            <button type="button" id="axY" aria-pressed="false">My (flexión en b)</button>
+            <button type="button" id="uDes" aria-pressed="true">Mostrar diseño</button>
+          </div>
+        </div>
+        <div id="p2d" class="plot"></div>
+        <div class="tbl-wrap">
+          <table id="pts">
+            <thead><tr><th>Punto notable (rama +, todos por equilibrio seccional)</th><th class="num">c [cm]</th><th class="num">Mn [tm]</th><th class="num">Pn [t]</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3 class="mfh" style="margin-top:6px">Solicitaciones últimas vs. resistencia de diseño</h3>
+        <div class="tbl-wrap">
+          <table id="cmp2d">
+            <thead><tr><th>Caso</th><th class="num">Pu [t]</th><th class="num">Mu [tm]</th><th class="num">φMn a ese Pu [tm]</th><th class="num">φPn,máx [t]</th><th class="num">Mu/φMn</th><th>Resultado</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="hint" id="cmp2dTxt"></p>
+      </div>
+
+      <div class="panel only-fl">
+        <div class="row" style="justify-content:space-between">
+          <h2>Momento-curvatura, ductilidad e Ie/Ig (flexión simple)</h2>
+          <div class="tabs" role="group" aria-label="Eje de flexión para M-φ">
+            <button type="button" id="mfX" aria-pressed="true">Flexión en x (Mx)</button>
+            <button type="button" id="mfY" aria-pressed="false">Flexión en y (My)</button>
+          </div>
+        </div>
+        <div class="fields" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">
+          <input id="mfP" type="hidden" value="0">
+          <label>εcu (ELU3)<input id="mfEcu" type="number" step="0.0005" value="0.003"></label>
+          <label>ε0 parábola H°<input id="mfE0" type="number" step="0.0001" value="0.002"></label>
+          <label>fr = k·√f'c · k<input id="mfFr" type="number" step="0.005" value="0.62"></label>
+        </div>
+        <div class="mfgrid">
+          <div><h3 class="mfh">Momento positivo (M+)</h3><div id="pmfP" class="plot mfplot"></div></div>
+          <div><h3 class="mfh">Momento negativo (M−)</h3><div id="pmfN" class="plot mfplot"></div></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--accent);height:4px"></i>Real (3 ELU)</span><span><i style="background:var(--steel);height:4px"></i>Idealizada bilineal</span><span><i style="background:var(--muted)"></i>Fibras (referencia, punteada)</span></div>
+        <div class="tbl-wrap">
+          <table id="mft">
+            <thead><tr><th>Estado</th><th class="num">M+ [tm]</th><th class="num">φ+ [1/cm]</th><th class="num">M− [tm]</th><th class="num">φ− [1/cm]</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="hint">Real: 0 → ELU1 (fisuración, sección transformada no fisurada, fr) → ELU2 (primera fluencia de la capa más traccionada; hormigón parábola de Hognestad con f'c y ε0, tracción despreciada) → ELU3 (εc = εcu, bloque 0,85 f'c·β1c). Idealizada bilineal: 0 → (Mn, φ'y = φy·Mn/My) → (Mn, φu). μ = φu/φ'y · E·Ie = Mn/φ'y · Ie = E·Ie/Ec con Ec = 4700√f'c. Cada gráfico en valor absoluto, con la misma escala de momentos. Azul lleno = real (3 ELU), ocre rayado = idealizada bilineal, gris punteado = análisis continuo por fibras (referencia).</p>
+      </div>
+
+      <div class="notes">
+        <p>Hipótesis: secciones planas, εcu = 0,003 (CIRSOC 201-25 art. 22.2.2.1), bloque rectangular 0,85 f'c en a = β1·c (art. 22.2.2.4), acero elastoplástico, hormigón desplazado por barras comprimidas descontado. Momentos respecto del baricentro de la sección bruta (en T y L no coincide con h/2: ver dato en el panel). El eje neutro gira de 0 a 360° y el bloque comprimido se recorta en forma exacta sobre el polígono de la sección. En T y L se usa la sección completa cargada (bf real): el ancho efectivo del ala según el reglamento lo define el usuario.</p>
+        <p>φ: C201 según Tabla 21.2.2 (0,65 estribos, 0,75 zuncho si εt ≤ εty; 0,90 si εt ≥ εty + 0,003; transición lineal), φPn,max = 0,80 (0,85 zuncho)·φ·Po (Tabla 22.4.2.1). IC103: φ = 0,90 constante (Tabla 1.2 b) y Pu ≤ 0,70·φ·Pn (expr. 2.3-15). εty = 0,002 con fy = 420 MPa (art. 21.2.2.1).</p>
+        <p>Datos iniciales: los de la planilla "Flexo compresión - revisado.xlsx" (16×36, H-30, 3 capas de 2ø10). Con Es = 210.000 el Excel da los mismos puntos notables; acá el valor por defecto es el del art. 20.2.2.2.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script id="app">
+(function(){
+// copia limpia del documento para descargar (se toma antes de que la página se dibuje)
+const SRC=(()=>{ const d=document.documentElement.cloneNode(true); d.querySelectorAll("script").forEach(sc=>{ if(sc.id!=="app" && !(sc.src||"").includes("plotly")) sc.remove(); }); d.querySelectorAll("#dlHtml").forEach(b=>b.remove()); return "<!doctype html>"+String.fromCharCode(10)+d.outerHTML; })();
+const $ = id => document.getElementById(id);
+const fmt = (v,d=2) => (v==null||!isFinite(v)) ? '—' : v.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+let layers = [{d:4,n:2,f:10},{d:17.5,n:2,f:10},{d:31,n:2,f:10}];
+// paleta de solicitaciones (sin rojos, para no confundir con pretensado)
+const PAL=['#B0118A','#E07B00','#0E8C7F','#6A3FB5','#1F6FB5','#8C6D1F','#2E8B3E','#D14FA0','#4A5A66','#00A3C4'];
+let loads = [{name:'Caso Excel',P:0,Mx:4.4,My:0,color:PAL[0]},{name:'Biaxial',P:20,Mx:3,My:1.2,color:PAL[1]}];
+let show = {nom:true, des:false, ax:'x', uDes:true};
+try{ const s = JSON.parse(localStorage.getItem('ib-state')||'null'); if(s){ layers=s.layers||layers; loads=s.loads||loads; for(const k of ['tipo','ala','b','h','bf','hf','fc','fy','Es','rx','crit','cN','cF','cR']) if(s[k]!=null) $(k).value=s[k]; } }catch(e){}
+
+function save(){ try{ const o={layers,loads}; for(const k of ['tipo','ala','b','h','bf','hf','fc','fy','Es','rx','crit','cN','cF','cR']) o[k]=$(k).value; localStorage.setItem('ib-state',JSON.stringify(o)); }catch(e){} }
+
+function renderLayerRows(){
+  const tb = $('layers').tBodies[0]; tb.innerHTML='';
+  layers.forEach((L,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td><input id="ld${i}" type="number" step="0.5" value="${L.d}"></td><td><input id="ln${i}" type="number" step="1" min="0" value="${L.n}"></td><td><select id="lf${i}">${[6,8,10,12,16,20,25,32].map(f=>`<option ${f==L.f?'selected':''}>${f}</option>`).join('')}</select></td><td><button class="x" type="button" aria-label="Quitar capa ${i+1}">×</button></td>`;
+    tr.querySelector(`#ld${i}`).oninput=e=>{L.d=+e.target.value;schedule()};
+    tr.querySelector(`#ln${i}`).oninput=e=>{L.n=Math.max(0,Math.round(+e.target.value));schedule()};
+    tr.querySelector(`#lf${i}`).onchange=e=>{L.f=+e.target.value;schedule()};
+    tr.querySelector('button').onclick=()=>{layers.splice(i,1);renderLayerRows();schedule()};
+    tb.appendChild(tr);
+  });
+}
+function renderLoadRows(){
+  const tb = $('loads').tBodies[0]; tb.innerHTML='';
+  loads.forEach((L,i)=>{
+    const tr=document.createElement('tr');
+    if(!L.color) L.color=PAL[i%PAL.length];
+    tr.innerHTML=`<td><input id="cc${i}" type="color" value="${L.color}" aria-label="Color del caso ${i+1}" class="sw"></td><td><input id="cn${i}" value="${L.name}"></td><td><input id="cp${i}" type="number" step="0.5" value="${L.P}"></td><td><input id="cx${i}" type="number" step="0.1" value="${L.Mx}"></td><td><input id="cy${i}" type="number" step="0.1" value="${L.My}"></td><td><button class="x" type="button" aria-label="Quitar caso ${i+1}">×</button></td>`;
+    tr.querySelector(`#cc${i}`).oninput=e=>{L.color=e.target.value;schedule()};
+    tr.querySelector(`#cn${i}`).oninput=e=>{L.name=e.target.value;schedule()};
+    tr.querySelector(`#cp${i}`).oninput=e=>{L.P=+e.target.value;schedule()};
+    tr.querySelector(`#cx${i}`).oninput=e=>{L.Mx=+e.target.value;schedule()};
+    tr.querySelector(`#cy${i}`).oninput=e=>{L.My=+e.target.value;schedule()};
+    tr.querySelector('button').onclick=()=>{loads.splice(i,1);renderLoadRows();schedule()};
+    tb.appendChild(tr);
+  });
+}
+$('addLayer').onclick=()=>{const last=layers[layers.length-1]||{d:4,f:10}; layers.push({d:last.d,n:2,f:last.f}); renderLayerRows(); schedule();};
+$('addLoad').onclick=()=>{const used=new Set(loads.map(l=>l.color)); loads.push({name:'Caso '+(loads.length+1),P:0,Mx:0,My:0,color:PAL.find(c=>!used.has(c))||PAL[loads.length%PAL.length]}); renderLoadRows(); schedule();};
+for(const k of ['b','h','bf','hf','fc','fy','Es','rx','cN','cR']) $(k).addEventListener('input',()=>schedule());
+$('cF').addEventListener('change',()=>schedule());
+for(const k of ['crit','tipo','ala']) $(k).addEventListener('change',()=>{syncTipo();schedule();});
+$('capD').addEventListener('change',()=>schedule());
+function syncTipo(){ const t=$('tipo').value;
+  document.querySelectorAll('.tl').forEach(e=>e.hidden=!(t==='T'||t==='L'||t==='X'));
+  document.querySelectorAll('.onlyTL').forEach(e=>e.hidden=!(t==='T'||t==='L'));
+  document.querySelectorAll('.onlyC').forEach(e=>e.hidden=t!=='C');
+  document.querySelectorAll('.notC').forEach(e=>e.hidden=t==='C');
+  $('bLab').textContent=t==='R'?'b (ancho, eje x) [cm]':'bw (ancho del alma) [cm]';
+  $('hLab').textContent=t==='C'?'D (diámetro) [cm]':'h (altura total, eje y) [cm]'; }
+
+// ---------- modelo ----------
+// Polígono de la sección (antihorario), coordenadas con y = 0 en la fibra superior hacia abajo negativo
+function rawPoly(tipo,b,h,bf,hf,ala){
+  if(tipo==='R') return [[0,0],[b,0],[b,h],[0,h]].map(([x,y])=>[x,-y]);
+  if(tipo==='C'){ const n=96, r=h/2; return Array.from({length:n},(_,i)=>[r+r*Math.cos(2*Math.PI*i/n), -(r-r*Math.sin(2*Math.PI*i/n))]); }
+  // construido con el ala arriba y luego espejado si va abajo
+  let P;
+  if(tipo==='T'){ const e=(bf-b)/2; P=[[0,0],[bf,0],[bf,hf],[e+b,hf],[e+b,h],[e,h],[e,hf],[0,hf]]; }
+  else if(tipo==='X'){ const e=(bf-b)/2, y1=(h-hf)/2, y2=(h+hf)/2; P=[[e,0],[e+b,0],[e+b,y1],[bf,y1],[bf,y2],[e+b,y2],[e+b,h],[e,h],[e,y2],[0,y2],[0,y1],[e,y1]]; ala='sup'; }
+  else { P=[[0,0],[bf,0],[bf,hf],[b,hf],[b,h],[0,h]]; }            // L: alma a la izquierda
+  if(ala==='inf') P=P.map(([x,y])=>[x,h-y]);
+  // a coordenadas y hacia arriba y orientación antihoraria
+  let Q=P.map(([x,y])=>[x,-y]);
+  let s=0; for(let i=0;i<Q.length;i++){const p=Q[i],q=Q[(i+1)%Q.length]; s+=p[0]*q[1]-q[0]*p[1];}
+  if(s<0) Q.reverse();
+  return Q;
+}
+function polyProps(Q){
+  let A2=0,cx=0,cy=0;
+  for(let i=0;i<Q.length;i++){const p=Q[i],q=Q[(i+1)%Q.length],c=p[0]*q[1]-q[0]*p[1];A2+=c;cx+=(p[0]+q[0])*c;cy+=(p[1]+q[1])*c;}
+  return {A:Math.abs(A2)/2,cx:cx/(3*A2),cy:cy/(3*A2)};
+}
+// cuerda horizontal del polígono a la altura y: [xmin, xmax]
+function chord(Q,y){
+  const xs=[];
+  for(let i=0;i<Q.length;i++){const p=Q[i],q=Q[(i+1)%Q.length];
+    if((p[1]-y)*(q[1]-y)<=0 && p[1]!==q[1]){ xs.push(p[0]+(y-p[1])*(q[0]-p[0])/(q[1]-p[1])); }}
+  if(xs.length<2) return null;
+  return [Math.min(...xs),Math.max(...xs)];
+}
+function inPoly(Q,x,y){
+  let ins=false;
+  for(let i=0,j=Q.length-1;i<Q.length;j=i++){const a=Q[i],b=Q[j];
+    if(((a[1]>y)!==(b[1]>y)) && (x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])) ins=!ins;}
+  return ins;
+}
+function model(){
+  const tipo=$('tipo').value, ala=$('ala').value;
+  const tipo0=$('tipo').value, h=+$('h').value, b=tipo0==='C'?h:+$('b').value, bf=Math.max(+$('bf').value,b), hf=Math.min(+$('hf').value,h), fcM=+$('fc').value, fyM=+$('fy').value, EsM=+$('Es').value, rx=+$('rx').value;
+  const fc=fcM/100, fy=fyM/100, Es=EsM/100;           // t/cm2 (1 MPa = 0,01 t/cm2)
+  const b1=Math.max(0.65,Math.min(0.85,0.85-0.05*(fcM-28)/7));
+  const raw=rawPoly(tipo,b,h,bf,hf,ala), pp=polyProps(raw);
+  const poly=raw.map(([x,y])=>[x-pp.cx,y-pp.cy]);   // origen en el baricentro de la sección bruta
+  const yTop=-pp.cy;                                  // fibra superior en coordenadas centradas
+  const bars=[]; let barOut=false;
+  if(tipo==='C'){
+    const n=Math.max(3,Math.round(+$('cN').value||0)), f=+$('cF').value, R=h/2-(+$('cR').value), A=Math.PI*f*f/400;
+    if(R<=0) barOut=true;
+    for(let k=0;k<n;k++){ const t=Math.PI/2+2*Math.PI*k/n; bars.push({x:R*Math.cos(t),y:R*Math.sin(t),A,f,layer:0}); }
+  } else
+  layers.forEach((L,li)=>{
+    if(!(L.n>0)) return;
+    const A=Math.PI*L.f*L.f/400;                       // cm2
+    const y=yTop-L.d;
+    const ch=chord(poly,y); if(!ch){ barOut=true; return; }
+    const x0=ch[0]+rx, x1=ch[1]-rx;
+    for(let k=0;k<L.n;k++){
+      const x = L.n===1 ? (ch[0]+ch[1])/2 : (x0 + k*(x1-x0)/(L.n-1));
+      if(!inPoly(poly,x,y)) barOut=true;
+      bars.push({x,y,A,f:L.f,layer:li});
+    }
+  });
+  const As=bars.reduce((s,q)=>s+q.A,0), Ag=pp.A;
+  const crit=$('crit').value;
+  const ety = fyM===420 ? 0.002 : fy/Es;
+  const capD=$('capD').checked;
+  const phiC = capD?1:(crit==='IC103'?0.9:(crit==='C201Z'?0.75:0.65)), phiT = capD?1:0.9;
+  const kMax = crit==='IC103'?0.70:(crit==='C201Z'?0.85:0.80);
+  const P0 = 0.85*fc*(Ag-As)+fy*As;
+  const Pt = -fy*As;
+  return {capD,phiT,tipo,ala,b,h,bf,hf,poly,yTop,ycg:pp.cy,fc,fy,Es,fcM,fyM,EsM,rx,b1,bars,barOut,As,Ag,crit,ety,phiC,kMax,P0,Pt,cap:kMax*phiC*P0};
+}
+function phiOf(m,et){
+  if(m.capD) return 1;
+  if(m.crit==='IC103') return 0.9;
+  if(et>=m.ety+0.003) return 0.9;
+  if(et<=m.ety) return m.phiC;
+  return m.phiC+(0.9-m.phiC)*(et-m.ety)/0.003;
+}
+const CORN = m => m.poly;
+// eje neutro: u = dirección hacia la fibra comprimida (ángulo th)
+function section(m,th,c){
+  const ux=Math.cos(th), uy=Math.sin(th), cr=CORN(m);
+  const proj=cr.map(p=>p[0]*ux+p[1]*uy), smax=Math.max(...proj), D=smax-Math.min(...proj);
+  let P=0,Mx=0,My=0,et=-Infinity;
+  if(c===Infinity){
+    P=0.85*m.fc*m.Ag;
+    for(const q of m.bars){ const F=q.A*(m.fy-0.85*m.fc); P+=F; Mx+=F*q.y; My+=F*q.x; }
+    return {P,Mx:Mx/100,My:My/100,et:-0.003,c};
+  }
+  if(c===0){
+    for(const q of m.bars){ const F=-q.A*m.fy; P+=F; Mx+=F*q.y; My+=F*q.x; }
+    return {P,Mx:Mx/100,My:My/100,et:Infinity,c};
+  }
+  const a=Math.min(m.b1*c,D), lim=smax-a;
+  // recorte del polígono por el semiplano u·p >= lim (Sutherland-Hodgman; en T/L puede dar tramos
+  // degenerados sobre la recta de corte, que no aportan área ni momento)
+  const poly=[], n=cr.length;
+  for(let i=0;i<n;i++){
+    const p=cr[i], q=cr[(i+1)%n], sp=proj[i]-lim, sq=proj[(i+1)%n]-lim;
+    if(sp>=0) poly.push(p);
+    if((sp>=0)!==(sq>=0)){ const t=sp/(sp-sq); poly.push([p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1])]); }
+  }
+  let A2=0,cx=0,cy=0;
+  for(let i=0;i<poly.length;i++){ const p=poly[i],q=poly[(i+1)%poly.length],cr2=p[0]*q[1]-q[0]*p[1]; A2+=cr2; cx+=(p[0]+q[0])*cr2; cy+=(p[1]+q[1])*cr2; }
+  const Ac=Math.abs(A2)/2;
+  if(Ac>1e-12){ cx/=(3*A2); cy/=(3*A2); const Cc=0.85*m.fc*Ac; P+=Cc; Mx+=Cc*cy; My+=Cc*cx; }
+  for(const q of m.bars){
+    const d=smax-(q.x*ux+q.y*uy);
+    const eps=0.003*(1-d/c);                         // compresión +
+    let s=Math.max(-m.fy,Math.min(m.fy,eps*m.Es));
+    if(d<a) s-=0.85*m.fc;                            // hormigón desplazado
+    const F=q.A*s; P+=F; Mx+=F*q.y; My+=F*q.x;
+    const e_t=0.003*(d/c-1); if(e_t>et) et=e_t;
+  }
+  return {P,Mx:Mx/100,My:My/100,et,c,D};
+}
+function depthRange(m,th){ const ux=Math.cos(th),uy=Math.sin(th),pr=CORN(m).map(p=>p[0]*ux+p[1]*uy); return Math.max(...pr)-Math.min(...pr); }
+function design(m,r){ const f=(r.c===0)?m.phiT:(r.c===Infinity?m.phiC:phiOf(m,r.et)); return {P:Math.min(f*r.P,m.cap),Mx:f*r.Mx,My:f*r.My,f}; }
+function cGrid(D,m,n){ const out=[]; const lo=Math.log(0.015*D), hi=Math.log(3*D); for(let i=0;i<n;i++) out.push(Math.exp(lo+(hi-lo)*i/(n-1))); out.push(D/m.b1); return out.sort((x,y)=>x-y); }
+
+// P(c) creciente con c: bisección en log(c)
+function solveC(m,th,Pu,useDes){
+  const D=depthRange(m,th); let lo=1e-4*D, hi=60*D;
+  const val=c=>{const r=section(m,th,c); return useDes?design(m,r).P:r.P;};
+  const flo=val(lo), fhi=val(hi);
+  if(Pu<flo||Pu>fhi) return null;
+  for(let k=0;k<70;k++){ const mid=Math.sqrt(lo*hi); if(val(mid)<Pu) lo=mid; else hi=mid; }
+  return Math.sqrt(lo*hi);
+}
+function contour(m,Pu,useDes,nth=180){
+  const pts=[];
+  for(let j=0;j<nth;j++){
+    const th=2*Math.PI*j/nth, c=solveC(m,th,Pu,useDes);
+    if(c==null) return null;
+    const r=section(m,th,c), d=useDes?design(m,r):r;
+    pts.push([d.Mx,d.My]);
+  }
+  return pts;
+}
+function rayHit(pts,dx,dy){
+  let best=null;
+  for(let i=0;i<pts.length;i++){
+    const p=pts[i], q=pts[(i+1)%pts.length], ex=q[0]-p[0], ey=q[1]-p[1];
+    const den=dx*ey-dy*ex; if(Math.abs(den)<1e-14) continue;
+    const t=(p[0]*ey-p[1]*ex)/den, s=(p[0]*dy-p[1]*dx)/den;
+    if(t>0&&s>=-1e-9&&s<=1+1e-9) best=Math.max(best??0,t);
+  }
+  return best;
+}
+
+// ---------- dibujo sección ----------
+function drawSection(m){
+  const svg=$('secSvg'), W=340, H=340, padL=48, padR=86, padT=44, padB=44;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const xs=m.poly.map(p=>p[0]), ys=m.poly.map(p=>p[1]);
+  const xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);
+  const sc=Math.min((W-padL-padR)/(xmax-xmin),(H-padT-padB)/(ymax-ymin));
+  const ox=padL+((W-padL-padR)-(xmax-xmin)*sc)/2, oy=padT+((H-padT-padB)-(ymax-ymin)*sc)/2;
+  const X=x=>ox+(x-xmin)*sc, Y=y=>oy+(ymax-y)*sc;
+  const T=(x,y,t,rot,anc='middle')=>`<text x="${x}" y="${y}" text-anchor="${anc}" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="var(--ink)"${rot?` transform="rotate(-90 ${x} ${y})"`:''}>${t}</text>`;
+  const st='stroke="var(--muted)" stroke-width=".8"';
+  const tick=(x,y)=>`<line x1="${x-3}" y1="${y+3}" x2="${x+3}" y2="${y-3}" stroke="var(--ink)" stroke-width="1.1"/>`;
+  // cota horizontal entre x1 y x2 (coords sección) a la altura de pantalla yl, extensiones desde ye
+  const dimH=(x1,x2,ye,yl,lab)=>{const a=X(x1),b=X(x2);return `<line x1="${a}" y1="${ye}" x2="${a}" y2="${yl+(yl>ye?4:-4)}" ${st}/><line x1="${b}" y1="${ye}" x2="${b}" y2="${yl+(yl>ye?4:-4)}" ${st}/><line x1="${a}" y1="${yl}" x2="${b}" y2="${yl}" ${st}/>`+tick(a,yl)+tick(b,yl)+T((a+b)/2,yl+(yl>ye?13:-4),lab);};
+  const dimV=(y1,y2,xe,xl,lab)=>{const a=Y(y1),b=Y(y2);return `<line x1="${xe}" y1="${a}" x2="${xl+(xl>xe?4:-4)}" y2="${a}" ${st}/><line x1="${xe}" y1="${b}" x2="${xl+(xl>xe?4:-4)}" y2="${b}" ${st}/><line x1="${xl}" y1="${a}" x2="${xl}" y2="${b}" ${st}/>`+tick(xl,a)+tick(xl,b)+T(xl+(xl>xe?12:-5),(a+b)/2,lab,true);};
+  let s=`<polygon points="${m.poly.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="var(--concrete)" stroke="var(--muted)" stroke-width="1"/>`;
+  // ejes baricéntricos
+  s+=`<line x1="${X(xmin)-6}" y1="${Y(0)}" x2="${X(xmax)+6}" y2="${Y(0)}" stroke="var(--muted)" stroke-dasharray="3 3"/><line x1="${X(0)}" y1="${Y(ymax)-6}" x2="${X(0)}" y2="${Y(ymin)+6}" stroke="var(--muted)" stroke-dasharray="3 3"/>`;
+  s+=`<text x="${X(xmax)+8}" y="${Y(0)+3}" font-size="10" fill="var(--muted)" font-family="IBM Plex Sans,sans-serif">x</text><text x="${X(0)+3}" y="${Y(ymax)-8}" font-size="10" fill="var(--muted)" font-family="IBM Plex Sans,sans-serif">y</text>`;
+  // cotas: h a la izquierda
+  const top=Y(ymax), bot=Y(ymin);
+  if(m.tipo!=='C') s+=dimV(ymax,ymin,X(xmin),X(xmin)-26,'h = '+fmt(m.h,1));
+  if(m.tipo==='C'){
+    s+=dimH(xmin,xmax,bot,bot+22,'D = '+fmt(m.h,1));
+    const n=m.bars.length; if(n){ s+=T(X(xmax)+10,Y(ymax)+12,`${n}ø${m.bars[0].f}`,false,'start'); s+=T(X(xmax)+10,Y(ymax)+26,`rec ${fmt(+$('cR').value,1)}`,false,'start'); }
+  } else if(m.tipo==='X'){
+    const web=chord(m.poly, ymin+0.01), yA=m.yTop-(m.h-m.hf)/2, yB=m.yTop-(m.h+m.hf)/2;
+    s+=dimH(xmin,xmax,Y(yA),top-22,'bf = '+fmt(m.bf,1));
+    s+=dimH(web[0],web[1],bot,bot+22,'bw = '+fmt(m.b,1));
+    s+=dimV(yA,yB,X(xmax),X(xmax)+18,'hf = '+fmt(m.hf,1));
+  } else if(m.tipo==='R'){
+    s+=dimH(xmin,xmax,bot,bot+22,'b = '+fmt(m.b,1));
+  }else{
+    const sup=m.ala==='sup';
+    const yF=sup?ymax:ymin, yW=sup?ymin:ymax;                 // cara del ala / cara del alma
+    const web=chord(m.poly, sup? ymin+0.01 : ymax-0.01);
+    s+=dimH(xmin,xmax,Y(yF),sup?top-22:bot+22,'bf = '+fmt(m.bf,1));
+    s+=dimH(web[0],web[1],Y(yW),sup?bot+22:top-22,'bw = '+fmt(m.b,1));
+    const yF2=sup?ymax-m.hf:ymin+m.hf;
+    s+=dimV(yF,yF2,X(xmax),X(xmax)+18,'hf = '+fmt(m.hf,1));
+  }
+  // profundidad de capas (di desde la fibra superior) a la derecha
+  const used=m.tipo==='C'?[]:layers.map((L,i)=>({L,i})).filter(o=>o.L.n>0);
+  const xr=X(xmax)+(m.tipo==='R'?16:40);
+  used.forEach(({L,i})=>{
+    const yy=Y(m.yTop-L.d);
+    s+=`<line x1="${X(xmax)+2}" y1="${yy}" x2="${xr-2}" y2="${yy}" stroke="var(--steel)" stroke-width=".8" stroke-dasharray="2 2"/>`;
+    s+=T(xr,yy+3.5,`d${i+1}=${fmt(L.d,1)}`,false,'start');
+    s+=`<text x="${xr}" y="${yy+14}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="var(--muted)">${L.n}ø${L.f}</text>`;
+  });
+  for(const q of m.bars){ const r=Math.max(2.2,q.f/20*sc); s+=`<circle cx="${X(q.x)}" cy="${Y(q.y)}" r="${r}" fill="var(--steel)" stroke="var(--ink)" stroke-width=".6"/>`; }
+  svg.innerHTML=s;
+}
+
+// ---------- plots ----------
+function plotTheme(){ return {paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'IBM Plex Sans, sans-serif',color:css('--muted'),size:12}}; }
+function surf(m,useDes){
+  const nth=73, X=[],Y=[],Z=[];
+  const rowsC=[0]; const Dref=Math.max(m.b,m.h);
+  const fr=[]; for(let i=0;i<34;i++) fr.push(Math.exp(Math.log(0.015)+(Math.log(3)-Math.log(0.015))*i/33));
+  const rows=[0,...fr,Infinity];
+  for(const fc of rows){
+    const xr=[],yr=[],zr=[];
+    for(let j=0;j<nth;j++){
+      const th=2*Math.PI*j/(nth-1), D=depthRange(m,th);
+      const c = (fc===0||fc===Infinity)?fc:fc*D;
+      let r=section(m,th,c); if(useDes) r=design(m,r);
+      xr.push(r.Mx); yr.push(r.My); zr.push(r.P);
+    }
+    X.push(xr);Y.push(yr);Z.push(zr);
+  }
+  return {X,Y,Z};
+}
+let res=[];
+function render(){
+  const m=model(); save();
+  $('critTxt').textContent = m.capD ? `Diseño por capacidad: φ = 1,00 en toda la curva (IC-103 II Tabla 1.2 a) · φPn,máx = ${fmt(m.kMax,2)}·Po` : (m.crit==='IC103' ? 'Diseño por resistencia: φ = 0,90 constante · Pu ≤ 0,70·φ·Pn' : `Diseño por resistencia: φ = ${fmt(m.phiC,2)} (εt ≤ εty) a 0,90 (εt ≥ εty+0,003) · φPn,máx = ${fmt(m.kMax,2)}·φ·Po`);
+  drawSection(m);
+  const rho=m.As/m.Ag;
+  $('kv').innerHTML=(tab==='fc'
+    ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['ρ columna = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
+    : [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm']]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
+  // controles
+  const ck=[];
+  const bad=layers.some(L=>L.n>0&&(L.d<=0||L.d>=m.h)); ck.push(bad?['bad','Hay capas con di ≤ 0 o di ≥ h']:['ok','Barras dentro de la sección']);
+  if(m.barOut) ck.push(['bad','Hay barras fuera del hormigón (revisar di o recubrimiento lateral)']);
+  if((m.tipo==='T'||m.tipo==='L'||m.tipo==='X')&&(m.bf<=m.b||m.hf>=m.h)) ck.push(['warn','Ala mal definida: requiere bf > bw y hf < h']);
+  const rmin=m.crit==='IC103'?0.008:0.01, rmax=m.crit==='IC103'?18/m.fyM:0.08;
+  if(tab==='fc'){
+  ck.push([rho>=rmin?'ok':'warn',`Cuantía de columna ≥ ${fmt(rmin*100,1)} % (${m.crit==='IC103'?'IC103 art. 2.3.6':'C201 art. 10.6.1.1'})`]);
+  ck.push([rho<=rmax?'ok':'bad',`Cuantía ≤ ${fmt(rmax*100,2)} %`]);
+  const dmin=Math.min(m.b,m.h,m.tipo==='R'?Infinity:m.hf);
+  ck.push([dmin>=20?'ok':'warn',`Dimensión mínima de columna ≥ 20 cm (${m.crit==='IC103'?'IC103 art. 2.3.1.3':'C201 art. 10.3.1'})`]);
+  if(m.crit==='IC103') ck.push([m.fcM>=20&&m.fcM<=70?'ok':'bad','20 ≤ f\'c ≤ 70 MPa (IC103 art. 1.2.1)']);
+  }
+  if(m.EsM!==200000) ck.push(['warn','Es distinto de 200.000 MPa (C201-25 art. 20.2.2.2)']);
+  $('checks').innerHTML=ck.map(([k,t])=>`<li><span class="pill ${k}">${k==='ok'?'Cumple':k==='warn'?'Revisar':'No cumple'}</span>${t}</li>`).join('');
+  if(!m.bars.length){ $('res').tBodies[0].innerHTML='<tr><td colspan="7">Cargá al menos una capa con barras.</td></tr>'; return; }
+
+  if(tab!=='fc'){ drawMphi(m); return; }
+  // verificación
+  res=loads.map(L=>{
+    const Mu=Math.hypot(L.Mx,L.My);
+    let cap=null, ratio, txt;
+    if(L.P>m.cap){ ratio=L.P/m.cap; txt='Pu supera φPn,max'; }
+    else if(L.P<m.phiT*m.Pt){ ratio=L.P/(m.phiT*m.Pt); txt='Pu supera la tracción de diseño'; }
+    else if(Mu<1e-9){ ratio=L.P>=0?L.P/m.cap:L.P/(m.phiT*m.Pt); txt='Solo axial'; }
+    else{
+      const pts=contour(m,L.P,true);
+      cap=pts?rayHit(pts,L.Mx/Mu,L.My/Mu):null;
+      ratio=cap?Mu/cap:Infinity; txt='';
+    }
+    return {L,Mu,cap,ratio,txt};
+  });
+  $('res').tBodies[0].innerHTML=res.map(r=>{
+    const k=r.ratio<=1?'ok':'bad', dir=Math.atan2(r.L.My,r.L.Mx)*180/Math.PI;
+    return `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${r.L.color};margin-right:6px;vertical-align:middle"></span>${r.L.name}</td><td class="num">${fmt(r.L.P,1)} t</td><td class="num">${fmt(r.Mu,2)} tm</td><td class="num">${r.Mu>0?fmt(dir,0)+'°':'—'}</td><td class="num">${r.cap!=null?fmt(r.cap,2)+' tm':'—'}</td><td class="num">${isFinite(r.ratio)?fmt(r.ratio,2):'> 1'}</td><td><span class="pill ${k}">${r.ratio<=1?'Verifica':'No verifica'}</span> <span class="hint">${r.txt}</span></td></tr>`;
+  }).join('');
+
+  if(tab==='fc'){ draw3D(m); draw2D(m); } else drawMphi(m);
+}
+
+function draw3D(m){
+  const acc=css('--accent'), des=css('--design'), st=css('--steel'), ln=css('--line'), ink=css('--ink');
+  const tr=[];
+  if(show.nom){ const s=surf(m,false); tr.push({type:'surface',x:s.X,y:s.Y,z:s.Z,name:'Nominal',showscale:false,opacity:show.des?0.25:0.45,colorscale:[[0,acc],[1,acc]],contours:{z:{show:true,color:ink,width:1,start:Math.floor(m.Pt),end:Math.ceil(m.P0),size:Math.max(5,Math.round((m.P0-m.Pt)/12/5)*5)}},hovertemplate:'Mx %{x:.2f} tm<br>My %{y:.2f} tm<br>P %{z:.1f} t<extra>Nominal</extra>'}); }
+  if(show.des){ const s=surf(m,true); tr.push({type:'surface',x:s.X,y:s.Y,z:s.Z,name:'Diseño',showscale:false,opacity:0.3,colorscale:[[0,des],[1,des]],hovertemplate:'φMx %{x:.2f} tm<br>φMy %{y:.2f} tm<br>φP %{z:.1f} t<extra>Diseño</extra>'}); }
+  // eje P y, por caso, el rayo desde (0,0,Pu) hasta la solicitación y hasta la capacidad de diseño
+  tr.push({type:'scatter3d',mode:'lines',x:[0,0],y:[0,0],z:[m.Pt*1.1,m.P0*1.05],line:{color:ink,width:3},hoverinfo:'skip'});
+  res.forEach(r=>{
+    const L=r.L;
+    if(r.cap!=null&&r.Mu>0){
+      const k=r.cap/r.Mu;
+      tr.push({type:'scatter3d',mode:'lines',x:[0,L.Mx*Math.max(1,k)],y:[0,L.My*Math.max(1,k)],z:[L.P,L.P],line:{color:L.color,width:5,dash:'dot'},hoverinfo:'skip'});
+      tr.push({type:'scatter3d',mode:'markers',x:[L.Mx*k],y:[L.My*k],z:[L.P],marker:{size:7,color:css('--surface'),symbol:'diamond',line:{color:ink,width:2}},hovertemplate:`${L.name}: φMn = ${fmt(r.cap,2)} tm<extra>Capacidad</extra>`});
+    }
+  });
+  tr.push({type:'scatter3d',mode:'markers+text',x:loads.map(l=>l.Mx),y:loads.map(l=>l.My),z:loads.map(l=>l.P),text:loads.map(l=>' '+l.name),textposition:'middle right',textfont:{color:ink,size:14,family:'IBM Plex Sans Condensed, sans-serif'},marker:{size:11,color:loads.map(l=>l.color),symbol:'square',line:{color:ink,width:3}},name:'Solicitaciones',hovertemplate:'%{text}<br>Mux %{x:.2f}<br>Muy %{y:.2f}<br>Pu %{z:.1f}<extra></extra>'});
+  const ax=t=>({title:{text:t},gridcolor:ln,zerolinecolor:css('--muted'),backgroundcolor:'rgba(0,0,0,0)',showbackground:false,color:css('--muted')});
+  Plotly.react('p3d',tr,{...plotTheme(),margin:{l:0,r:0,t:10,b:0},showlegend:false,scene:{xaxis:ax('Mx [tm]'),yaxis:ax('My [tm]'),zaxis:ax('P [t]'),aspectmode:'manual',aspectratio:{x:1,y:1,z:1.1},camera:{eye:{x:1.6,y:-1.5,z:0.8}}}},{responsive:true,displaylogo:false});
+}
+
+function branch(m,th,comp,useDes){
+  const D=depthRange(m,th), pts=[];
+  const cs=[0,...cGrid(D,m,160),Infinity];
+  for(const c of cs){ let r=section(m,th,c); if(useDes) r=design(m,r); pts.push([comp==='x'?r.Mx:r.My,r.P]); }
+  return pts;
+}
+function draw2D(m){
+  const th1 = show.ax==='x'?Math.PI/2:0, th2=th1+Math.PI;
+  const acc=css('--accent'), des=css('--design'), st=css('--steel'), ln=css('--line'), ink=css('--ink');
+  const tr=[];
+  for(const [th,lab] of [[th1,'rama +'],[th2,'rama −']]){
+    const p=branch(m,th,show.ax,false);
+    tr.push({x:p.map(q=>q[0]),y:p.map(q=>q[1]),mode:'lines',line:{color:acc,width:2,dash:lab==='rama −'?'dash':'solid'},name:'Nominal '+lab,hovertemplate:'M %{x:.2f} tm<br>P %{y:.1f} t<extra></extra>'});
+    if(show.uDes){ const d=branch(m,th,show.ax,true); tr.push({x:d.map(q=>q[0]),y:d.map(q=>q[1]),mode:'lines',line:{color:des,width:2,dash:lab==='rama −'?'dash':'solid'},name:'Diseño '+lab,hovertemplate:'φM %{x:.2f} tm<br>φP %{y:.1f} t<extra></extra>'}); }
+  }
+  tr.push({x:loads.map(l=>show.ax==='x'?l.Mx:l.My),y:loads.map(l=>l.P),mode:'markers+text',text:loads.map(l=>l.name),textposition:'top right',textfont:{color:ink,size:11},marker:{size:9,color:loads.map(l=>l.color),symbol:'square',line:{color:ink,width:1}},name:'Solicitaciones',hovertemplate:'%{text}<br>Mu %{x:.2f}<br>Pu %{y:.1f}<extra></extra>'});
+  const axs=t=>({title:{text:t},gridcolor:ln,zerolinecolor:css('--muted'),color:css('--muted')});
+  Plotly.react('p2d',tr,{...plotTheme(),margin:{l:60,r:20,t:10,b:50},showlegend:true,legend:{orientation:'h',y:-0.18,font:{color:css('--muted')}},xaxis:axs(show.ax==='x'?'Mx [tm]':'My [tm]'),yaxis:axs('P [t] (compresión +)')},{responsive:true,displaylogo:false});
+
+  // puntos notables rama +
+  const comp=show.ax==='x'?'Mx':'My';
+  const dt=Math.max(...m.bars.map(q=>{const ux=Math.cos(th1),uy=Math.sin(th1);const pr=CORN(m).map(p=>p[0]*ux+p[1]*uy);return Math.max(...pr)-(q.x*ux+q.y*uy);}));
+  const cb=dt*0.003/(0.003+m.ety);
+  const c0=solveC(m,th1,0,false);
+  const rows=[['Tracción pura',0,section(m,th1,0)],['Flexión pura (Pn = 0, análisis seccional)',c0,c0?section(m,th1,c0):null],['Falla balanceada (εt = εty)',cb,section(m,th1,cb)],['Quiebre de φ (εt = εty + 0,003)',dt*0.003/(0.006+m.ety),section(m,th1,dt*0.003/(0.006+m.ety))],['Compresión pura',Infinity,section(m,th1,Infinity)]];
+  // comparación solicitaciones vs. diseño en esta dirección
+  { const pill=(ok,t)=>`<span class="pill ${ok?'ok':'bad'}">${t}</span>`;
+    const Pt_d=m.phiT*m.Pt;
+    $('cmp2d').tBodies[0].innerHTML=loads.map(L=>{
+      const Mu=show.ax==='x'?L.Mx:L.My, th=Mu>=0?th1:th2;
+      let cap=null, ok, note='';
+      if(L.P>m.cap){ ok=false; note='Pu > φPn,máx'; }
+      else if(L.P<Pt_d){ ok=false; note='Pu supera la tracción de diseño'; }
+      else { const c=solveC(m,th,L.P,true); if(c!=null){ const r=design(m,section(m,th,c)); cap=Math.abs(show.ax==='x'?r.Mx:r.My); } ok = cap!=null && Math.abs(Mu)<=cap+1e-9; if(cap==null) note='fuera del diagrama'; }
+      const ratio = cap ? Math.abs(Mu)/cap : null;
+      return `<tr><td style="font-family:var(--sans)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${L.color};margin-right:6px;vertical-align:middle"></span>${L.name}</td><td class="num">${fmt(L.P,1)}</td><td class="num">${fmt(Mu,2)}</td><td class="num">${cap!=null?fmt(cap,2):'—'}</td><td class="num">${fmt(m.cap,1)}</td><td class="num">${ratio!=null?fmt(ratio,2):'—'}</td><td>${pill(ok, ok?'Verifica':'No verifica')} <span class="hint">${note}</span></td></tr>`;
+    }).join('');
+    $('cmp2dTxt').textContent = `Flexocompresión recta según ${show.ax==='x'?'x (Mux)':'y (Muy)'}: se toma solo la componente del momento en esta dirección; para el caso con los dos momentos ver "Verificación de casos" (oblicua). φMn es la capacidad de diseño a la altura Pu en la rama del signo de Mu.`;
+  }
+  $('pts').tBodies[0].innerHTML=rows.map(([n,c,r])=>`<tr><td style="font-family:var(--sans)">${n}</td><td class="num">${c===0?'—':c===Infinity?'∞':fmt(c,2)}</td><td class="num">${r?fmt(r[comp],3):'—'}</td><td class="num">${r?fmt(r.P,2):'—'}</td></tr>`).join('');
+}
+
+// ---------- momento-curvatura ----------
+let mfAx='x';
+// ancho de la sección a la profundidad s (medida desde la fibra comprimida) según la dirección u
+function stripW(m,ux,uy,t){
+  // intersecciones del polígono con la recta u·p = t
+  const Q=m.poly, xs=[];
+  const vx=-uy, vy=ux;                          // dirección a lo largo de la recta
+  for(let i=0;i<Q.length;i++){const p=Q[i],q=Q[(i+1)%Q.length];
+    const tp=p[0]*ux+p[1]*uy, tq=q[0]*ux+q[1]*uy;
+    if((tp-t)*(tq-t)<0 || (tp===t&&tq!==t)){ const k=(t-tp)/(tq-tp); const x=p[0]+k*(q[0]-p[0]), y=p[1]+k*(q[1]-p[1]); xs.push(x*vx+y*vy); }}
+  xs.sort((a,b)=>a-b); let w=0; for(let i=0;i+1<xs.length;i+=2) w+=xs[i+1]-xs[i]; return w;
+}
+function mfSetup(m,th,opt){
+  const ux=Math.cos(th), uy=Math.sin(th);
+  const pr=m.poly.map(p=>p[0]*ux+p[1]*uy), tmax=Math.max(...pr), tmin=Math.min(...pr), D=tmax-tmin;
+  const N=400, ds=D/N, strips=[];
+  for(let i=0;i<N;i++){ const s=(i+0.5)*ds, t=tmax-s; strips.push({s,t,A:stripW(m,ux,uy,t)*ds}); }
+  const bars=m.bars.map(q=>{const t=q.x*ux+q.y*uy; return {A:q.A,t,s:tmax-t};});
+  // Ig respecto del eje baricéntrico perpendicular a u
+  let Ig=0; for(let i=0;i<m.poly.length;i++){const p=m.poly[i],q=m.poly[(i+1)%m.poly.length];
+    const a=p[0]*ux+p[1]*uy, b=q[0]*ux+q[1]*uy, pa=-p[0]*uy+p[1]*ux, pb=-q[0]*uy+q[1]*ux;
+    Ig+=(pa*b-pb*a)*(a*a+a*b+b*b);} Ig=Math.abs(Ig)/12;
+  const fcM=m.fcM, Ec=4700*Math.sqrt(fcM)/100, fr=opt.kfr*Math.sqrt(fcM)/100;
+  return {ux,uy,tmax,tmin,D,strips,bars,Ig,Ec,fr,n:m.Es/Ec};
+}
+function sigC(m,o,e,withT,cracked){       // tensión del hormigón, compresión +
+  if(e>=0){ const e0=o.e0, ecu=o.ecu; if(e<=e0){const r=e/e0; return m.fc*(2*r-r*r);} return e<=ecu? m.fc*(1-0.15*(e-e0)/(ecu-e0)) : 0; }
+  if(withT&&!cracked){ const st=o.S.Ec*e; return st>=-o.S.fr? st:0; } return 0;
+}
+function sigS(m,e){ return Math.max(-m.fy,Math.min(m.fy,e*m.Es)); }
+// fuerzas y momento para deformación en fibra comprimida ec y curvatura phi (ε(s) = ec - phi·s)
+function fibFM(m,o,ec,phi,withT,cracked){
+  const S=o.S; let F=0,M=0;
+  for(const st of S.strips){ const e=ec-phi*st.s; const f=sigC(m,o,e,withT,cracked)*st.A; F+=f; M+=f*st.t; }
+  for(const b of S.bars){ const e=ec-phi*b.s; const f=b.A*(sigS(m,e)-(e>0?sigC(m,o,e,false,true):(withT&&!cracked?sigC(m,o,e,true,false):0))); F+=f; M+=f*b.t; }
+  return {F,M};
+}
+function mphiBranch(m,th,opt){
+  const S=mfSetup(m,th,opt), o={...opt,S}, P=opt.P;
+  const dt=Math.max(...S.bars.map(b=>b.s)), out={S};
+  // ELU1: sección transformada no fisurada
+  let At=m.Ag, St=0; for(const b of S.bars){At+=(S.n-1)*b.A; St+=(S.n-1)*b.A*b.t;}
+  const tb=St/At; let It=S.Ig+m.Ag*tb*tb; for(const b of S.bars) It+=(S.n-1)*b.A*(b.t-tb)**2;
+  const yt=tb-S.tmin, Mp=(S.fr+P/At)*It/yt;
+  out.cr={M:(Mp+P*tb)/100, phi:Mp/(S.Ec*It)};
+  // ELU2: primera fluencia de la capa más traccionada, parábola, sin tracción del H°
+  { let lo=1e-6, hi=dt*(1-1e-9), ok=true;
+    const g=c=>{const phi=m.fy/m.Es/(dt-c); return fibFM(m,o,phi*c,phi,false,true).F-P;};
+    if(g(lo)>0||g(hi)<0) ok=false;
+    if(ok){ for(let k=0;k<80;k++){const mid=(lo+hi)/2; if(g(mid)<0) lo=mid; else hi=mid;} }
+    const c=(lo+hi)/2, phi=m.fy/m.Es/(dt-c), ec=phi*c;
+    out.y = (ok && ec<=opt.ecu) ? {M:fibFM(m,o,ec,phi,false,true).M/100, phi, c, ec} : null;
+  }
+  // ELU3: εc = εcu con bloque rectangular (mismo motor que el diagrama de interacción)
+  { const r=(()=>{ let lo=1e-4*S.D, hi=60*S.D; const v=c=>secU(m,th,c,opt.ecu).P;
+      if(P<v(lo)||P>v(hi)) return null;
+      for(let k=0;k<80;k++){const mid=Math.sqrt(lo*hi); if(v(mid)<P) lo=mid; else hi=mid;}
+      const c=Math.sqrt(lo*hi); return {c, ...secU(m,th,c,opt.ecu)}; })();
+    out.u = r ? {M:r.Mt, phi:opt.ecu/r.c, c:r.c} : null;
+  }
+  // curva continua por fibras
+  const pts=[[0,0]]; let cracked=false;
+  const ecs=[]; for(let i=1;i<=90;i++) ecs.push(opt.ecu*Math.pow(i/90,2.2));
+  for(const ec of ecs){
+    const g=(c,cr)=>fibFM(m,o,ec,ec/c,true,cr).F-P;
+    let lo=1e-3*S.D, hi=1e3*S.D; if(g(lo,cracked)>0||g(hi,cracked)<0) continue;
+    for(let k=0;k<70;k++){const mid=Math.sqrt(lo*hi); if(g(mid,cracked)<0) lo=mid; else hi=mid;}
+    let c=Math.sqrt(lo*hi); const phi=ec/c;
+    if(!cracked && ec-phi*S.D < -S.fr/S.Ec){ cracked=true; lo=1e-3*S.D; hi=1e3*S.D;
+      if(g(lo,true)>0||g(hi,true)<0) continue;
+      for(let k=0;k<70;k++){const mid=Math.sqrt(lo*hi); if(g(mid,true)<0) lo=mid; else hi=mid;} c=Math.sqrt(lo*hi); }
+    const r=fibFM(m,o,ec,ec/c,true,cracked); pts.push([ec/c, r.M/100]);
+  }
+  out.fib=pts;
+  if(out.y&&out.u){ const phiY2=out.y.phi*out.u.M/out.y.M; out.id={phiY2, mu:out.u.phi/phiY2, EIe:out.u.M*100/phiY2}; out.id.Ie=out.id.EIe/S.Ec; out.id.ratio=out.id.Ie/S.Ig; }
+  out.Ig=S.Ig; out.Ec=S.Ec; out.fr=S.fr;
+  return out;
+}
+// momento en la dirección de flexión (componente sobre u) para el bloque rectangular con εcu variable
+function secU(m,th,c,ecu){
+  const r=section(m,th,c); // section usa 0,003; se corrige si εcu difiere
+  if(Math.abs(ecu-0.003)<1e-12){ return {P:r.P, Mt:Math.abs(Math.sin(th))>0.5? r.Mx : r.My}; }
+  const ux=Math.cos(th), uy=Math.sin(th), pr=m.poly.map(p=>p[0]*ux+p[1]*uy), smax=Math.max(...pr);
+  let P=0,Mx=0,My=0; const a=Math.min(m.b1*c,smax-Math.min(...pr)), lim=smax-a, poly=[], n=m.poly.length;
+  for(let i=0;i<n;i++){const p=m.poly[i],q=m.poly[(i+1)%n],sp=pr[i]-lim,sq=pr[(i+1)%n]-lim; if(sp>=0) poly.push(p); if((sp>=0)!==(sq>=0)){const t=sp/(sp-sq); poly.push([p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1])]);}}
+  let A2=0,cx=0,cy=0; for(let i=0;i<poly.length;i++){const p=poly[i],q=poly[(i+1)%poly.length],k=p[0]*q[1]-q[0]*p[1];A2+=k;cx+=(p[0]+q[0])*k;cy+=(p[1]+q[1])*k;}
+  if(Math.abs(A2)>1e-12){cx/=3*A2;cy/=3*A2;const Cc=0.85*m.fc*Math.abs(A2)/2;P+=Cc;Mx+=Cc*cy;My+=Cc*cx;}
+  for(const q of m.bars){const d=smax-(q.x*ux+q.y*uy); let s=Math.max(-m.fy,Math.min(m.fy,ecu*(1-d/c)*m.Es)); if(d<a) s-=0.85*m.fc; const F=q.A*s;P+=F;Mx+=F*q.y;My+=F*q.x;}
+  return {P, Mt:(Math.abs(Math.sin(th))>0.5? Mx:My)/100};
+}
+function drawMphi(m){
+  if(!m.bars.length){ $('mft').tBodies[0].innerHTML=''; return; }
+  const opt={P:+$('mfP').value, ecu:+$('mfEcu').value||0.003, e0:+$('mfE0').value||0.002, kfr:+$('mfFr').value||0.62};
+  const th1=mfAx==='x'?Math.PI/2:0;
+  const Bp=mphiBranch(m,th1,opt), Bn=mphiBranch(m,th1+Math.PI,opt);
+  const acc=css('--accent'), des=css('--design'), st=css('--steel'), ln=css('--line'), ink=css('--ink'), mu=css('--muted');
+  const axs=t=>({title:{text:t},gridcolor:ln,zerolinecolor:mu,color:mu,rangemode:'tozero'});
+  const k=100; // φ en 1/m
+  const ymax=1.12*Math.max(...[Bp,Bn].flatMap(B=>[Math.abs(B.u?.M||0),Math.abs(B.y?.M||0),...B.fib.map(p=>Math.abs(p[1]))]));
+  for(const [B,div] of [[Bp,'pmfP'],[Bn,'pmfN']]){
+    const tr=[];
+    tr.push({x:B.fib.map(p=>Math.abs(p[0])*k),y:B.fib.map(p=>Math.abs(p[1])),mode:'lines',line:{color:mu,width:1.5,dash:'dot'},name:'Fibras',hovertemplate:'φ %{x:.4f} 1/m<br>M %{y:.2f} tm<extra>Fibras</extra>'});
+    if(B.id){ const I=[[0,0],[B.id.phiY2,B.u.M],[B.u.phi,B.u.M]];
+      tr.push({x:I.map(p=>Math.abs(p[0])*k),y:I.map(p=>Math.abs(p[1])),mode:'lines',line:{color:st,width:3.5,dash:'dash'},name:'Idealizada',hovertemplate:'φ %{x:.4f} 1/m<br>M %{y:.2f} tm<extra>Idealizada</extra>'}); }
+    const R=[[0,0],[B.cr.phi,B.cr.M]], lab=['','ELU1','ELU2','ELU3']; if(B.y) R.push([B.y.phi,B.y.M]); if(B.u) R.push([B.u.phi,B.u.M]);
+    tr.push({x:R.map(p=>Math.abs(p[0])*k),y:R.map(p=>Math.abs(p[1])),mode:'lines+markers+text',text:lab.slice(0,R.length),textposition:'top left',textfont:{color:ink,size:11},line:{color:acc,width:3},marker:{size:8,color:acc,line:{color:ink,width:1}},name:'Real',hovertemplate:'%{text}<br>φ %{x:.4f} 1/m<br>M %{y:.2f} tm<extra>Real</extra>'});
+    const ann = B.id ? [{xref:'paper',yref:'paper',x:0.98,y:0.06,xanchor:'right',showarrow:false,align:'right',text:`μ = ${fmt(B.id.mu,2)}  ·  Ie/Ig = ${fmt(Math.abs(B.id.ratio),3)}`,font:{color:ink,size:13,family:'IBM Plex Mono, monospace'},bgcolor:css('--surface'),bordercolor:ln,borderpad:5}] : [];
+    Plotly.react(div,tr,{...plotTheme(),margin:{l:56,r:14,t:8,b:46},showlegend:false,annotations:ann,xaxis:axs('Curvatura φ [1/m]'),yaxis:{...axs('Momento [tm]'),range:[0,ymax]}},{responsive:true,displaylogo:false});
+  }
+  const e=v=>(v==null||!isFinite(v))?'—':v.toExponential(3).replace('.',',');
+  const row=(t,a,b,c,d)=>`<tr><td style="font-family:var(--sans)">${t}</td><td class="num">${a}</td><td class="num">${b}</td><td class="num">${c}</td><td class="num">${d}</td></tr>`;
+  const P1=Bp, N1=Bn;
+  // cuantía de flexión con área efectiva, según reglamento elegido
+  const reg=$('regFl').value, bw = mfAx==='x' ? m.b : m.h, sfc=Math.sqrt(m.fcM), fyM=m.fyM;
+  const ety=m.fyM===420?0.002:m.fy/m.Es;
+  // Mn seccional (P = 0) con las barras traccionadas multiplicadas por k
+  const MnK=(th,idx,k)=>{ const mm={...m,bars:m.bars.map((q,i)=>idx.has(i)?{...q,A:q.A*k}:q)};
+    const D=depthRange(mm,th); let lo=1e-5*D, hi=60*D; const v=c=>secU(mm,th,c,0.003).P;
+    if(v(lo)>0) return 0; for(let it=0;it<70;it++){const mid=Math.sqrt(lo*hi); if(v(mid)<0) lo=mid; else hi=mid;}
+    return Math.abs(secU(mm,th,Math.sqrt(lo*hi),0.003).Mt)*100; };               // t·cm
+  const rq=(B,sgn)=>{ if(!B.u) return null; const c=B.u.c, S=B.S; const th=sgn>0?th1:th1+Math.PI;
+    // como el Excel: la capa más cercana a la cara comprimida es A's; el resto es armadura traccionada
+    const smin=Math.min(...S.bars.map(q=>q.s)); const cp=S.bars.filter(q=>q.s<=smin+1e-6), tr=S.bars.filter(q=>q.s>smin+1e-6); if(!tr.length) return null;
+    const d=Math.max(...tr.map(q=>q.s)), Ase=tr.reduce((a,q)=>a+q.A*q.s/d,0), Ast=tr.reduce((a,q)=>a+q.A,0), Asc=cp.reduce((a,q)=>a+q.A,0);
+    const rho=Ase/(bw*d), et=0.003*(d/c-1);
+    // ¿el ala queda del lado traccionado? (T/L flexionando en x)
+    const alaTracc = m.tipo!=='R' && mfAx==='x' && ((m.ala==='sup')===(sgn<0));
+    let rmin, rmax, fmin, fmax, McrIC=null, rsimp=null, fsimp='';
+    if(reg==='IC103'){
+      // procedimiento general [2.2-12]/[2.2-13]: Mn ≥ 1,5·Mcr, Mcr = 0,6√f’c·Ig/yt (sección bruta sin armadura)
+      const yt=-S.tmin; McrIC=0.6*sfc/100*S.Ig/yt;                     // t·cm
+      const Mreq=1.5*McrIC, idx=new Set(S.bars.map((q,i)=>[q,i]).filter(([q])=>q.s>smin+1e-6).map(([,i])=>i));
+      let klo=0, khi=1; if(MnK(th,idx,0)>=Mreq) khi=0; else { while(MnK(th,idx,khi)<Mreq && khi<64) khi*=2; for(let it=0;it<40;it++){const km=(klo+khi)/2; if(MnK(th,idx,km)<Mreq) klo=km; else khi=km;} }
+      rmin=khi*rho;                                                        // As,e,mín/(bw·d) fmin='As,mín tal que Mn = 1,5·Mcr, Mcr = 0,6√f’c·Ig/yt de la sección bruta [2.2-12], [2.2-13]';
+      if(alaTracc){ rsimp=Math.max(0.40*sfc/fyM,2.2/fyM); fsimp='máx(0,40√f’c/fy ; 2,2/fy) [2.2-15a]'; }
+      else { rsimp=Math.max(0.25*sfc/fyM,1.4/fyM); fsimp='máx(0,25√f’c/fy ; 1,4/fy) [2.2-14]'; }
+      rmax=Math.min((m.fcM+10)/(6*fyM),0.025); fmax='mín((f\'c+10)/(6fy) ; 0,025) [2.2-11]';
+    } else {
+      rmin=Math.max(0.25*sfc/fyM,1.4/fyM); fmin='máx(0,25√f\'c/fy ; 1,4/fy) [9.6.1.2]';
+      rmax=0.85*m.b1*(m.fcM/fyM)*0.003/(0.003+ety+0.003); fmax='0,85·β1·(f\'c/fy)·εcu/(εcu+εty+0,003) [9.3.3.1]';
+    }
+    return {d,Ase,Ast,Asc,rho,rmin,rmax,fmin,fmax,et,McrIC,rsimp,fsimp,mcr:McrIC!=null&&Math.abs(B.u.M)*100>=1.5*McrIC}; };
+  const qp=rq(Bp,1), qn=rq(Bn,-1);
+  const pill=(ok,t)=>`<span class="pill ${ok?'ok':'bad'}">${t??(ok?'Cumple':'No cumple')}</span>`;
+  const rr=(t,f,cls='')=>`<tr class="${cls}"><td>${t}</td><td class="num">${qp?f(qp,Bp):'—'}</td><td class="num">${qn?f(qn,Bn):'—'}</td></tr>`;
+  const rows=[
+    rr('As,e [cm²]',q=>fmt(q.Ase,2)),
+    rr('ρ = As,e/(bw·d)',q=>'<b>'+fmt(q.rho*100,3)+' %</b>'),
+    rr('ρmín',q=>fmt(q.rmin*100,3)+' %'),
+    rr('ρmáx',q=>fmt(q.rmax*100,3)+' %'),
+    rr('¿Verifica?',q=>pill(q.rho>=q.rmin&&q.rho<=q.rmax, q.rho<q.rmin?'No: ρ < ρmín':q.rho>q.rmax?'No: ρ > ρmáx':'Verifica'),'sep'),
+  ];
+  $('rhoc').tBodies[0].innerHTML=rows.join('');
+  const q0=qp||qn;
+  $('rhoRef').innerHTML = q0 ? (reg==='IC103' ? `ρmín: As,e tal que Mn = 1,5·Mcr [2.2-12], con Mcr = 0,6√f’c·Ig/yt de la sección bruta [2.2-13] (M+: ${qp?fmt(qp.McrIC/100,2):'—'} tm; M−: ${qn?fmt(qn.McrIC/100,2):'—'} tm); Mn por análisis seccional. ρmáx = mín((f’c+10)/(6fy) ; 0,025) [2.2-11].` : `ρmín = máx(0,25√f’c/fy ; 1,4/fy) [9.6.1.2]. ρmáx = 0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1].`) + ` bw = ${fmt(bw,1)} cm.` + (reg==='C201'?' El CIRSOC 201-25 no fija ρmáx explícita: se exige εt ≥ εty+0,003; la ρmáx mostrada es la equivalente para una capa.':' ρ con área efectiva según art. 2.2.5(a). A’s = capa más cercana a la cara comprimida; el resto se toma como traccionado (igual que el Excel de flexión).') : '';
+  $('mft').tBodies[0].innerHTML=[
+    row('ELU1 · Fisuración (Mcr, φcr)',fmt(Math.abs(P1.cr.M),3),e(P1.cr.phi),fmt(Math.abs(N1.cr.M),3),e(N1.cr.phi)),
+    row('ELU2 · Primera fluencia (My, φy)',P1.y?fmt(Math.abs(P1.y.M),3):'no fluye',P1.y?e(P1.y.phi):'—',N1.y?fmt(Math.abs(N1.y.M),3):'no fluye',N1.y?e(N1.y.phi):'—'),
+    row('ELU3 · Rotura (Mn, φu)',P1.u?fmt(Math.abs(P1.u.M),3):'—',P1.u?e(P1.u.phi):'—',N1.u?fmt(Math.abs(N1.u.M),3):'—',N1.u?e(N1.u.phi):'—'),
+    row('Fluencia idealizada φ\'y = φy·Mn/My','',P1.id?e(P1.id.phiY2):'—','',N1.id?e(N1.id.phiY2):'—'),
+    row('<b>Ductilidad de curvatura μ = φu/φ\'y</b>',P1.id?'<b>'+fmt(P1.id.mu,2)+'</b>':'—','',N1.id?'<b>'+fmt(N1.id.mu,2)+'</b>':'—',''),
+    row('E·Ie = Mn/φ\'y [t·cm²]',P1.id?fmt(Math.abs(P1.id.EIe),0):'—','',N1.id?fmt(Math.abs(N1.id.EIe),0):'—',''),
+    row('Ie [cm⁴]',P1.id?fmt(Math.abs(P1.id.Ie),0):'—','',N1.id?fmt(Math.abs(N1.id.Ie),0):'—',''),
+    row('<b>Ie/Ig</b>',P1.id?'<b>'+fmt(Math.abs(P1.id.ratio),3)+'</b>':'—','',N1.id?'<b>'+fmt(Math.abs(N1.id.ratio),3)+'</b>':'—',''),
+    row(`Ig = ${fmt(P1.Ig,0)} cm⁴ · Ec = ${fmt(P1.Ec*100,0)} MPa · fr = ${fmt(P1.fr*100,2)} MPa`,'','','','')
+  ].join('');
+}
+
+function setTab(id,on){ $(id).setAttribute('aria-pressed',on?'true':'false'); }
+$('tNom').onclick=()=>{show.nom=!show.nom; if(!show.nom&&!show.des) show.des=true; setTab('tNom',show.nom); setTab('tDes',show.des); draw3D(model());};
+$('tDes').onclick=()=>{show.des=!show.des; if(!show.nom&&!show.des) show.nom=true; setTab('tNom',show.nom); setTab('tDes',show.des); draw3D(model());};
+$('axX').onclick=()=>{show.ax='x'; setTab('axX',true); setTab('axY',false); draw2D(model());};
+$('axY').onclick=()=>{show.ax='y'; setTab('axX',false); setTab('axY',true); draw2D(model());};
+$('uDes').onclick=()=>{show.uDes=!show.uDes; setTab('uDes',show.uDes); draw2D(model());};
+
+$('regFl').addEventListener('change',()=>render());
+for(const k of ['mfP','mfEcu','mfE0','mfFr']) $(k).addEventListener('input',()=>schedule());
+$('mfX').onclick=()=>{mfAx='x'; setTab('mfX',true); setTab('mfY',false); render();};
+$('mfY').onclick=()=>{mfAx='y'; setTab('mfX',false); setTab('mfY',true); render();};
+let tab='fl'; try{ tab=localStorage.getItem('ib-tab')||'fl'; }catch(e){}
+function setMainTab(t){ tab=t; document.body.dataset.tab=t; $('tabFl').setAttribute('aria-selected',t==='fl'); $('tabFc').setAttribute('aria-selected',t==='fc'); try{localStorage.setItem('ib-tab',t);}catch(e){} render(); }
+$('tabFl').onclick=()=>setMainTab('fl'); $('tabFc').onclick=()=>setMainTab('fc');
+document.body.dataset.tab=tab;
+(async()=>{ try{ const dl=await window.claude?.use?.('downloads'); if(!dl) return; const b=$('dlHtml'); b.hidden=false;
+  b.onclick=async()=>{ $('dlMsg').textContent=''; try{ await dl.save({filename:'Flexion y Flexocompresion HA.html',data:SRC}); $('dlMsg').textContent='Archivo guardado.'; }
+    catch(e){ $('dlMsg').textContent = e&&e.code==='declined' ? 'Descarga cancelada.' : e&&e.code==='rate_limited' ? 'Ya hay una descarga pendiente; esperá un momento.' : 'No se pudo descargar en esta vista.'; } };
+ }catch(e){} })();
+// ---------- proyectos ----------
+const KEYS=['tipo','ala','b','h','bf','hf','fc','fy','Es','rx','crit','cN','cF','cR','regFl','mfEcu','mfE0','mfFr'];
+let projName='';
+function getState(){ const o={layers:JSON.parse(JSON.stringify(layers)),loads:JSON.parse(JSON.stringify(loads))}; for(const k of KEYS) o[k]=$(k).value; o.capD=$('capD').checked; return o; }
+function setState(o){ layers=o.layers||[]; loads=o.loads||[]; for(const k of KEYS) if(o[k]!=null&&$(k)) $(k).value=o[k]; $('capD').checked=!!o.capD; syncTipo(); renderLayerRows(); renderLoadRows(); render(); }
+function setName(n){ projName=n; $('projName').textContent=n||'Proyecto sin guardar'; try{localStorage.setItem('ib-name',n||'');}catch(e){} }
+try{ setName(localStorage.getItem('ib-name')||''); }catch(e){}
+const msg=t=>{ $('pMsg').textContent=t; clearTimeout(msg.t); msg.t=setTimeout(()=>$('pMsg').textContent='',5000); };
+const panels=['pSavePanel','pClearPanel']; const only=id=>panels.forEach(p=>$(p).hidden=p!==id);
+const fileName=n=>(n||'Proyecto').replace(/[\/:*?"<>|]+/g,'-').trim()+'.json';
+const projJSON=n=>JSON.stringify({app:'Flexión y Flexocompresión H°A°',version:1,nombre:n,guardado:new Date().toISOString(),datos:getState()},null,1);
+let dlCap=null; (async()=>{ try{ dlCap=await window.claude?.use?.('downloads'); }catch(e){} })();
+async function saveAs(n){
+  const data=projJSON(n);
+  // 1) "Guardar como" nativo (Chrome/Edge, archivo local)
+  if(window.showSaveFilePicker){ try{
+      const h=await showSaveFilePicker({suggestedName:fileName(n),types:[{description:'Proyecto de flexión (JSON)',accept:{'application/json':['.json']}}]});
+      const w=await h.createWritable(); await w.write(data); await w.close();
+      setName(h.name.replace(/\.json$/i,'')); only(null); msg('Proyecto guardado como "'+h.name+'".'); return;
+    }catch(e){ if(e&&e.name==='AbortError'){ msg('Guardado cancelado.'); return; } } }
+  // 2) dentro de claude.ai: descarga con confirmación
+  if(dlCap){ try{ await dlCap.save({filename:fileName(n),data}); setName(n); only(null); msg('Proyecto descargado: '+fileName(n)); }
+    catch(e){ msg(e&&e.code==='declined'?'Guardado cancelado.':'No se pudo descargar en esta vista.'); } return; }
+  // 3) navegador sin selector: descarga común
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:'application/json'})); a.download=fileName(n);
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); setName(n); only(null); msg('Proyecto descargado: '+fileName(n));
+}
+$('pSave').onclick=()=>{ if(window.showSaveFilePicker && window.top===window){ saveAs(projName||'Proyecto'); return; } only('pSavePanel'); $('pSaveName').value=projName; $('pSaveName').focus(); };
+$('pSaveCancel').onclick=()=>only(null);
+const doSave=()=>{ const n=$('pSaveName').value.trim(); if(!n){ msg('Escribí un nombre para el proyecto.'); return; } saveAs(n); };
+$('pSaveOk').onclick=doSave; $('pSaveName').addEventListener('keydown',e=>{ if(e.key==='Enter') doSave(); });
+$('pOpen').onclick=()=>{ only(null); $('pFile').value=''; $('pFile').click(); };
+$('pFile').addEventListener('change',()=>{ const fl=$('pFile').files[0]; if(!fl) return;
+  const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); const st=o.datos||o; if(!st||!Array.isArray(st.layers)) throw 0;
+      setState(st); setName(o.nombre||fl.name.replace(/\.json$/i,'')); msg('Proyecto "'+fl.name+'" abierto.'); }
+    catch(e){ msg('El archivo elegido no es un proyecto válido de esta herramienta.'); } };
+  rd.onerror=()=>msg('No se pudo leer el archivo.'); rd.readAsText(fl); });
+$('pClear').onclick=()=>only('pClearPanel');
+$('pClearCancel').onclick=()=>only(null);
+$('pClearOk').onclick=()=>{ const blank={tipo:'R',ala:'sup',b:20,h:40,bf:60,hf:10,fc:30,fy:420,Es:200000,rx:4,crit:'C201E',cN:8,cF:16,cR:5,regFl:'IC103',mfEcu:0.003,mfE0:0.002,mfFr:0.62,
+  layers:[{d:4,n:0,f:12},{d:36,n:0,f:12}], loads:[{name:'Caso 1',P:0,Mx:0,My:0,color:PAL[0]}]}; setState(blank); setName(''); only(null); msg('Datos limpiados: cargá la sección, la armadura y las solicitaciones.'); };
+let tmr=null; function schedule(){ clearTimeout(tmr); tmr=setTimeout(render,250); }
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render()); }catch(e){}
+syncTipo(); renderLayerRows(); renderLoadRows(); setMainTab(tab);
+})();
+</script>
+
+</body>
+</html>

@@ -919,11 +919,23 @@ async function expWord(){
   ${$('memoria').innerHTML}
   <p style="font-size:9pt;color:#666"><i>Generado con el verificador de fundaciones superficiales. Verificar con criterio profesional.</i></p>
   </body></html>`;
-  const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
+  // dentro de claude.ai no se permiten .doc: se guarda como .html (Word lo abre igual)
+  await bajarArchivo(DL?'memoria_fundacion.html':'memoria_fundacion.doc','\ufeff'+html,'application/msword','Memoria descargada.');
+}
+// ---- Descargas: en claude.ai con el permiso "downloads"; fuera, con un enlace com\u00fan ----
+let DL=null; (async()=>{ try{ DL=await window.claude?.use?.('downloads'); }catch(e){} })();
+async function bajarArchivo(nombre,data,tipo,okTxt){
+  if(DL){
+    try{ await DL.save({filename:nombre,data}); projMsg(okTxt); }
+    catch(e){ projMsg(e&&e.code==='declined'?'Descarga cancelada.':e&&e.code==='rate_limited'?'Ya hay una descarga pendiente; esper\u00e1 un momento.':'No se pudo descargar en esta vista.',e&&e.code!=='declined'); }
+    return;
+  }
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='memoria_fundacion.doc';
-  a.click();
+  a.href=URL.createObjectURL(new Blob([data],{type:tipo}));
+  a.download=nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  projMsg(okTxt);
 }
 
 [['B','Br'],['L','Lr'],['Df','Dfr']].forEach(([a,b])=>{
@@ -943,13 +955,7 @@ function descargarProyecto(){
   PROJ_IDS.forEach(id=>{const el=$(id);if(!el)return;campos[id]=el.type==='checkbox'?el.checked:el.value;});
   const proj={app:'fundaciones-superficiales',version:1,fecha:new Date().toISOString(),campos,rows};
   const nombre=(($('obra').value||'proyecto').trim().replace(/[^\w\-]+/g,'_').slice(0,50))||'proyecto';
-  const blob=new Blob([JSON.stringify(proj,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='fundacion_'+nombre+'.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  projMsg('Proyecto descargado.');
+  bajarArchivo('fundacion_'+nombre+'.json',JSON.stringify(proj,null,2),'application/json','Proyecto descargado.');
 }
 function cargarProyecto(input){
   const file=input.files&&input.files[0];

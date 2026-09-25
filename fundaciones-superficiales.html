@@ -207,7 +207,7 @@ svg{display:block;width:100%;height:auto}
         <div class="ep"><label>Factor de movilización</label><input id="epF" type="number" step="0.05" min="0" max="1" value="0.5"></div>
       </div>
       <div class="hint" id="epHint" style="display:none">K_p = tan²(45° + φ/2) con el ángulo de fricción interna del suelo. El empuje pasivo requiere desplazamiento para movilizarse y depende de que el relleno lateral esté compactado y no se excave luego. Por eso se afecta por un factor (típico 1/3 a 1/2) y conviene despreciarlo si el terreno lateral no está garantizado.</div>
-      <div class="hint">Con napa sobre el plano de fundación se usa γ' = γsat − 1 y se descuenta la subpresión U del equilibrio. La verificación de tensiones es siempre por <b>área efectiva</b>: σ = ΣV / (B′·L′) ≤ σ_adm.</div>
+      <div class="hint">Con napa se computan <b>pesos totales</b> (γsat bajo napa) y se descuenta la subpresión U = γ_w·(Df−D_w)·A del equilibrio; γ' = γsat − 1 se usa solo en la capacidad portante y el empuje pasivo. La verificación de tensiones es siempre por <b>área efectiva</b>: σ = ΣV / (B′·L′) ≤ σ_adm.</div>
     </div>
   </div>
 
@@ -406,9 +406,10 @@ function calc(){
     let Vsoil=A*Math.max(zTop,0)-(isTronco()?Vfr:0);
     Vsoil=Math.max(Vsoil,0);
     if(Dw!==null&&Dw<Df){
+      // Peso TOTAL del relleno (γsat bajo napa): la flotación ya se descuenta con U en la base.
       const frac=Math.max(zTop,0.001);
       const dry=Math.min(Math.max(Dw,0),frac);
-      Ws=Vsoil*((dry*gs+(frac-dry)*gp)/frac);
+      Ws=Vsoil*((dry*gs+(frac-dry)*gsat)/frac);
     } else Ws=Vsoil*gs;
   }
 

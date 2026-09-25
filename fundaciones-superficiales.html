@@ -156,6 +156,7 @@ svg{display:block;width:100%;height:auto}
         <div class="kk"><label>b_k sup / b_k inf (m)</label><div style="display:flex;gap:5px"><input id="bk" type="number" step="0.05" value="0.6"><input id="bk2" type="number" step="0.05" value="0.3"></div></div>
         <div class="kk"><label>h_k — profundidad (m)</label><input id="hk" type="number" step="0.05" value="0.5"></div>
       </div>
+      <div class="row4 kk"><div><label title="El pasivo de la llave requiere desplazamiento para movilizarse. Típico 0,5; más alto solo con suelo intacto y hormigonado contra el terreno.">f — movilización de la llave ⓘ</label><input id="fK" type="number" step="0.05" min="0" max="1" value="0.5"></div></div>
       <div class="hint" id="tipoHint"></div>
     </div>
 
@@ -473,11 +474,16 @@ function calc(){
   const phiK=modo==='dir'?nz('phi2'):phi;
   // Tensión vertical efectiva a profundidad z (considera napa)
   const sigV=z=>(Dw===null||Dw>=z)?gs*z:gs*Dw+gp*(z-Dw);
-  let EpK=0;
+  // Ancho que enfrenta al deslizamiento: Hx empuja caras de ancho L, Hy caras de ancho B;
+  // con H oblicua, ancho proyectado de la planta L·|cos θ| + B·|sen θ|. Lo usan el pasivo lateral y la llave.
+  const wProj=Hres>0.01 ? L*Math.abs(SHx)/Hres + B*Math.abs(SHy)/Hres : L;
+  let EpK=0, fK=0;
   if(kOn&&hk>0){
+    fK=Math.min(Math.max(num('fK')===null?0.5:num('fK'),0),1);
     const Kp=Math.pow(Math.tan(rad(45+phiK/2)),2);
     const gk=(Dw!==null&&Dw<Df+hk)?gp:gs;
-    EpK=L*(qb*Kp*hk+0.5*gk*Kp*hk*hk+2*c*Math.sqrt(Kp)*hk);
+    EpK=fK*wProj*(qb*Kp*hk+0.5*gk*Kp*hk*hk+2*c*Math.sqrt(Kp)*hk);
+    if(fK>0.5)warn.push('Factor de movilización de la llave alto ('+fmt(fK,2)+'): justificar con suelo intacto y hormigonado contra el terreno.');
   }
   // Empuje pasivo sobre la cara lateral enterrada de la fundación.
   // Cara de altura hf: entre z_top y Df. No se solapa con la llave (que arranca en Df).
@@ -490,15 +496,13 @@ function calc(){
     epKp=Math.pow(Math.tan(rad(45+phiK/2)),2);
     const qTop=sigV(epZtop);
     const gf=(Dw!==null&&Dw<Df)?gp:gs;          // peso efectivo en el tramo de la cara
-    // Ancho de cara perpendicular al deslizamiento: Hx empuja la cara de ancho L, Hy la de ancho B.
-    // Con H oblicua se usa el ancho proyectado de la planta: L·|cos θ| + B·|sen θ|.
-    wFace=Hres>0.01 ? L*Math.abs(SHx)/Hres + B*Math.abs(SHy)/Hres : L;
+    wFace=wProj;
     EpL=epF*wFace*(qTop*epKp*epHf+0.5*gf*epKp*epHf*epHf+2*c*Math.sqrt(epKp)*epHf);
     if(epF>0.5)warn.push('Factor de movilización del empuje pasivo alto ('+fmt(epF,2)+'): requiere desplazamiento y relleno lateral garantizado.');
   }
 
   const ca=2/3*c;
-  const Rd=Vt*Math.tan(rad(del))+ca*A+EpK+EpL;
+  const Rd=Vt*Math.tan(rad(del))+ca*Aef+EpK+EpL;   // adhesión solo sobre el área en contacto A′
   const RdD=lrfd?phiR*Rd:Rd;
   const fd=Hres>0.01?RdD/Hres:1/0;
 
@@ -534,7 +538,7 @@ function calc(){
   return {uplift:false,tipo,corr,circ,oct,B,L,h,Df,h0,b0,l0,ac,A,Vc,Wc,Ws,U,gs,gsat,c,phi,del,Dw,modo,met,
     SV,SHx,SHy,SMx,SMy,Vt,Hres,eB,eL,Bp,Lp,Aef,nucleo,contact,
     fvB,fvL,Rd,RdD,ca,fd,FSq,FSv,FSd,lrfd,phiR,sis,kOn,tsK,hk,bkT,bkB,Vk,EpK,phiK,
-    epOn,EpL,epHf,epZtop,epKp,epF,epMod,wFace,
+    epOn,EpL,epHf,epZtop,epKp,epF,epMod,wFace,wProj,fK,
     F,sc,sq,sg,dc,dq,dg,ic,iq,ig,qb,ge,qult,qadm,sef,warn,medOff,
     loads:rows.filter(r=>r.on)};
 }
@@ -860,8 +864,9 @@ function memoria(R){
     (R.EpL>0?row('K_p = tan²(45° + φ/2)',`= tan²(45° + ${n(R.phiK,0)}°/2) = <b>${n(R.epKp,3)}</b>`)+
       row('b_cara = L·|H_x|/H + B·|H_y|/H',`= ${n(R.L,2)}·${n(Math.abs(R.SHx),1)}/${n(R.Hres,1)} + ${n(R.B,2)}·${n(Math.abs(R.SHy),1)}/${n(R.Hres,1)} = <b>${n(R.wFace,2)}</b> m`)+
       row('E_p,lateral = f·b_cara·(σ_v,top·K_p·h_f + ½·γ·K_p·h_f² + 2c·√K_p·h_f)',`(f=${n(R.epF,2)}, h_f=${n(R.epHf,2)} m desde z=${n(R.epZtop,2)} m) = <b>${n(R.EpL,1)}</b> ${un}`):'')+
-    (R.EpK>0?row('E_p,llave = L·(q̄·K_p·h_k + ½·γ·K_p·h_k² + 2c·√K_p·h_k)',`(K_p = tan²(45° + ${n(R.phiK,0)}°/2) = ${n(Math.pow(Math.tan((45+R.phiK/2)*Math.PI/180),2),3)}, h_k=${n(R.hk,2)} m, ${R.tsK==='rect'?'rectangular':R.tsK==='trap'?'trapezoidal':'triangular'}) = <b>${n(R.EpK,1)}</b> ${un}`):'')+
-    row('R_d = ΣV·tan δ + ⅔c·A'+(R.EpL>0?' + E_p,lateral':'')+(R.EpK>0?' + E_p,llave':''),`= ${n(R.Vt,1)}·tan ${n(R.del,0)}° + ${n(R.ca,1)}·${n(R.A,2)}${R.EpL>0?' + '+n(R.EpL,1):''}${R.EpK>0?' + '+n(R.EpK,1):''} = <b>${n(R.Rd,1)}</b> ${un}`)+
+    (R.EpK>0&&R.EpL<=0?row('b_cara = L·|H_x|/H + B·|H_y|/H',`= ${n(R.L,2)}·${n(Math.abs(R.SHx),1)}/${n(R.Hres,1)} + ${n(R.B,2)}·${n(Math.abs(R.SHy),1)}/${n(R.Hres,1)} = <b>${n(R.wProj,2)}</b> m`):'')+
+    (R.EpK>0?row('E_p,llave = f_k·b_cara·(q̄·K_p·h_k + ½·γ·K_p·h_k² + 2c·√K_p·h_k)',`(f_k=${n(R.fK,2)}, K_p = tan²(45° + ${n(R.phiK,0)}°/2) = ${n(Math.pow(Math.tan((45+R.phiK/2)*Math.PI/180),2),3)}, h_k=${n(R.hk,2)} m, ${R.tsK==='rect'?'rectangular':R.tsK==='trap'?'trapezoidal':'triangular'}) = <b>${n(R.EpK,1)}</b> ${un}`):'')+
+    row('R_d = ΣV·tan δ + ⅔c·A′'+(R.EpL>0?' + E_p,lateral':'')+(R.EpK>0?' + E_p,llave':''),`= ${n(R.Vt,1)}·tan ${n(R.del,0)}° + ${n(R.ca,1)}·${n(R.Aef,2)}${R.EpL>0?' + '+n(R.EpL,1):''}${R.EpK>0?' + '+n(R.EpK,1):''} = <b>${n(R.Rd,1)}</b> ${un}`)+
     (R.lrfd
       ? row('H_u ≤ φ·R_d',`= ${n(R.Hres,1)} ≤ ${n(R.phiR,2)}·${n(R.Rd,1)} = <b>${n(R.RdD,1)}</b> ${un}`,R.Hres>R.RdD)
       : row('FS_d = R_d / H',`= ${n(R.Rd,1)} / ${n(R.Hres,1)} = <b>${isFinite(R.fd)?n(R.fd,2):'∞'}</b> ≥ ${n(R.FSd,1)}`,R.fd<R.FSd)));
@@ -946,12 +951,12 @@ async function bajarArchivo(nombre,data,tipo,okTxt){
   $(a).addEventListener('input',()=>{$(b).value=$(a).value;fill();});
   $(b).addEventListener('input',()=>{$(a).value=$(b).value;fill();});
 });
-['h','h0','b0','ac','gc','pp','gs','gsat','c','phi','del','met','Dw','FSq','FSv','FSd','sadm','del2','c2','gs2','gsat2','phi2','sismo','bk','bk2','hk','obra','epH','epF']
+['h','h0','b0','ac','gc','pp','gs','gsat','c','phi','del','met','Dw','FSq','FSv','FSd','sadm','del2','c2','gs2','gsat2','phi2','sismo','bk','bk2','hk','fK','obra','epH','epF']
   .forEach(id=>{$(id).addEventListener('input',fill);$(id).addEventListener('change',fill);});
 // ---- Guardar / cargar proyecto ----
 const PROJ_IDS=['obra','tipo','B','L','Df','h','h0','b0','ac','gc','pp','cbK','tsK','bk','bk2','hk',
   'modo','suelo','gs','gsat','c','phi','del','met','del2','c2','gs2','gsat2','phi2',
-  'marco','sismo','Dw','FSq','FSv','FSd','sadm','cbEp','epH','epF'];
+  'marco','sismo','Dw','FSq','FSv','FSd','sadm','cbEp','epH','epF','fK'];
 function projMsg(txt,err){const el=$('projMsg');el.textContent=txt;el.className='projmsg'+(err?' err':'');
   if(txt)setTimeout(()=>{if(el.textContent===txt){el.textContent='';}},4000);}
 function descargarProyecto(){

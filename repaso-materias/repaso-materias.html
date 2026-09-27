@@ -15,7 +15,7 @@
   --accent:#2F5570; --accent-soft:#E3EBF1;
   --torrisi:#2F6E55; --torrisi-bg:#E6F0EA;
   --old:#B85A12; --old-bg:#FCEAD8; --old-rule:#E9A56A;
-  --nota:#46525C; --nota-bg:#EBEEF1;
+  --nota:#46525C; --nota-bg:#EBEEF1; --clase:#5B4B8A; --clase-bg:#F1EDF8;
   --err:#A8322B; --err-bg:#F7E2DF;
   --ok:#2E6B3F;
   --fig-bg:#FFFFFF;
@@ -30,7 +30,7 @@
     --accent:#8FB6D3; --accent-soft:#1F2C36;
     --torrisi:#80C4A4; --torrisi-bg:#1A2A23;
     --old:#F0A262; --old-bg:#34261A; --old-rule:#8A5528;
-    --nota:#B7C1C9; --nota-bg:#222A30;
+    --nota:#B7C1C9; --nota-bg:#222A30; --clase:#C9BCEF; --clase-bg:#2A2439;
     --err:#EE8D84; --err-bg:#3A2321;
     --ok:#8FD19E;
     --fig-bg:#F4F4F2;
@@ -42,7 +42,7 @@
   --accent:#8FB6D3; --accent-soft:#1F2C36;
   --torrisi:#80C4A4; --torrisi-bg:#1A2A23;
   --old:#F0A262; --old-bg:#34261A; --old-rule:#8A5528;
-  --nota:#B7C1C9; --nota-bg:#222A30;
+  --nota:#B7C1C9; --nota-bg:#222A30; --clase:#C9BCEF; --clase-bg:#2A2439;
   --err:#EE8D84; --err-bg:#3A2321;
   --ok:#8FD19E;
   --fig-bg:#F4F4F2;
@@ -142,6 +142,8 @@ td.num,th.num{text-align:right}
 .box.old{background:var(--old-bg);border:1.5px solid var(--old-rule)} .box.old .lbl{color:var(--old)}
 .box.nota{background:var(--nota-bg)} .box.nota .lbl{color:var(--nota)}
 .box.err{background:var(--err-bg)} .box.err .lbl{color:var(--err)}
+.box.clase{background:var(--clase-bg);border-left:3px solid var(--clase)} .box.clase .lbl{color:var(--clase)}
+.box.clase .deriv{background:var(--bg)}
 .chip{display:inline-block;font-family:var(--display);font-size:11.5px;font-weight:600;letter-spacing:.01em;border:1px solid currentColor;border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:1px}
 .old .chip{color:var(--old)}
 .ok{color:var(--ok);font-weight:600}
@@ -266,6 +268,7 @@ td.num,th.num{text-align:right}
         <span role="listitem"><i style="background:var(--old-bg);border:1.5px solid var(--old-rule)"></i>Desactualizado respecto del CIRSOC 201-25 o del IC 103-P2-2021</span>
         <span role="listitem"><i style="background:var(--nota-bg);border:1px solid var(--nota)"></i>Nota del repaso</span>
         <span role="listitem"><i style="background:var(--err-bg);border:1px solid var(--err)"></i>Error en el apunte</span>
+        <span role="listitem"><i style="background:var(--clase-bg);border:1px solid var(--clase)"></i>Apuntes de clase de Agustín (manuscritos)</span>
       </div>
       <div class="box old" style="margin-top:14px">
         <span class="lbl">Sobre los recuadros naranjas</span>
@@ -1569,6 +1572,36 @@ td.num,th.num{text-align:right}
         <span class="lbl">Aclaración</span>
         <p>El brazo de la cupla queda entre 0,92d y 0,98d para las cuantías usuales: por eso la resistencia depende casi solo de A<sub>s</sub>·f<sub>y</sub>, y la fórmula aproximada de la sección 3.9 funciona bien.</p>
       </div>
+      <div class="box clase">
+        <span class="lbl">Apuntes de clase · manuscritos de Agustín, hojas 22–23</span>
+        <p>"Resistencia a flexión simple · Viga simplemente armada (M<sub>n</sub>)". Dada una sección de H°A° simplemente armada, una sola capa de acero a una distancia d del borde comprimido (altura útil). El mismo desarrollo, escrito con la <strong>cuantía mecánica</strong> ω:</p>
+      <div class="deriv">
+      <div class="dt">Desarrollo con la cuantía mecánica</div>
+      <div class="st"><div class="why">Por equilibrio de fuerzas</div><div class="ex"><math display="block"><mrow><mo largeop="true">∑</mo><msub><mi>F</mi><mi>x</mi></msub><mo>=</mo><mn>0</mn><mspace width="0.28em"/><mo>→</mo><mspace width="0.28em"/><msub><mi>C</mi><mi>c</mi></msub><mo>=</mo><msub><mi>T</mi><mi>s</mi></msub><mspace width="2em"/><mi>a</mi><mo>·</mo><mi>b</mi><mo>·</mo><mn>0,85</mn><mo>·</mo><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><mo>·</mo><msub><mi>f</mi><mi>y</mi></msub></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">ahora despejo a</div><div class="ex"><math display="block"><mrow><mi>a</mi><mo>=</mo><mfrac><mrow><msub><mi>A</mi><mi>s</mi></msub><mo>·</mo><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><mi>b</mi><mo>·</mo><mn>0,85</mn><mo>·</mo><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">si multiplico y divido por d tengo</div><div class="ex"><math display="block"><mrow><mi>a</mi><mo>=</mo><mfrac><mrow><msub><mi>A</mi><mi>s</mi></msub><mo>·</mo><msub><mi>f</mi><mi>y</mi></msub><mspace width="0.17em"/><mi>d</mi></mrow><mrow><mi>b</mi><mo>·</mo><mi>d</mi><mo>·</mo><mn>0,85</mn><mo>·</mo><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">ahora, con ρ = A<sub>s</sub>/(b·d) y f<sub>r</sub> = f<sub>y</sub>/f'<sub>c</sub></div><div class="ex"><math display="block"><mrow><mi>a</mi><mo>=</mo><mfrac><mrow><mi>ρ</mi><mo>·</mo><msub><mi>f</mi><mi>r</mi></msub><mo>·</mo><mi>d</mi></mrow><mrow><mn>0,85</mn></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">cuantía mecánica</div><div class="ex"><math display="block"><mrow><mi>ω</mi><mo>=</mo><mi>ρ</mi><mo>·</mo><msub><mi>f</mi><mi>r</mi></msub><mo>=</mo><mfrac><mrow><msub><mi>A</mi><mi>s</mi></msub></mrow><mrow><mi>b</mi><mo>·</mo><mi>d</mi></mrow></mfrac><mo>·</mo><mfrac><mrow><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></mrow></mfrac><mspace width="2em"/><mo>⇒</mo><mspace width="2em"/><mi>a</mi><mo>=</mo><mfrac><mrow><mi>ω</mi><mspace width="0.17em"/><mi>d</mi></mrow><mrow><mn>0,85</mn></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Por equilibrio de momentos</div><div class="ex"><math display="block"><mrow><mo largeop="true">∑</mo><mi>M</mi><mo>=</mo><mn>0</mn><mspace width="0.28em"/><mo>→</mo><mspace width="0.28em"/><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><mi>T</mi><mo stretchy="true">(</mo><mi>d</mi><mo>−</mo><mfrac><mrow><mi>a</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo stretchy="true">)</mo><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub><mo stretchy="true">(</mo><mi>d</mi><mo>−</mo><mfrac><mrow><mi>a</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo stretchy="true">)</mo><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub><mo stretchy="true">(</mo><mi>d</mi><mo>−</mo><mfrac><mrow><mi>ω</mi><mspace width="0.17em"/><mi>d</mi></mrow><mrow><mn>2</mn><mo>·</mo><mn>0,85</mn></mrow></mfrac><mo stretchy="true">)</mo></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">entonces (recuadrado y resaltado en los apuntes)</div><div class="ex"><math display="block"><mrow><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub><mo stretchy="true">(</mo><mi>d</mi><mo>−</mo><mfrac><mrow><mi>a</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo stretchy="true">)</mo><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub><mo stretchy="true">(</mo><mi>d</mi><mo>−</mo><mn>0,59</mn><mspace width="0.17em"/><mfrac><mrow><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><mi>b</mi><mo>·</mo><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></mrow></mfrac><mo stretchy="true">)</mo><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub><mspace width="0.17em"/><mi>d</mi><mspace width="0.17em"/><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mn>0,59</mn><mspace width="0.17em"/><mi>ω</mi><mo stretchy="false">)</mo></mrow></math></div><div class="tag"></div></div>
+      </div>
+        <p>"Esta ecuación es la <strong>fórmula exacta del momento nominal</strong>, y en el caso de tener más de una capa de acero traccionado, A<sub>s</sub> es el área de acero efectiva":</p>
+        <div class="eq"><math display="block"><mrow><msub><mi>A</mi><mrow><mi>s</mi><mo>,</mo><mi>e</mi></mrow></msub><mo>=</mo><mo largeop="true">∑</mo><mo stretchy="true">(</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">si</mi></mrow></msub><mo>·</mo><mfrac><mrow><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mi>d</mi></mrow></mfrac><mo stretchy="true">)</mo></mrow></math></div>
+        <p>"que representa a toda el área del acero traccionado concentrada a una distancia d del borde comprimido".</p>
+      </div>
+      <div class="box nota">
+        <span class="lbl">Aclaración · qué tan exacta es la fórmula con A<sub>s,e</sub></span>
+        <ul>
+          <li>Con <strong>una sola capa</strong> es exacta dentro de las hipótesis del reglamento (bloque rectangular y acero en fluencia). El 0,59 redondea 1/(2 × 0,85) = 0,588.</li>
+          <li>Con <strong>varias capas</strong>, tomando d = d<sub>t</sub> (la capa más traccionada, como define A<sub>s,e</sub> el IC 103 P-II 2021, art. 2.2.5(a)), el área efectiva conserva el momento estático, A<sub>s,e</sub>·d<sub>t</sub> = ΣA<sub>si</sub>·d<sub>i</sub>, pero es menor que ΣA<sub>si</sub>: subestima la tracción T y el término T·a/2 que se resta. Por eso M<sub>n</sub> sale <strong>levemente sobrestimado</strong> (del lado no conservador).</li>
+          <li>Lo exacto, si todas las capas fluyen, es calcular a con toda el área y tomar momentos en el baricentro d<sub>g</sub> de las capas traccionadas (o sumar capa por capa):</li>
+        </ul>
+        <div class="eq"><math display="block"><mrow><mi>a</mi><mo>=</mo><mfrac><mrow><mo stretchy="true">(</mo><mo largeop="true">∑</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">si</mi></mrow></msub><mo stretchy="true">)</mo><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><mn>0,85</mn><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup><mspace width="0.17em"/><mi>b</mi></mrow></mfrac><mspace width="2em"/><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><mo largeop="true">∑</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">si</mi></mrow></msub><msub><mi>f</mi><mi>y</mi></msub><mo stretchy="true">(</mo><msub><mi>d</mi><mi>i</mi></msub><mo>−</mo><mfrac><mrow><mi>a</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo stretchy="true">)</mo><mo>=</mo><mo stretchy="true">(</mo><mo largeop="true">∑</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">si</mi></mrow></msub><mo stretchy="true">)</mo><msub><mi>f</mi><mi>y</mi></msub><mo stretchy="true">(</mo><msub><mi>d</mi><mi>g</mi></msub><mo>−</mo><mfrac><mrow><mi>a</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo stretchy="true">)</mo><mspace width="2em"/><msub><mi>d</mi><mi>g</mi></msub><mo>=</mo><mfrac><mrow><mo largeop="true">∑</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">si</mi></mrow></msub><msub><mi>d</mi><mi>i</mi></msub></mrow><mrow><mo largeop="true">∑</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">si</mi></mrow></msub></mrow></mfrac></mrow></math></div>
+        <ul>
+          <li><strong>Ejemplo</strong> (30 × 60 cm, H-25, ADN 420, 4Ø20 a 55 cm y 2Ø20 a 50 cm; las dos capas fluyen): exacto 373,1 kNm; con A<sub>s,e</sub> = 18,28 cm² (contra ΣA<sub>s</sub> = 18,85 cm²) da 374,6 a 376,0 kNm, <strong>+0,4 a +0,8 %</strong>. El error grueso es otro: poner toda el área a d<sub>t</sub> da 386,3 kNm (+3,5 %).</li>
+          <li>En el IC 103 el área efectiva sirve para calcular la <strong>cuantía</strong> (ρ = A<sub>s,e</sub>/(b<sub>w</sub>·d)), no el momento. Las cuentas son mías, verificadas con un script.</li>
+        </ul>
+      </div>
       <div class="box torrisi">
         <span class="lbl">Aporte de Torrisi · §3.5.2, §3.6 y §3.17, págs. 46–48 y 94–100</span>
         <p><strong>Dimensionamiento adimensional.</strong> Del equilibrio <span class="f">M<sub>u</sub>/φ = A<sub>s</sub>f<sub>y</sub>(d − a/2)</span> arma una ecuación de segundo grado en A<sub>s</sub> y define:</p>
@@ -1618,6 +1651,31 @@ td.num,th.num{text-align:right}
       <p>y, con d y d' asociados a los recubrimientos mínimos, la <strong>ecuación de diseño aproximada</strong>, que ya incluye φ:</p>
       <div class="eq"><math display="block"><mrow><msub><mi>A</mi><mi>s</mi></msub><mo>=</mo><mfrac><mrow><msub><mi>M</mi><mi>u</mi></msub></mrow><mrow><mi>φ</mi><mspace width="0.17em"/><msub><mi>f</mi><mi>y</mi></msub><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>d</mi><mo>−</mo><msup><mi>d</mi><mrow><mo>′</mo></mrow></msup><mo stretchy="false">)</mo></mrow></mfrac></mrow></math><span class="tag">(3.26)</span></div>
       <p>Es una forma muy rápida y efectiva de prediseñar la armadura, que luego se ajusta con equilibrio y compatibilidad; en muchos casos el ajuste es mínimo. Es buena aproximación para el momento, pero el eje neutro supuesto <strong>no</strong> es buena aproximación para la curvatura nominal. <span class="pg">pág. 33</span></p>
+      <div class="box clase">
+        <span class="lbl">Apuntes de clase · manuscritos de Agustín, hoja 23 y siguiente</span>
+        <p>Con el mismo razonamiento del apunte (c muy chico, a/2 = d'), para una sección con armadura inferior A<sub>s</sub> y superior A'<sub>s</sub>, a profundidades d y d', el momento nominal se puede calcular en forma aproximada con el área efectiva:</p>
+        <div class="eq"><math display="block"><mrow><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><mi>T</mi><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>d</mi><mo>−</mo><msup><mi>d</mi><mrow><mo>′</mo></mrow></msup><mo stretchy="false">)</mo><mo>=</mo><msub><mi>A</mi><mrow><mi>s</mi><mo>,</mo><mi>e</mi></mrow></msub><mo>·</mo><msub><mi>f</mi><mi>y</mi></msub><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>d</mi><mo>−</mo><msup><mi>d</mi><mrow><mo>′</mo></mrow></msup><mo stretchy="false">)</mo></mrow></math></div>
+        <p>"Si quiero prediseñar la armadura de una viga sometida a M<sub>u</sub>, conozco f<sub>y</sub>, d y d'; el área de la armadura traccionada se puede calcular como":</p>
+      <div class="deriv">
+      <div class="st"><div class="why">Condición de diseño</div><div class="ex"><math display="block"><mrow><msub><mi>M</mi><mi>u</mi></msub><mo>≤</mo><msub><mi>M</mi><mi>d</mi></msub><mo>=</mo><mi>φ</mi><mo>·</mo><msub><mi>M</mi><mi>n</mi></msub><mspace width="2em"/><mo>⇒</mo><mspace width="2em"/><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><mfrac><mrow><msub><mi>M</mi><mi>u</mi></msub></mrow><mrow><mi>φ</mi></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">con la fórmula aproximada</div><div class="ex"><math display="block"><mrow><mfrac><mrow><msub><mi>M</mi><mi>u</mi></msub></mrow><mrow><mi>φ</mi></mrow></mfrac><mo>=</mo><msub><mi>A</mi><mrow><mi>s</mi><mo>,</mo><mi>e</mi></mrow></msub><mo>·</mo><msub><mi>f</mi><mi>y</mi></msub><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>d</mi><mo>−</mo><msup><mi>d</mi><mrow><mo>′</mo></mrow></msup><mo stretchy="false">)</mo></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">despejando, donde φ = 0,9</div><div class="ex"><math display="block"><mrow><msub><mi>A</mi><mrow><mi>s</mi><mo>,</mo><mi>e</mi></mrow></msub><mo>=</mo><mfrac><mrow><msub><mi>M</mi><mi>u</mi></msub></mrow><mrow><mi>φ</mi><mo>·</mo><msub><mi>f</mi><mi>y</mi></msub><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>d</mi><mo>−</mo><msup><mi>d</mi><mrow><mo>′</mo></mrow></msup><mo stretchy="false">)</mo></mrow></mfrac><mspace width="2em"/><mi>φ</mi><mo>=</mo><mn>0,9</mn></mrow></math></div><div class="tag"></div></div>
+      </div>
+        <p>"Este método da una muy buena aproximación de M<sub>n</sub>, pero no tan buena de la profundidad del eje neutro."</p>
+      </div>
+      <div class="box nota">
+        <span class="lbl">Aclaración · cuándo la fórmula aproximada deja de estar del lado seguro</span>
+        <p>Sin armadura comprimida, el brazo real es d − a/2 y la fórmula usa d − d'. Con d'/d = 0,10, comparando con la fórmula exacta de una viga simplemente armada (cálculo propio):</p>
+        <div class="tbl"><table>
+          <thead><tr><th></th><th class="num">H-20</th><th class="num">H-25</th><th class="num">H-30</th></tr></thead>
+          <tbody>
+            <tr><td>Cuantía para la que coinciden (a/2 = d')</td><td class="num">0,81 %</td><td class="num">1,01 %</td><td class="num">1,21 %</td></tr>
+            <tr><td>Con ρ = 0,5 %: momento aproximado respecto del exacto</td><td class="num">−4 %</td><td class="num">−5 %</td><td class="num">−6 %</td></tr>
+            <tr><td>En el límite del 201-25 (c/d<sub>t</sub> = 0,375, brazo real 0,84d)</td><td class="num">+7 %</td><td class="num">+7 %</td><td class="num">+7 %</td></tr>
+          </tbody>
+        </table></div>
+        <p>Por debajo de esas cuantías la fórmula es conservadora; por encima, y sin armadura comprimida, sobrestima M<sub>n</sub> (en el ejemplo de 30 × 60 cm de arriba, +2,6 %). Con armadura comprimida, como exige el IC 103 en rótulas (A'<sub>s</sub> ≥ 0,5A<sub>s</sub>), parte de la compresión la toman las barras de arriba y la aproximación mejora: en el Apéndice D quedó 3,3 % del lado seguro. El φ = 0,9 es correcto para vigas, porque el 201-25 las obliga a ser controladas por tracción (9.3.3.1) y el IC 103 usa 0,90 para flexión.</p>
+      </div>
       <div class="box torrisi">
         <span class="lbl">Aporte de Torrisi · §3.7, §3.16 y §3.17, págs. 48–53 y 93–100</span>
         <p>Agrega un criterio de uso: la fórmula aproximada supone A'<sub>s</sub> comparable a A<sub>s</sub>. Sin reversión de esfuerzos (A'<sub>s</sub> solo de montaje) <strong>no la recomienda</strong>; con reversión sísmica "se puede ocupar sin problema".</p>

@@ -188,6 +188,73 @@ td.num,th.num{text-align:right}
   .topbar .site{display:none}
   .topbar-in{gap:0}
 }
+
+/* ---------- botón Emitir PDF ---------- */
+.pdf-btn{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-family:var(--display);font-size:13.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid transparent;border-radius:8px;padding:7px 12px;text-decoration:none;white-space:nowrap;cursor:pointer;flex:none}
+.pdf-btn:hover{border-color:var(--accent)}
+.pdf-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pdf-btn[aria-busy="true"]{opacity:.6;cursor:progress}
+@media (max-width:560px){.pdf-btn span{display:none}.pdf-btn{padding:7px 9px}}
+.print-only{display:none}
+
+/* ---------- impresión / PDF ---------- */
+@page{size:A4;margin:16mm 14mm 17mm 14mm;
+  @bottom-center{content:counter(page) " / " counter(pages);font-family:Archivo,Arial,sans-serif;font-size:8.5pt;color:#5B636A}
+  @top-right{content:"Repaso de materias";font-family:Archivo,Arial,sans-serif;font-size:8pt;color:#8A9197}}
+@page :first{@top-right{content:none}}
+@media print{
+  :root:not(#_p){
+    color-scheme:light;
+    --bg:#FFFFFF; --surface:#FFFFFF; --ink:#15191D; --muted:#4F575E; --rule:#CBD0CA;
+    --accent:#2F5570; --accent-soft:#E6EDF3;
+    --torrisi:#2F6E55; --torrisi-bg:#E9F2EC;
+    --old:#A8500F; --old-bg:#FCECDC; --old-rule:#E3A069;
+    --nota:#46525C; --nota-bg:#EEF0F3; --clase:#5B4B8A; --clase-bg:#F2EEF8;
+    --err:#A8322B; --err-bg:#F8E5E2; --ok:#2E6B3F; --fig-bg:#FFFFFF; --topbar-h:0px;
+  }
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html{scroll-behavior:auto}
+  body{background:#FFFFFF;font-size:10.4pt;line-height:1.5;padding:0}
+  .topbar,.side,.toc-toggle,.pdf-btn,.materia[data-print="no"]{display:none!important}
+  .materia[hidden]:not([data-print="no"]){display:block!important}
+  .materia + .materia:not([data-print="no"]){break-before:page}
+  .layout{display:block;max-width:none;margin:0;padding:0}
+  main{max-width:none;padding:0}
+  .print-only{display:block}
+  .hero{padding-bottom:10pt}
+  h1{font-size:26pt}
+  h2{break-before:page;font-size:19pt;margin:0 0 4pt}
+  h3{font-size:13pt;margin:16pt 0 5pt}
+  h4{font-size:11pt;margin:12pt 0 4pt}
+  h2,h3,h4,.unit-meta,.deriv .dt,.box .lbl{break-after:avoid}
+  p,li{orphans:3;widows:3}
+  figure,.eq,.deriv .st,tr,.legend,.sources div,.synth .row{break-inside:avoid}
+  figure{margin:10pt 0 12pt}
+  figure .frame{padding:6pt}
+  figure img{max-height:118mm;width:auto!important}
+  figure.w-sm img{max-width:92mm}
+  figure.w-md img{max-width:125mm}
+  figcaption{font-size:8.6pt}
+  .box{font-size:9.8pt;padding:8pt 10pt 2pt;margin:10pt 0 12pt}
+  .tbl,.eq,.deriv .ex,math[display="block"]{overflow:visible}
+  table{font-size:8.6pt}
+  th,td{padding:4pt 6pt}
+  .eq{padding:6pt 10pt;margin:6pt 0 10pt}
+  .deriv{padding:2pt 10pt;margin:8pt 0 12pt}
+  .deriv .st{padding:5pt 0}
+  .deriv .why{font-size:8.6pt}
+  math{font-size:1em}
+  .pg{font-size:7.6pt}
+  a{color:inherit;text-decoration:none}
+  .print-toc{break-before:page;break-after:page}
+  .print-toc a.active{background:none;font-weight:inherit;color:inherit}
+  .print-toc h2{break-before:avoid;font-size:17pt;margin:0 0 8pt}
+  .print-toc ul{list-style:none;margin:0;padding:0;font-family:var(--display);font-size:9.6pt;line-height:1.45}
+  .print-toc li.unit{margin-top:6pt;font-weight:700}
+  .print-toc li.unit ul{font-weight:500;padding-left:12pt;color:var(--muted)}
+  .print-toc a{display:inline;padding:0;color:inherit}
+  .print-date{font-family:var(--display);font-size:9pt;color:var(--muted);margin-top:8pt}
+}
 </style>
 </head>
 <body>
@@ -198,6 +265,7 @@ td.num,th.num{text-align:right}
       <button class="tab" role="tab" id="tab-h1" aria-controls="m-h1" aria-selected="true" data-key="h1" type="button">Hormigón 1</button>
       <button class="tab" role="tab" id="tab-h2" aria-controls="m-h2" aria-selected="false" data-key="h2" type="button" tabindex="-1">Hormigón 2 <span class="soon-dot">próximamente</span></button>
     </nav>
+    <a class="pdf-btn" id="btnPdf" href="#pdf" role="button" title="Genera el PDF del documento completo (en el diálogo de impresión, elegí Guardar como PDF)"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M7 3h7l4 4v14H7z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M14 3v4h4"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M10 12.5h5M10 16h5"/></svg><span>Emitir PDF</span></a>
   </div>
 </header>
 
@@ -2262,7 +2330,7 @@ td.num,th.num{text-align:right}
 </div>
 </section>
 
-<section class="materia" id="m-h2" role="tabpanel" aria-labelledby="tab-h2" hidden>
+<section class="materia" id="m-h2" role="tabpanel" aria-labelledby="tab-h2" data-print="no" hidden>
   <div class="placeholder">
     <p class="eyebrow">FI · UNCuyo · IMERIS</p>
     <h1>Hormigón Armado II</h1>
@@ -2340,6 +2408,70 @@ td.num,th.num{text-align:right}
   var start = panels[h] ? h : null;
   if (!start && h) { var el = document.getElementById(h); if (el) { var p = el.closest('.materia'); if (p) start = p.id.replace('m-',''); } }
   show(start || stored() || 'h1', !!h);
+})();
+</script>
+<script>
+(function(){
+  var PAGES = "https://agustinchiconi-debug.github.io/repositorio-agustin-chiconi/repaso-materias/repaso-materias.html";
+  var btn = document.getElementById('btnPdf');
+  if (!btn) return;
+  var framed = true;
+  try { framed = window.self !== window.top; } catch(e) {}
+  // En el visor de claude.ai (y en otros marcos) no se puede imprimir: el botón abre la copia de GitHub, que imprime sola.
+  if (framed) {
+    btn.href = PAGES + '#pdf';
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+    btn.title = 'Abre la versión publicada en GitHub y genera ahí el PDF del documento completo';
+    return;
+  }
+  var prepared = false;
+  function fecha(){
+    var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+  }
+  function prepare(){
+    document.querySelectorAll('img[loading="lazy"]').forEach(function(im){ im.loading = 'eager'; });
+    if (!prepared) {
+      prepared = true;
+      document.querySelectorAll('.materia:not([data-print="no"])').forEach(function(m){
+        var main = m.querySelector('main'), toc = m.querySelector('.toc');
+        if (!main || !toc) return;
+        var box = document.createElement('section');
+        box.className = 'print-only print-toc';
+        box.innerHTML = '<h2>Índice</h2>';
+        box.appendChild(toc.cloneNode(true));
+        var first = main.querySelector('h2');
+        var sec = first ? first.closest('section') : null;
+        main.insertBefore(box, sec && sec.parentNode === main ? sec : (first && first.parentNode === main ? first : null));
+        var hero = m.querySelector('.hero');
+        if (hero) {
+          var pd = document.createElement('p');
+          pd.className = 'print-only print-date';
+          pd.textContent = 'Documento completo, generado el ' + fecha() + '.';
+          hero.appendChild(pd);
+        }
+      });
+    }
+    var imgs = Array.prototype.slice.call(document.images);
+    return Promise.all(imgs.map(function(im){
+      if (im.complete && im.naturalWidth) return im.decode ? im.decode().catch(function(){}) : null;
+      return new Promise(function(r){ im.addEventListener('load', r, {once:true}); im.addEventListener('error', r, {once:true}); setTimeout(r, 4000); });
+    }));
+  }
+  function emitir(){
+    btn.setAttribute('aria-busy', 'true');
+    prepare().then(function(){
+      btn.removeAttribute('aria-busy');
+      setTimeout(function(){ window.print(); }, 60);
+    });
+  }
+  btn.addEventListener('click', function(e){ e.preventDefault(); emitir(); });
+  window.addEventListener('beforeprint', function(){ prepare(); });
+  if (location.hash === '#pdf') {
+    if (document.readyState === 'complete') emitir();
+    else window.addEventListener('load', emitir);
+  }
 })();
 </script>
 </body>

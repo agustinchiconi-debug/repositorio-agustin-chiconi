@@ -135,7 +135,10 @@ class P:
             if cmd in ('frac', 'dfrac'):
                 n = self.group()
                 d = self.group()
-                return '<mfrac><mrow>%s</mrow><mrow>%s</mrow></mfrac>' % (''.join(n), ''.join(d))
+                fr = '<mfrac><mrow>%s</mrow><mrow>%s</mrow></mfrac>' % (''.join(n), ''.join(d))
+                if cmd == 'dfrac':
+                    return '<mstyle displaystyle="true">%s</mstyle>' % fr
+                return fr
             if cmd == 'sqrt':
                 x = self.group()
                 return '<msqrt>%s</msqrt>' % ''.join(x)

@@ -123,7 +123,7 @@ input.sw{width:34px;height:26px;padding:1px;border-radius:4px;cursor:pointer}
 <div class="wrap">
   <header>
     <div class="row" style="gap:14px"><h1>Flexión y Flexocompresión H°A°</h1><button type="button" id="dlHtml" hidden>Descargar HTML</button><span class="hint" id="dlMsg"></span></div>
-    <p>Secciones rectangular, T, L, cruz y circular: flexión con axial en una y dos direcciones, por compatibilidad de deformaciones. CIRSOC 201-25 / INPRES-CIRSOC 103 Parte II-2021. Unidades: t, cm, tm (g = 10).</p>
+    <p>Secciones rectangular, T y L: flexión con axial en una y dos direcciones, por compatibilidad de deformaciones. CIRSOC 201-25 / INPRES-CIRSOC 103 Parte II-2021. Unidades: t, cm, tm (g = 10).</p>
   </header>
   <div class="projbar" role="toolbar" aria-label="Proyecto">
     <span class="projname" id="projName">Proyecto sin guardar</span>
@@ -288,7 +288,7 @@ input.sw{width:34px;height:26px;padding:1px;border-radius:4px;cursor:pointer}
         <div id="p2d" class="plot"></div>
         <div class="tbl-wrap">
           <table id="pts">
-            <thead><tr><th>Punto notable (rama +, todos por equilibrio seccional)</th><th class="num">c [cm]</th><th class="num">Mn [tm]</th><th class="num">Pn [t]</th></tr></thead>
+            <thead><tr><th>Punto notable (curva nominal, equilibrio seccional)</th><th class="num">c [cm]</th><th class="num">Mn [tm]</th><th class="num">Pn [t]</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -654,7 +654,9 @@ function render(){
     let cap=null, ratio, txt;
     if(L.P>m.cap){ ratio=L.P/m.cap; txt='Pu supera φPn,max'; }
     else if(L.P<m.phiT*m.Pt){ ratio=L.P/(m.phiT*m.Pt); txt='Pu supera la tracción de diseño'; }
-    else if(Mu<1e-9){ ratio=L.P>=0?L.P/m.cap:L.P/(m.phiT*m.Pt); txt='Solo axial'; }
+    else if(Mu<1e-9){ const pts=contour(m,L.P,true);
+      if(pts && inPoly(pts,0,0)){ ratio=L.P>=0?L.P/m.cap:L.P/(m.phiT*m.Pt); txt='Solo axial'; }
+      else { ratio=Infinity; txt='Solo axial, pero con esta armadura asimétrica M = 0 queda fuera de la superficie a este Pu'; } }
     else{
       const pts=contour(m,L.P,true);
       cap=pts?rayHit(pts,L.Mx/Mu,L.My/Mu):null;
@@ -714,7 +716,25 @@ function draw2D(m){
   const dt=Math.max(...m.bars.map(q=>{const ux=Math.cos(th1),uy=Math.sin(th1);const pr=CORN(m).map(p=>p[0]*ux+p[1]*uy);return Math.max(...pr)-(q.x*ux+q.y*uy);}));
   const cb=dt*0.003/(0.003+m.ety);
   const c0=solveC(m,th1,0,false);
-  const rows=[['Tracción pura',0,section(m,th1,0)],['Flexión pura (Pn = 0, análisis seccional)',c0,c0?section(m,th1,c0):null],['Falla balanceada (εt = εty)',cb,section(m,th1,cb)],['Quiebre de φ (εt = εty + 0,003)',dt*0.003/(0.006+m.ety),section(m,th1,dt*0.003/(0.006+m.ety))],['Compresión pura',Infinity,section(m,th1,Infinity)]];
+  // cruces de la curva nominal con M = 0 (tracción pura y compresión pura, e = 0)
+  const cross=()=>{ const D1=depthRange(m,th1), D2=depthRange(m,th2);
+    const cs1=[0,...cGrid(D1,m,400),Infinity], cs2=[Infinity,...cGrid(D2,m,400).reverse(),0];
+    const poly=[...cs1.map(c=>({c,th:th1,r:section(m,th1,c)})), ...cs2.map(c=>({c,th:th2,r:section(m,th2,c)}))];
+    const hits=[];
+    for(let i=0;i+1<poly.length;i++){ const A=poly[i],B=poly[i+1], ma=A.r[comp], mb=B.r[comp];
+      if(ma===0){ hits.push({P:A.r.P,c:A.c,th:A.th}); continue; }
+      if(ma*mb<0){ // refinar por bisección sobre c en la misma rama
+        if(A.th===B.th && isFinite(A.c)&&isFinite(B.c)&&A.c>0&&B.c>0){ let lo=A.c,hi=B.c,flo=ma;
+          for(let k=0;k<60;k++){ const mid=Math.sqrt(lo*hi), fm=section(m,A.th,mid)[comp]; if(fm*flo>0){lo=mid;flo=fm;} else hi=mid; }
+          const c=Math.sqrt(lo*hi); hits.push({P:section(m,A.th,c).P,c,th:A.th}); }
+        else { const t=ma/(ma-mb); hits.push({P:A.r.P+t*(B.r.P-A.r.P),c:null,th:A.th}); } } }
+    if(!hits.length) return {t:null,cmp:null};
+    hits.sort((x,y)=>x.P-y.P); return {t:hits[0], cmp:hits[hits.length-1]}; };
+  const X0=cross();
+  const zr=h=>h?{[comp]:0,P:h.P}:null;
+  if(X0.cmp && Math.abs(X0.cmp.P-m.P0)<1e-6*m.P0) X0.cmp.c=Infinity;
+  if(X0.t && Math.abs(X0.t.P-m.Pt)<1e-6*Math.abs(m.Pt)) X0.t.c=0;
+  const rows=[['1 · Tracción pura (Mn = 0)',X0.t?.c??null,zr(X0.t)],['2 · Compresión pura (Mn = 0)',X0.cmp?.c??null,zr(X0.cmp)],['3 · Flexión pura (Pn = 0)',c0,c0?section(m,th1,c0):null],['4 · Falla balanceada (εt = εty)',cb,section(m,th1,cb)],['Referencia: fin de control por tracción (εt = εty + 0,003)',dt*0.003/(0.006+m.ety),section(m,th1,dt*0.003/(0.006+m.ety))],['Tracción máxima (Pnt = fy·Ast, todo el acero en fluencia)',0,section(m,th1,0)],['Compresión máxima (Po = 0,85·f’c·(Ag − Ast) + fy·Ast)',Infinity,section(m,th1,Infinity)]];
   // comparación solicitaciones vs. diseño en esta dirección
   { const pill=(ok,t)=>`<span class="pill ${ok?'ok':'bad'}">${t}</span>`;
     const Pt_d=m.phiT*m.Pt;
@@ -723,8 +743,15 @@ function draw2D(m){
       let cap=null, ok, note='';
       if(L.P>m.cap){ ok=false; note='Pu > φPn,máx'; }
       else if(L.P<Pt_d){ ok=false; note='Pu supera la tracción de diseño'; }
-      else { const c=solveC(m,th,L.P,true); if(c!=null){ const r=design(m,section(m,th,c)); cap=Math.abs(show.ax==='x'?r.Mx:r.My); } ok = cap!=null && Math.abs(Mu)<=cap+1e-9; if(cap==null) note='fuera del diagrama'; }
-      const ratio = cap ? Math.abs(Mu)/cap : null;
+      else {
+        const lim=t=>{ const c=solveC(m,t,L.P,true); if(c==null) return null; const r=design(m,section(m,t,c)); return show.ax==='x'?r.Mx:r.My; };
+        const hi=lim(th1), lo=lim(th2);                                   // límites con signo a la altura Pu
+        if(hi==null||lo==null){ ok=false; note='fuera del diagrama'; }
+        else { ok = Mu>=lo-1e-9 && Mu<=hi+1e-9; cap = Mu>=0?hi:lo;
+          if(!ok && Math.abs(Mu)<1e-9) note=`a este Pu el diagrama va de ${fmt(lo,2)} a ${fmt(hi,2)} tm: M = 0 queda afuera (armadura asimétrica)`;
+          else if(!ok) note='fuera del diagrama'; }
+      }
+      const ratio = (cap!=null && Math.abs(Mu)>1e-9 && Math.sign(cap)===Math.sign(Mu)) ? Math.abs(Mu)/Math.abs(cap) : null;
       return `<tr><td style="font-family:var(--sans)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${L.color};margin-right:6px;vertical-align:middle"></span>${L.name}</td><td class="num">${fmt(L.P,1)}</td><td class="num">${fmt(Mu,2)}</td><td class="num">${cap!=null?fmt(cap,2):'—'}</td><td class="num">${fmt(m.cap,1)}</td><td class="num">${ratio!=null?fmt(ratio,2):'—'}</td><td>${pill(ok, ok?'Verifica':'No verifica')} <span class="hint">${note}</span></td></tr>`;
     }).join('');
     $('cmp2dTxt').textContent = `Flexocompresión recta según ${show.ax==='x'?'x (Mux)':'y (Muy)'}: se toma solo la componente del momento en esta dirección; para el caso con los dos momentos ver "Verificación de casos" (oblicua). φMn es la capacidad de diseño a la altura Pu en la rama del signo de Mu.`;

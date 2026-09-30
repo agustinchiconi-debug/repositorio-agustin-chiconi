@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Anclajes al Hormigón · Cap. 17</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* Mismo sistema que "Flexión y Flexocompresión H°A°": panel de datos a la izquierda, dibujo 3D y resultados a la derecha */
+:root{
+  --bg:#EEF0EE; --surface:#FAFBFA; --ink:#1B2226; --muted:#5B656A; --line:#D3D8D6;
+  --accent:#2E5B87; --accent-soft:#DCE6F0; --steel:#A8741F; --concrete:#C9CECB; --load:#B0118A; --shear:#5E3FA0;
+  --ok:#2F7A4E; --ok-soft:#DDEFE3; --warn:#9A6A12; --warn-soft:#F5EAD2; --bad:#8E3B5A; --bad-soft:#F2DEE6;
+  --cone:#2E7A74;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#13181B; --surface:#1B2226; --ink:#E3E8E9; --muted:#9AA5AA; --line:#2E373C;
+    --accent:#86AEDB; --accent-soft:#233447; --steel:#D8A553; --concrete:#3A4449; --load:#FF5FD2; --shear:#B997DE;
+    --ok:#7CC49A; --ok-soft:#1E3528; --warn:#E0B460; --warn-soft:#3A2F17; --bad:#E08FAE; --bad-soft:#3D2230;
+    --cone:#6CC4BC;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#13181B; --surface:#1B2226; --ink:#E3E8E9; --muted:#9AA5AA; --line:#2E373C;
+  --accent:#86AEDB; --accent-soft:#233447; --steel:#D8A553; --concrete:#3A4449; --load:#FF5FD2; --shear:#B997DE;
+  --ok:#7CC49A; --ok-soft:#1E3528; --warn:#E0B460; --warn-soft:#3A2F17; --bad:#E08FAE; --bad-soft:#3D2230;
+  --cone:#6CC4BC;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:18px 40px;margin:0}
+.wrap{max-width:1500px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;border-bottom:1px solid var(--line);padding-bottom:12px}
+h1{font-family:var(--cond);font-weight:600;font-size:26px;letter-spacing:.01em;margin:0;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:74ch}
+.grid{display:grid;grid-template-columns:minmax(360px,440px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;display:grid;gap:12px;min-width:0}
+h2{font-family:var(--cond);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.06em;margin:0;color:var(--muted)}
+h3{font-family:var(--cond);font-weight:600;font-size:14px;margin:0;color:var(--ink)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.fields .full{grid-column:1/-1}
+label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+input,select{font:inherit;font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 7px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+select{font-family:var(--sans)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-weight:500;font-size:11px;color:var(--muted);text-align:left;padding:4px 4px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.04em}
+td{padding:3px 4px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px;vertical-align:top}
+td.t{font-family:var(--sans);font-size:12.5px}
+td.num,th.num{text-align:right}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:4px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.main{display:grid;gap:16px;min-width:0}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.kv div{display:grid;gap:1px;padding:7px 9px;background:var(--bg);border-radius:4px}
+.kv span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.kv b{font-family:var(--mono);font-weight:500;font-size:15px}
+.pill{font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;white-space:nowrap;font-family:var(--sans)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.na{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.verdict{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-radius:6px;font-family:var(--cond);font-weight:600;font-size:17px;letter-spacing:.01em}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict.warn{background:var(--warn-soft);color:var(--warn)}
+.verdict small{font-family:var(--sans);font-weight:400;font-size:13px;color:var(--ink)}
+#p3d{width:100%;height:540px}
+@media (max-width:640px){#p3d{height:400px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.projbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.projname{font-family:var(--cond);font-weight:600;font-size:15px;margin-right:6px}
+.projbar button{background:var(--surface)}
+#pSave{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.projpanel{max-width:760px}
+.capd span{display:inline}
+.capd{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 9px;cursor:pointer}
+.capd input{width:18px;height:18px;margin:0;accent-color:var(--accent);flex:none}
+.capd:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.inf{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.notes{font-size:12px;color:var(--muted);display:grid;gap:4px}
+.notes p{margin:0;max-width:100ch}
+details{border-top:1px solid var(--line);padding-top:6px}
+details summary{cursor:pointer;font-family:var(--cond);font-weight:600;font-size:14px;color:var(--ink)}
+.calc{font-family:var(--sans);font-size:13.5px;line-height:1.6;background:var(--bg);border-left:3px solid var(--accent-soft);border-radius:4px;padding:10px 14px;margin:8px 0 4px;overflow-x:auto;display:grid;gap:3px}
+.calc p{margin:0}
+.calc p.in{padding-left:18px}
+.calc .g{display:inline-block;margin-right:22px}
+.calc .ar{color:var(--accent);font-weight:600}
+.calc .gap{height:6px}
+.calc ul{margin:2px 0;padding-left:20px;display:grid;gap:2px}
+.calc table{width:auto;min-width:60%;margin:4px 0;background:var(--surface);border:1px solid var(--line)}
+.calc th{text-transform:none;letter-spacing:0;font-size:12px;padding:5px 10px;background:var(--accent-soft);color:var(--ink)}
+.calc td{font-family:var(--sans);font-size:13px;padding:4px 10px;text-align:center}
+.calc sub,.calc sup{font-size:.72em}
+details summary{padding:4px 0}
+#memo details[open]{padding-bottom:6px}
+.sec{display:grid;gap:10px;padding-top:10px;border-top:1px solid var(--line)}
+.sec:first-of-type{border-top:0;padding-top:0}
+.err{color:var(--bad);font-size:13px;margin:0}
+.schem{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.schem figure{margin:0;display:grid;gap:4px}
+.schem canvas{width:100%;height:280px;background:var(--bg);border-radius:4px}
+.schem figcaption{font-size:12px;color:var(--muted)}
+.desc{margin:6px 0 0;max-width:100ch;font-size:12.5px;color:var(--ink)}
+
+input.sw{width:34px;height:26px;padding:1px;border-radius:4px;cursor:pointer}
+#cases td input,#aLoads td input,#angTbl td input{min-width:62px;padding:3px 5px}
+#cases td:nth-child(2) input{min-width:88px}
+#caseSum td:first-child{font-family:var(--sans)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+tr.gov td{background:var(--accent-soft)}
+button.x{padding:2px 8px;color:var(--muted)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="row" style="gap:14px"><h1>Verificación de Anclajes al Hormigón</h1><button type="button" id="dlHtml" hidden>Descargar HTML</button><span class="hint" id="dlMsg"></span></div>
+    <p>CIRSOC 201-25, Capítulo 17 (17.1 a 17.9): tracción, corte, interacción y detalles contra el hendimiento. Geometría en mm; cargas mayoradas en t o kN (g = 10). Sismo (17.10): INPRES-CIRSOC 103 Parte II-2021, no incluido.</p>
+  </header>
+  <div class="projbar" role="toolbar" aria-label="Proyecto">
+    <span class="projname" id="projName">Proyecto sin guardar</span>
+    <button type="button" id="pSave">Guardar proyecto</button>
+    <button type="button" id="pOpen">Abrir proyecto</button><input type="file" id="pFile" accept=".json,application/json" hidden>
+    <button type="button" id="wordBtn">Descargar memoria</button>
+    <button type="button" id="pClear">Limpiar</button>
+    <span class="hint" id="pMsg" aria-live="polite"></span><span class="hint" id="wordMsg" aria-live="polite"></span>
+  </div>
+  <div class="panel projpanel" id="pSavePanel" hidden>
+    <div class="row"><label style="flex:1"><span>Nombre del proyecto</span><input id="pSaveName" placeholder="Ej.: Cáncamo de izaje – ménsula 3950"></label>
+    <button type="button" id="pSaveOk">Guardar</button><button type="button" id="pSaveCancel">Cancelar</button></div>
+  </div>
+  <div class="panel projpanel" id="pClearPanel" hidden>
+    <div class="row"><span>¿Borrar todos los datos y empezar de cero?</span><button type="button" id="pClearOk">Sí, limpiar</button><button type="button" id="pClearCancel">Cancelar</button></div>
+  </div>
+
+  <div class="grid">
+    <aside class="panel" aria-label="Datos de entrada">
+      <div class="sec">
+        <h2>1 · Hormigón</h2>
+        <div class="fields">
+          <label><span>Largo en X, L<sub>x</sub> [mm]</span><input id="Lx" type="number" step="10" value="530"></label>
+          <label><span>Ancho en Y, L<sub>y</sub> [mm]</span><input id="Ly" type="number" step="10" value="80"></label>
+          <label><span>Espesor, h<sub>a</sub> [mm]</span><input id="ha" type="number" step="10" value="300"></label>
+          <label><span>f'c [MPa]</span><input id="fc" type="number" step="1" value="30"></label>
+        </div>
+        <label class="capd"><input type="checkbox" id="infAll"> Hormigón infinito (sin bordes cercanos)</label>
+        <div class="inf" id="infBox">
+          <label class="capd"><input type="checkbox" id="infX1"> Sin borde −X</label>
+          <label class="capd"><input type="checkbox" id="infX2"> Sin borde +X</label>
+          <label class="capd"><input type="checkbox" id="infY1"> Sin borde −Y</label>
+          <label class="capd"><input type="checkbox" id="infY2"> Sin borde +Y</label>
+          <label class="capd"><input type="checkbox" id="infH"> Espesor infinito</label>
+        </div>
+        <div class="fields">
+          <label><span>Tipo de hormigón</span><select id="lw"><option value="1">Peso normal (λ = 1,0)</option><option value="0.75">Liviano (λ = 0,75)</option></select></label>
+          <label><span>Estado en servicio</span><select id="crk"><option value="0">No fisurado</option><option value="1">Fisurado</option></select></label>
+          <label class="full"><span>Armadura suplementaria que controla el desprendimiento (17.5.3, condición A)</span><select id="supp"><option value="0">No (condición B)</option><option value="1">Sí (condición A)</option></select></label>
+          <label class="full"><span>Armadura de borde para ψ<sub>c,V</sub> (solo hormigón fisurado, 17.7.2.5)</span><select id="edgeR"><option value="1.0">Sin armadura de borde o menor que ø12</option><option value="1.2">Barra de borde ≥ ø12</option><option value="1.4">Barra de borde ≥ ø12 y estribos ≤ 100 mm</option></select></label>
+          <label><span>Recubrimiento del anclaje [mm]</span><input id="cover" type="number" step="5" value="20"></label>
+          <label><span>Tamaño máx. del agregado [mm]</span><input id="agg" type="number" step="1" value="19"></label>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h2>2 · Anclaje</h2>
+        <div class="fields">
+          <label class="full"><span>Tipo de anclaje (17.1.2)</span><select id="tipo">
+            <option value="cabeza">Pre-instalado con cabeza (perno o bulón)</option>
+            <option value="gancho" selected>Pre-instalado con gancho (bulón J o L, cáncamo)</option>
+            <option value="torque">Post-instalado de expansión, controlado por torque</option>
+            <option value="desplaz">Post-instalado de expansión, controlado por desplazamiento</option>
+            <option value="sobre">Post-instalado con sobreperforación en la base</option>
+            <option value="tornillo">Post-instalado de tornillo</option>
+            <option value="adhesivo">Adhesivo (químico)</option>
+          </select></label>
+          <label><span>Comportamiento del acero</span><select id="duct"><option value="1">Dúctil</option><option value="0">Frágil</option></select></label>
+          <label><span>Vástago</span><select id="vast"><option value="liso">Liso (sección plena)</option><option value="rosca">Roscado (fondo de rosca)</option></select></label>
+          <label><span>Diámetro d<sub>a</sub> [mm]</span><input id="da" type="number" step="1" value="12"></label>
+          <label data-show="rosca"><span>Hilos por mm, n<sub>t</sub></span><input id="nt" type="number" step="0.05" value="0.5"></label>
+          <label><span>f<sub>ya</sub> [MPa]</span><input id="fya" type="number" step="10" value="220"></label>
+          <label><span>f<sub>uta</sub> [MPa]</span><input id="futa" type="number" step="10" value="220"></label>
+          <label><span>Empotramiento h<sub>ef</sub> [mm] (a lo largo de la barra)</span><input id="hef" type="number" step="5" value="250"></label>
+          <label class="capd full"><input type="checkbox" id="angInd"> Inclinación distinta para cada barra</label>
+          <label><span data-angl>Inclinación en X, α<sub>x</sub> [°]</span><input id="angx" type="number" step="1" value="0"></label>
+          <label><span data-angl>Inclinación en Y, α<sub>y</sub> [°]</span><input id="angy" type="number" step="1" value="0"></label>
+          <div class="full" id="angBox" style="grid-column:1/-1;display:grid;gap:6px" hidden>
+            <div class="row"><button type="button" id="angAll">Igual para todas</button><button type="button" id="angOut">Simétricas, puntas hacia afuera</button><button type="button" id="angIn">Simétricas, puntas hacia adentro</button></div>
+            <div class="tbl-wrap"><table id="angTbl"><thead><tr><th>#</th><th>x [mm]</th><th>y [mm]</th><th>α<sub>x</sub> [°]</th><th>α<sub>y</sub> [°]</th></tr></thead><tbody></tbody></table></div>
+          </div>
+          <p class="hint full" style="grid-column:1/-1">α respecto de la vertical, en el plano xz (α<sub>x</sub>) y en el plano yz (α<sub>y</sub>). Positivo: la punta de la barra se corre hacia +X / +Y al bajar. Con barras distintas, los botones usan los valores de arriba como magnitud.</p>
+          <label data-show="cabeza"><span>Área de apoyo de la cabeza, A<sub>brg</sub> [mm²]</span><input id="Abrg" type="number" step="10" value="300"></label>
+          <label data-show="gancho"><span>Longitud del gancho, e<sub>h</sub> [mm]</span><input id="eh" type="number" step="5" value="120"></label>
+          <label data-show="gancho"><span>Dirección de los ganchos</span><select id="hookDir"><option value="in">Hacia adentro (al centro del grupo)</option><option value="out">Hacia afuera</option><option value="px">Todos hacia +X</option><option value="nx">Todos hacia −X</option><option value="py">Todos hacia +Y</option><option value="ny">Todos hacia −Y</option></select></label>
+          <label data-show="cast"><span>¿Se aprieta con torque? (17.9.2)</span><select id="torq"><option value="0">No</option><option value="1">Sí</option></select></label>
+          <label data-show="post"><span>Categoría ACI 355.2 / 355.4</span><select id="cat"><option value="1">1 · baja sensibilidad</option><option value="2">2 · media</option><option value="3">3 · alta</option></select></label>
+          <label><span>k<sub>c</sub> (17.6.2.2)</span><input id="kc" type="number" step="0.5" value="10"></label>
+          <label data-show="mech"><span>N<sub>p</sub> de ensayos [en la unidad de salida]</span><input id="Npt" type="number" step="0.1" value="0"></label>
+          <label data-show="adhesivo"><span>τ<sub>cr</sub> fisurado [MPa]</span><input id="tcr" type="number" step="0.1" value="1.4"></label>
+          <label data-show="adhesivo"><span>τ<sub>uncr</sub> no fisurado [MPa]</span><input id="tuncr" type="number" step="0.1" value="4.5"></label>
+          <label data-show="cabeza" class="full"><span>Pernos con cabeza soldados en forma continua a la placa (17.7.2.2.2)</span><select id="weld"><option value="0">No</option><option value="1">Sí (coeficiente 0,66)</option></select></label>
+          <label class="full"><span>Placa sobre mortero de nivelación (17.7.1.2.1)</span><select id="grout"><option value="0">No</option><option value="1">Sí (V<sub>sa</sub> × 0,80)</option></select></label>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h2>3 · Grupo de anclajes</h2>
+        <div class="fields">
+          <label><span>Cantidad en X, n<sub>1</sub></span><input id="n1" type="number" step="1" min="1" value="2"></label>
+          <label><span>Separación en X, s<sub>1</sub> [mm]</span><input id="s1" type="number" step="5" value="70"></label>
+          <label><span>Cantidad en Y, n<sub>2</sub></span><input id="n2" type="number" step="1" min="1" value="1"></label>
+          <label><span>Separación en Y, s<sub>2</sub> [mm]</span><input id="s2" type="number" step="5" value="0"></label>
+          <label><span>Centro del grupo, x<sub>g</sub> [mm]</span><input id="xg" type="number" step="5" value="265"></label>
+          <label><span>Centro del grupo, y<sub>g</sub> [mm]</span><input id="yg" type="number" step="5" value="40"></label>
+        </div>
+        <p class="hint">Origen en la esquina −X −Y de la cara superior. Con un lado infinito, la coordenada se sigue midiendo desde ese origen.</p>
+      </div>
+
+      <div class="sec">
+        <h2>4 · Solicitaciones mayoradas</h2>
+        <div class="fields">
+          <label class="full"><span>Unidad de fuerza</span><select id="unit"><option value="t">t (1 t = 10 kN)</option><option value="kN">kN</option></select></label>
+          <label class="full"><span>Cómo se cargan las solicitaciones</span><select id="loadMode"><option value="placa">Cargas sobre la placa (uno o varios casos)</option><option value="anclaje">Carga mayorada de cada anclaje</option></select></label>
+        </div>
+        <div id="placaBox" style="display:grid;gap:8px">
+          <div class="tbl-wrap"><table id="cases"><thead><tr><th></th><th>Caso</th><th>N<sub>ua</sub></th><th data-show="adhesivo">N<sub>ua,s</sub></th><th>V<sub>ua,x</sub></th><th>V<sub>ua,y</sub></th><th>x [mm]</th><th>y [mm]</th><th>z [mm]</th><th></th></tr></thead><tbody></tbody></table></div>
+          <div class="row"><button type="button" id="addCase">Agregar caso</button><span class="hint">N positiva = tracción. (x, y): punto de aplicación sobre la placa.</span></div>
+        </div>
+        <div id="anchBox" style="display:grid;gap:8px" hidden>
+          <div class="tbl-wrap"><table id="aLoads"><thead><tr><th>#</th><th>x [mm]</th><th>y [mm]</th><th>N<sub>ua,i</sub> según la barra</th><th>V<sub>ua,x,i</sub> adicional</th><th>V<sub>ua,y,i</sub> adicional</th></tr></thead><tbody></tbody></table></div>
+          <label data-show="adhesivo"><span>Tracción sostenida total N<sub>ua,s</sub></span><input id="NusA" type="number" step="0.1" value="0"></label>
+        </div>
+        <div class="fields">
+          <label class="full"><span>Filas que toman el corte hacia el borde (17.7.2.1)</span><select id="vcase">
+            <option value="12">Casos 1 y 2: gobierna el más desfavorable</option>
+            <option value="1">Caso 1: fila delantera con su parte del corte</option>
+            <option value="2">Caso 2: fila trasera con el corte total</option>
+            <option value="3">Caso 3: fila delantera con el corte total</option>
+          </select></label>
+        </div>
+        <p class="hint" id="loadHint"></p>
+      </div>
+    </aside>
+
+    <div class="main">
+      <section class="panel" aria-label="Dibujo 3D">
+        <div class="row" style="justify-content:space-between"><h2>Modelo 3D</h2>
+          <div class="legend"><span><i style="background:var(--steel)"></i>Anclajes</span><span><i style="background:var(--cone)"></i>Área proyectada A<sub>Nc</sub> / A<sub>Vc</sub></span><span><i style="background:var(--load)"></i>Tracción</span><span><i style="background:var(--shear)"></i>Corte</span></div></div>
+        <div id="p3d" role="img" aria-label="Bloque de hormigón con el grupo de anclajes, el área proyectada del cono y las cargas"></div>
+        <p class="err" id="errBox" hidden></p>
+      </section>
+
+      <section class="panel" aria-label="Esquema">
+        <h2>Esquema de barras y cargas</h2>
+        <div class="schem">
+          <figure><canvas id="scXZ" role="img" aria-label="Elevación en el plano xz"></canvas><figcaption>Elevación, plano xz (mirando hacia +Y)</figcaption></figure>
+          <figure><canvas id="scYZ" role="img" aria-label="Elevación en el plano yz"></canvas><figcaption>Elevación, plano yz (mirando hacia −X)</figcaption></figure>
+          <figure><canvas id="scXY" role="img" aria-label="Planta"></canvas><figcaption>Planta, plano xy</figcaption></figure>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Resumen">
+        <div class="row" style="justify-content:space-between;align-items:end"><h2>Resumen de la verificación</h2>
+          <label style="min-width:240px" id="showWrap"><span>Caso que se muestra abajo y en el 3D</span><select id="showCase"></select></label></div>
+        <div class="verdict" id="verdict"></div>
+        <div class="tbl-wrap" id="sumWrap"><table id="caseSum"><thead><tr><th>Caso</th><th class="num">N<sub>ua</sub></th><th class="num">V<sub>ua</sub></th><th class="num">Tracción</th><th class="num">Corte</th><th class="num">Interacción</th><th>Gobierna</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="kv" id="kv"></div>
+      </section>
+
+      <section class="panel" aria-label="Modos de falla">
+        <h2>Modos de falla</h2>
+        <div class="tbl-wrap"><table id="modes"><thead><tr><th>Art.</th><th>Modo</th><th class="num">R<sub>n</sub></th><th class="num">φ</th><th class="num">φR<sub>n</sub></th><th class="num">Solicitación</th><th class="num">Relación</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="tbl-wrap"><table id="det"><thead><tr><th>Art.</th><th>Detalle / límite</th><th>Valor</th><th>Requisito</th><th></th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="panel" aria-label="Reparto">
+        <h2>Reparto por anclaje</h2>
+        <div class="tbl-wrap"><table id="dist"><thead><tr><th>#</th><th class="num">x [mm]</th><th class="num">y [mm]</th><th class="num">N<sub>ua,i</sub></th><th class="num">V<sub>ua,i</sub></th><th class="num">c<sub>−X</sub></th><th class="num">c<sub>+X</sub></th><th class="num">c<sub>−Y</sub></th><th class="num">c<sub>+Y</sub></th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="panel" aria-label="Memoria de cálculo">
+        <h2>Memoria de cálculo</h2>
+        <div id="memo"></div>
+        <div class="notes">
+          <p>Factores φ según Tabla 17.5.3. Modos de acero y arrancamiento: anclaje más solicitado; desprendimiento, descascaramiento lateral y adherencia: grupo (Tabla 17.5.2).</p>
+          <p>Si no verifica el desprendimiento, 17.5.2.1 permite reemplazarlo por una armadura del anclaje (φ = 0,75) desarrollada según el Capítulo 25 a ambos lados de la superficie de falla. Esta herramienta no la calcula.</p>
+          <p>Los datos de anclajes post-instalados (N<sub>p</sub>, τ, k<sub>c</sub>, categoría) deben salir del informe de ensayos del producto (ACI 355.2 / 355.4).</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script id="app">
+(()=>{
+const $=id=>document.getElementById(id);
+const INF=1e7;
+const SRC=(()=>{ const d=document.documentElement.cloneNode(true); d.querySelectorAll("script").forEach(sc=>{ if(sc.id!=="app" && !/plotly|jszip/.test(sc.src||"")) sc.remove(); }); d.querySelectorAll("#dlHtml").forEach(b=>b.remove()); return "<!doctype html>"+String.fromCharCode(10)+d.outerHTML; })();
+const KEYS=['Lx','Ly','ha','fc','lw','crk','supp','edgeR','cover','agg','tipo','duct','vast','da','nt','fya','futa','hef','angx','angy','hookDir','Abrg','eh','torq','cat','kc','Npt','tcr','tuncr','weld','grout','n1','s1','n2','s2','xg','yg','unit','vcase','loadMode','NusA'];
+const CHK=['angInd','infAll','infX1','infX2','infY1','infY2','infH'];
+const v=id=>parseFloat($(id).value); const s=id=>$(id).value;
+const f2=(x,d=2)=>isFinite(x)?x.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+const fmm=x=>x>=INF/2?'∞':f2(x,0);
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const isPost=t=>!['cabeza','gancho'].includes(t);
+
+// ---------- motor (N, mm, MPa) ----------
+function calc(L){
+  const T=s('tipo'), post=isPost(T), U=s('unit')==='t'?10000:1000, un=s('unit');
+  const fc=v('fc'), lam=v('lw'), crk=s('crk')==='1', supp=s('supp')==='1';
+  // 17.2.4.1: λa reduce solo en hormigón liviano (1,0λ pre-instalados y sobreperforación; 0,8λ expansión, tornillo y adhesivo; 0,6λ adherencia)
+  const lamA = lam<1 ? lam*((T==='cabeza'||T==='gancho'||T==='sobre')?1:0.8) : 1, lamB = lam<1 ? 0.6*lam : 1;
+  const inf={x1:$('infX1').checked,x2:$('infX2').checked,y1:$('infY1').checked,y2:$('infY2').checked,h:$('infH').checked};
+  const Lx=v('Lx'), Ly=v('Ly'), ha=inf.h?INF:v('ha');
+  const da=v('da'), Lb=v('hef'), cat=+s('cat');
+  // barra inclinada: eje con pendientes tx, ty respecto de la vertical; h_ef vertical = L_b cos θ
+  const angOf=k=>$('angInd').checked?[+((angs[k]||{}).ax)||0,+((angs[k]||{}).ay)||0]:[v('angx')||0,v('angy')||0];
+  let hef=Lb, incl=false, thDeg=0;
+  const Ase = s('vast')==='liso' ? Math.PI/4*da*da : Math.PI/4*Math.pow(da-0.9743/v('nt'),2);
+  const futa=Math.min(v('futa'),1.9*v('fya'),860);
+  const n1=Math.max(1,Math.round(v('n1'))), n2=Math.max(1,Math.round(v('n2'))), s1=n1>1?v('s1'):0, s2=n2>1?v('s2'):0;
+  const xg=v('xg'), yg=v('yg');
+  const A=[]; for(let j=0;j<n2;j++) for(let i=0;i<n1;i++) A.push({x:xg+(i-(n1-1)/2)*s1, y:yg+(j-(n2-1)/2)*s2});
+  const errs=[];
+  const ed=p=>({x1:inf.x1?INF:p.x, x2:inf.x2?INF:Lx-p.x, y1:inf.y1?INF:p.y, y2:inf.y2?INF:Ly-p.y});
+  A.forEach((p,k)=>{ const [ax,ay]=angOf(k); p.ax=ax; p.ay=ay; if(Math.abs(ax)>=80||Math.abs(ay)>=80) errs.push('Anclaje '+(k+1)+': los ángulos deben estar entre −80° y 80°.');
+    p.tx=Math.tan(Math.max(-80,Math.min(80,ax))*Math.PI/180); p.ty=Math.tan(Math.max(-80,Math.min(80,ay))*Math.PI/180); p.k=Math.sqrt(1+p.tx*p.tx+p.ty*p.ty); p.hv=Lb/p.k; p.th=Math.acos(1/p.k)*180/Math.PI; });
+  hef=Math.min(...A.map(p=>p.hv)); incl=A.some(p=>p.k>1+1e-9); thDeg=Math.max(...A.map(p=>p.th));
+  A.forEach((p,k)=>{ p.i=k+1; p.c=ed(p); p.bx=p.x+p.hv*p.tx; p.by=p.y+p.hv*p.ty; p.cb=ed({x:p.bx,y:p.by}); if(Math.min(p.c.x1,p.c.x2,p.c.y1,p.c.y2,p.cb.x1,p.cb.x2,p.cb.y1,p.cb.y2)<=0) errs.push('El anclaje '+(k+1)+' queda fuera del bloque de hormigón. Revisá L, la posición del grupo o las separaciones.'); });
+  if(!inf.h && hef>=ha) errs.push('h_ef ('+hef+' mm) no puede ser mayor o igual que el espesor h_a ('+ha+' mm).');
+  const n=A.length;
+  const cxA=A.reduce((a,p)=>a+p.x,0)/n, cyA=A.reduce((a,p)=>a+p.y,0)/n, J=A.reduce((a,p)=>a+(p.x-cxA)**2+(p.y-cyA)**2,0);
+  let Nu,Nus,Vx,Vy,xL,yL,zL=0,lineX,lineY,Tset,EQ=null; const notes=[];
+  if(L.mode==='anclaje'){
+    // cargas mayoradas dadas por anclaje
+    A.forEach((p,k)=>{ const q=L.per[k]||{}; const Ni=(+q.N||0)*U; if(Ni<0) notes.push('Anclaje '+(k+1)+': N negativa (compresión), no se cuenta en tracción.');
+      // tracción según el eje de la barra (por su baricentro) → componentes globales; más el corte horizontal adicional
+      p.Na=Math.max(0,Ni); p.ex=(+q.Vx||0)*U; p.ey=(+q.Vy||0)*U; p.N=p.Na/p.k; p.vx=-p.Na*p.tx/p.k+p.ex; p.vy=-p.Na*p.ty/p.k+p.ey; p.V=Math.hypot(p.vx,p.vy); });
+    Nu=A.reduce((a,p)=>a+p.N,0); Vx=A.reduce((a,p)=>a+p.vx,0); Vy=A.reduce((a,p)=>a+p.vy,0); Nus=(+L.Ns||0)*U;
+    xL=Nu>0?A.reduce((a,p)=>a+p.N*p.x,0)/Nu:cxA; yL=Nu>0?A.reduce((a,p)=>a+p.N*p.y,0)/Nu:cyA;
+    // recta de acción de cada componente del corte (para ψec,V)
+    lineY=Math.abs(Vx)>1e-9?A.reduce((a,p)=>a+p.vx*p.y,0)/Vx:cyA; lineX=Math.abs(Vy)>1e-9?A.reduce((a,p)=>a+p.vy*p.x,0)/Vy:cxA;
+    Tset=A.filter(p=>p.N>1e-6); if(!Tset.length) Tset=[A[0]];
+  } else {
+    Nu=(+L.N||0)*U; Nus=(+L.Ns||0)*U; Vx=(+L.Vx||0)*U; Vy=(+L.Vy||0)*U; xL=+L.x; yL=+L.y; zL=+L.z||0; lineX=xL; lineY=yL;
+    // --- equilibrio de la placa rígida (6 ecuaciones): cada barra con rigidez axial según su eje y transversal menor
+    EQ=plateEq(A,[Vx,Vy,Nu],cxA,cyA,xL,yL,zL);
+    A.forEach((p,k)=>{ p.vx=EQ.f[k][0]; p.vy=EQ.f[k][1]; p.N=EQ.f[k][2]; p.V=Math.hypot(p.vx,p.vy); });
+    Tset=A.filter((p,k)=>EQ.T[k]>1e-6); if(!Tset.length) Tset=[A[0]];
+    if(Nu<0) notes.push('N negativa: es compresión sobre la placa; el Capítulo 17 no la verifica.');
+  }
+  const Vres=Math.hypot(Vx,Vy);
+  // --- inclinación: tracción según el eje de la barra y corte perpendicular (para acero y arrancamiento)
+  const NuV=Nu;
+  A.forEach(p=>{ p.Nv=p.N; p.Vv=p.V; const T=(p.N - p.tx*p.vx - p.ty*p.vy)/p.k; const F2=p.N*p.N+p.vx*p.vx+p.vy*p.vy; p.N=Math.max(0,T); p.V=Math.sqrt(Math.max(0,F2-T*T)); });
+  { Nu=A.reduce((a,p)=>a+p.N,0); const Ts=A.filter(p=>p.N>1e-6); if(Ts.length) Tset=Ts; }
+  // --- φ
+  const phiSt=s('duct')==='1'?[0.75,0.65]:[0.65,0.60];
+  const phiCT = !post ? (supp?0.75:0.70) : [[0.75,0.65],[0.65,0.55],[0.55,0.45]][cat-1][supp?0:1];
+  const phiPO = !post ? 0.70 : [0.65,0.55,0.45][cat-1];
+  const phiCV = supp?0.75:0.70, phiCP = !post?0.70:[0.65,0.55,0.45][cat-1];
+  const cac = hef*(T==='adhesivo'?2:T==='sobre'?2.5:4);
+  const kc=v('kc');
+  const M=[], D=[], memo=[];
+  const add=(art,name,Rn,phi,Su,note,extra)=>{ const pR=phi*Rn; M.push({art,name,Rn,phi,pR,Su,r:(Rn>0&&Su>0)?Su/pR:(Su>0?Infinity:0),na:false,note,...(extra||{})}); };
+  const na=(art,name,why)=>M.push({art,name,na:true,why});
+  // ---------- desprendimiento en tracción de un subconjunto (reutilizado para cabeceo)
+  function breakout(G,eNx,eNy){
+    const xs=G.map(p=>p.bx), ys=G.map(p=>p.by); const xa=Math.min(...xs), xb=Math.max(...xs), ya=Math.min(...ys), yb=Math.max(...ys);
+    const c={x1:inf.x1?INF:xa, x2:inf.x2?INF:Lx-xb, y1:inf.y1?INF:ya, y2:inf.y2?INF:Ly-yb};
+    const cs=[c.x1,c.x2,c.y1,c.y2]; const near=cs.filter(q=>q<1.5*hef);
+    let smax=0; for(const a of G) for(const b of G){ smax=Math.max(smax,Math.abs(a.x-b.x),Math.abs(a.y-b.y)); }
+    let h=hef, red=false; if(near.length>=3){ h=Math.min(hef,Math.max(Math.max(...near)/1.5,smax/3)); red=true; }
+    const ANco=9*h*h, ANc=Math.min((Math.min(1.5*h,c.x1)+(xb-xa)+Math.min(1.5*h,c.x2))*(Math.min(1.5*h,c.y1)+(yb-ya)+Math.min(1.5*h,c.y2)),G.length*ANco);
+    let Nb=kc*lamA*Math.sqrt(fc)*Math.pow(h,1.5), Nb2=0;
+    if(T==='cabeza' && hef>=280 && hef<=635){ Nb2=3.9*lamA*Math.sqrt(fc)*Math.pow(h,5/3); Nb=Math.min(Nb,Nb2); }
+    const pex=Math.min(1,1/(1+Math.abs(eNx)/(1.5*h))), pey=Math.min(1,1/(1+Math.abs(eNy)/(1.5*h)));
+    const camin=Math.min(...cs); const ped=camin>=1.5*h?1:0.7+0.3*camin/(1.5*h);
+    const pc=crk?1:(post?1.4:1.25);
+    const pcp=(post && !crk && !supp)?(camin>=cac?1:Math.min(1,Math.max(camin,1.5*h)/cac)):1;
+    const Ncb=ANc/ANco*pex*pey*ped*pc*pcp*Nb;
+    return {c,h,red,near:near.length,smax,ANco,ANc,Nb,Nb2,pex,pey,ped,pc,pcp,Ncb,camin,xa,xb,ya,yb};
+  }
+  let BK=null, BD=null;
+  const Tg=Tset.filter(p=>p.N>1e-6);
+  const NmaxI=Math.max(0,...A.map(p=>p.N));
+  if(Nu>0){
+    // centroides y excentricidad de la resultante respecto de los anclajes traccionados
+    const cxT=Tg.reduce((a,p)=>a+p.bx,0)/Tg.length, cyT=Tg.reduce((a,p)=>a+p.by,0)/Tg.length;
+    const eNx=Tg.reduce((a,p)=>a+p.N*p.bx,0)/Nu-cxT, eNy=Tg.reduce((a,p)=>a+p.N*p.by,0)/Nu-cyT;
+    // 17.6.1 acero
+    const Nsa=Ase*futa;
+    add('17.6.1','Acero del anclaje en tracción, N<sub>sa</sub>',Nsa,phiSt[0],NmaxI,'anclaje más solicitado');
+    memo.push(['17.6.1 · Acero en tracción',`A_se,N = ${f2(Ase,1)} mm²   (${s('vast')==='liso'?'π/4·d_a²':'π/4·(d_a − 0,9743/n_t)²'})
+f_uta = mín(f_uta ; 1,9 f_ya ; 860) = ${f2(futa,0)} MPa
+N_sa = A_se,N · f_uta = ${f2(Nsa/U,2)} ${un}
+φ = ${phiSt[0]} (${s('duct')==='1'?'dúctil':'frágil'})   →   φN_sa = ${f2(phiSt[0]*Nsa/U,2)} ${un}   vs   N_ua,i = ${f2(NmaxI/U,2)} ${un}`]);
+    // 17.6.2 desprendimiento
+    BK=breakout(Tg,eNx,eNy);
+    add('17.6.2','Desprendimiento del hormigón en tracción, N<sub>cb'+(Tg.length>1?'g':'')+'</sub>',BK.Ncb,phiCT,Nu,'grupo traccionado');
+    memo.push(['17.6.2 · Desprendimiento en tracción (cono)',`Anclajes traccionados: ${Tg.length} de ${n}
+Bordes del grupo: c−X = ${fmm(BK.c.x1)} · c+X = ${fmm(BK.c.x2)} · c−Y = ${fmm(BK.c.y1)} · c+Y = ${fmm(BK.c.y2)} mm
+Bordes a menos de 1,5 h_ef: ${BK.near}${BK.red?`  →  17.6.2.1.2: h'ef = máx(c_a,máx/1,5 ; s_máx/3) = ${f2(BK.h,1)} mm`:`  →  h_ef = ${f2(BK.h,0)} mm`}
+A_Nco = 9 h_ef² = ${f2(BK.ANco,0)} mm²
+A_Nc = [mín(1,5h_ef ; c−X) + s_x + mín(1,5h_ef ; c+X)] × [mín(1,5h_ef ; c−Y) + s_y + mín(1,5h_ef ; c+Y)]
+     = (${f2(Math.min(1.5*BK.h,BK.c.x1),1)} + ${f2(BK.xb-BK.xa,1)} + ${f2(Math.min(1.5*BK.h,BK.c.x2),1)}) × (${f2(Math.min(1.5*BK.h,BK.c.y1),1)} + ${f2(BK.yb-BK.ya,1)} + ${f2(Math.min(1.5*BK.h,BK.c.y2),1)}) = ${f2(BK.ANc,0)} mm²   (≤ n · A_Nco)
+A_Nc/A_Nco = ${f2(BK.ANc/BK.ANco,3)}
+N_b = k_c λa √f'c h_ef^1,5 = ${kc} × ${lamA} × ${f2(Math.sqrt(fc),3)} × ${f2(Math.pow(BK.h,1.5),1)} = ${f2(BK.Nb/U,2)} ${un}${BK.Nb2?`   (tope 17.6.2.2.3: 3,9 λa √f'c h_ef^(5/3) = ${f2(BK.Nb2/U,2)} ${un})`:''}
+ψec,N = 1/(1 + e'N,x/(1,5 h_ef)) × 1/(1 + e'N,y/(1,5 h_ef)) = ${f2(BK.pex,3)} × ${f2(BK.pey,3)}   (e'N = ${f2(eNx,1)} ; ${f2(eNy,1)} mm)
+ψed,N = ${BK.camin>=1.5*BK.h?'1,0   (c_a,mín = '+fmm(BK.camin)+' mm ≥ 1,5 h_ef)':'0,7 + 0,3 × c_a,mín/(1,5 h_ef) = 0,7 + 0,3 × '+f2(BK.camin,1)+'/'+f2(1.5*BK.h,1)+' = '+f2(BK.ped,3)}
+ψc,N = ${BK.pc}   ψcp,N = ${f2(BK.pcp,3)}${post&&!crk&&!supp?`   (c_ac = ${f2(cac,0)} mm)`:''}
+N_cb${Tg.length>1?'g':''} = (A_Nc/A_Nco) ψec,N ψed,N ψc,N ψcp,N N_b = ${f2(BK.ANc/BK.ANco,3)} × ${f2(BK.pex*BK.pey,3)} × ${f2(BK.ped,3)} × ${BK.pc} × ${f2(BK.pcp,3)} × ${f2(BK.Nb/U,2)}
+     = ${f2(BK.Ncb/U,2)} ${un}   φ = ${phiCT}   →   φN_cb = ${f2(phiCT*BK.Ncb/U,2)} ${un}   vs   N_ua,g = ${f2(Nu/U,2)} ${un}`]);
+    // 17.6.3 arrancamiento
+    if(T==='adhesivo'){ na('17.6.3','Arrancamiento del anclaje, N<sub>pn</sub>','adhesivo: se verifica por adherencia'); }
+    else {
+      let Np=0, txt='';
+      if(T==='cabeza'){ Np=8*v('Abrg')*fc; txt=`N_p = 8 A_brg f'c = 8 × ${v('Abrg')} × ${fc} = ${f2(Np/U,2)} ${un}`; if(!(v('Abrg')>0)) errs.push('Cargá el área de apoyo de la cabeza A_brg.'); }
+      else if(T==='gancho'){ const eh=v('eh'), ehu=Math.min(eh,4.5*da); Np=0.9*fc*ehu*da; txt=`e_h = ${eh} mm  (3d_a = ${3*da} ≤ e_h ≤ 4,5d_a = ${4.5*da})  →  se toma ${f2(ehu,0)} mm
+N_p = 0,9 f'c e_h d_a = 0,9 × ${fc} × ${f2(ehu,0)} × ${da} = ${f2(Np/U,2)} ${un}`; D.push({art:'17.6.3.2.2',name:'Longitud del gancho',val:eh+' mm',req:'≥ 3 d_a = '+3*da+' mm',ok:eh>=3*da}); }
+      else { Np=(v('Npt')||0)*U; txt=`N_p de ensayos del producto (17.6.3.2.1) = ${f2(Np/U,2)} ${un}`; }
+      const pcP=crk?1:1.4, Npn=pcP*Np;
+      if(Np>0) add('17.6.3','Arrancamiento del anclaje, N<sub>pn</sub>',Npn,phiPO,NmaxI,'anclaje más solicitado');
+      else M.push({art:'17.6.3',name:'Arrancamiento del anclaje, N<sub>pn</sub>',na:true,why:'falta N<sub>p</sub> de ensayos del producto',warn:true});
+      memo.push(['17.6.3 · Arrancamiento',`${txt}
+ψc,P = ${pcP}   →   N_pn = ${f2(Npn/U,2)} ${un}   φ = ${phiPO}   →   φN_pn = ${f2(phiPO*Npn/U,2)} ${un}   vs   N_ua,i = ${f2(NmaxI/U,2)} ${un}`]);
+    }
+    // 17.6.4 descascaramiento lateral
+    if(T!=='cabeza') na('17.6.4','Descascaramiento lateral, N<sub>sb</sub>','solo anclajes con cabeza');
+    else {
+      let best=null;
+      for(const e of ['x1','x2','y1','y2']){
+        const G=Tg.filter(p=>hef>2.5*p.cb[e]); if(!G.length) continue;
+        const ca1=Math.min(...G.map(p=>p.cb[e])); const perp=e[0]==='x'?['y1','y2']:['x1','x2'];
+        const ca2=Math.min(...G.map(p=>Math.min(p.cb[perp[0]],p.cb[perp[1]])));
+        let Nsb=13*ca1*Math.sqrt(v('Abrg'))*lamA*Math.sqrt(fc); if(ca2<3*ca1) Nsb*=(1+Math.min(3,Math.max(1,ca2/ca1)))/4;
+        const along=G.map(p=>e[0]==='x'?p.by:p.bx); const sAl=Math.max(...along)-Math.min(...along);
+        const Nsbg=(G.length>1 && sAl<6*ca1)?(1+sAl/(6*ca1))*Nsb:Nsb*G.length;
+        const dem=G.reduce((a,p)=>a+p.N,0); const r=dem/(phiCT*Nsbg);
+        if(!best||r>best.r) best={e,ca1,ca2,Nsbg,dem,r,sAl,n:G.length};
+      }
+      if(!best) na('17.6.4','Descascaramiento lateral, N<sub>sb</sub>','h_ef ≤ 2,5 c<sub>a1</sub> en todos los bordes');
+      else { add('17.6.4','Descascaramiento lateral, N<sub>sb'+(best.n>1?'g':'')+'</sub>',best.Nsbg,phiCT,best.dem,'anclajes junto al borde');
+        memo.push(['17.6.4 · Descascaramiento lateral',`Borde ${best.e}: c_a1 = ${f2(best.ca1,0)} mm, c_a2 = ${fmm(best.ca2)} mm, h_ef > 2,5 c_a1
+N_sb = 13 c_a1 √A_brg λa √f'c${best.ca2<3*best.ca1?' × (1 + c_a2/c_a1)/4':''}   ;   grupo a lo largo del borde s = ${f2(best.sAl,0)} mm
+N_sb(g) = ${f2(best.Nsbg/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(best.dem/U,2)} ${un}`]); }
+    }
+    // 17.6.5 adherencia
+    if(T!=='adhesivo') na('17.6.5','Adherencia, N<sub>ag</sub>','solo anclajes adhesivos');
+    else {
+      const tau=crk?v('tcr'):v('tuncr'), cNa=10*da*Math.sqrt(v('tuncr')/7.6);
+      const xs=Tg.map(p=>p.bx), ys=Tg.map(p=>p.by); const xa=Math.min(...xs),xb=Math.max(...xs),ya=Math.min(...ys),yb=Math.max(...ys);
+      const c={x1:inf.x1?INF:xa,x2:inf.x2?INF:Lx-xb,y1:inf.y1?INF:ya,y2:inf.y2?INF:Ly-yb};
+      const ANao=(2*cNa)**2, ANa=Math.min((Math.min(cNa,c.x1)+(xb-xa)+Math.min(cNa,c.x2))*(Math.min(cNa,c.y1)+(yb-ya)+Math.min(cNa,c.y2)),Tg.length*ANao);
+      const Nba=lamB*tau*Math.PI*da*Lb; const camin=Math.min(c.x1,c.x2,c.y1,c.y2);
+      const pex=1/(1+Math.abs(eNx)/cNa), pey=1/(1+Math.abs(eNy)/cNa), ped=camin>=cNa?1:0.7+0.3*camin/cNa;
+      const pcp=(!crk&&!supp)?(camin>=cac?1:Math.min(1,Math.max(camin,cNa)/cac)):1;
+      const Nag=ANa/ANao*pex*pey*ped*pcp*Nba;
+      add('17.6.5','Adherencia del adhesivo, N<sub>a'+(Tg.length>1?'g':'')+'</sub>',Nag,phiCT,Nu,'grupo traccionado');
+      const Nusi=Nu>0?Nus*NmaxI/Nu:0; if(Nus>0) add('17.5.2.2','Carga sostenida, 0,55 φN<sub>ba</sub>',0.55*Nba,phiCT,Nusi,'anclaje más solicitado');
+      memo.push(['17.6.5 · Adherencia',`τ = ${tau} MPa (${crk?'fisurado':'no fisurado'})   λa = ${lamB}
+c_Na = 10 d_a √(τ_uncr/7,6) = ${f2(cNa,1)} mm   A_Nao = ${f2(ANao,0)} mm²   A_Na = ${f2(ANa,0)} mm²
+N_ba = λa τ π d_a h_ef = ${f2(Nba/U,2)} ${un}
+ψec,Na = ${f2(pex*pey,3)}   ψed,Na = ${f2(ped,3)}   ψcp,Na = ${f2(pcp,3)}
+N_a(g) = ${f2(Nag/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(Nu/U,2)} ${un}`]);
+      D.push({art:'17.3.3',name:'Empotramiento del adhesivo',val:Lb+' mm',req:`4d_a = ${4*da} ≤ h_ef ≤ 20d_a = ${20*da}`,ok:Lb>=4*da&&Lb<=20*da});
+    }
+  } else { ['17.6.1','17.6.2','17.6.3','17.6.4','17.6.5'].forEach((a,k)=>na(a,['Acero en tracción','Desprendimiento en tracción','Arrancamiento','Descascaramiento lateral','Adherencia'][k],'sin tracción')); }
+
+  // ---------- CORTE ----------
+  let VB=null;
+  const VmaxI=Math.max(0,...A.map(p=>p.V));
+  if(Vres>0){
+    const cV = (T==='cabeza' && s('weld')!=='1')?1:0.6; // 17.7.1.2 (a) perno con cabeza soldado: A_se f_uta ; (b) resto: 0,6
+    let Vsa=(T==='cabeza'?(s('weld')==='1'?1:0.6):0.6)*Ase*futa; if(s('grout')==='1') Vsa*=0.8;
+    add('17.7.1','Acero del anclaje en corte, V<sub>sa</sub>',Vsa,phiSt[1],VmaxI,'anclaje más solicitado');
+    memo.push(['17.7.1 · Acero en corte',`V_sa = ${T==='cabeza'&&s('weld')==='1'?'A_se f_uta (perno con cabeza soldado)':'0,6 A_se f_uta'}${s('grout')==='1'?' × 0,80 (mortero)':''} = ${f2(Vsa/U,2)} ${un}
+φ = ${phiSt[1]}   →   φV_sa = ${f2(phiSt[1]*Vsa/U,2)} ${un}   vs   V_ua,i = ${f2(VmaxI/U,2)} ${un}`]);
+    const le=Math.min(Lb,8*da); const coef=(T==='cabeza'&&s('weld')==='1')?0.66:0.6;
+    const pcV=crk?v('edgeR'):1.4;
+    // desprendimiento hacia un borde: dir = eje del corte, sgn = sentido
+    function vbreak(ax,sgn,Vcomp,parallel){
+      const e = ax==='x'?(sgn>0?'x2':'x1'):(sgn>0?'y2':'y1'); const perp=ax==='x'?['y1','y2']:['x1','x2'];
+      if(inf[e]) return null;
+      const ds=A.map(p=>p.c[e]); const dmin=Math.min(...ds), dmax=Math.max(...ds);
+      const rows={front:A.filter(p=>Math.abs(p.c[e]-dmin)<0.5), back:A.filter(p=>Math.abs(p.c[e]-dmax)<0.5)};
+      const cases=[]; const vc=s('vcase');
+      const mk=(label,G,Vd)=>{
+        let ca1=G[0].c[e]; const pos=G.map(p=>ax==='x'?p.y:p.x); const spread=Math.max(...pos)-Math.min(...pos);
+        const c1=Math.min(...G.map(p=>p.c[perp[0]])), c2=Math.min(...G.map(p=>p.c[perp[1]]));
+        let red=false; if(c1<1.5*ca1 && c2<1.5*ca1 && ha<1.5*ca1){ ca1=Math.max(Math.max(c1,c2)/1.5,ha/1.5,spread/3); red=true; }
+        const AVco=4.5*ca1*ca1, AVc=Math.min((Math.min(1.5*ca1,c1)+spread+Math.min(1.5*ca1,c2))*Math.min(1.5*ca1,ha),G.length*AVco);
+        const Vb1=coef*Math.pow(le/da,0.2)*Math.sqrt(da)*lamA*Math.sqrt(fc)*Math.pow(ca1,1.5), Vb2=3.7*lamA*Math.sqrt(fc)*Math.pow(ca1,1.5), Vb=Math.min(Vb1,Vb2);
+        const cG=G.reduce((a,p)=>a+(ax==='x'?p.y:p.x),0)/G.length; const eV=Math.abs((ax==='x'?lineY:lineX)-cG);
+        const pec=Math.min(1,1/(1+eV/(1.5*ca1)));
+        const ca2=Math.min(c1,c2); const ped=parallel?1:(ca2>=1.5*ca1?1:0.7+0.3*ca2/(1.5*ca1));
+        const phv=ha<1.5*ca1?Math.sqrt(1.5*ca1/ha):1;
+        const Vcb=AVc/AVco*pec*ped*pcV*phv*Vb*(parallel?2:1);
+        cases.push({label,ca1,red,c1,c2,spread,AVco,AVc,Vb1,Vb2,Vb,eV,pec,ped,phv,Vcb,Vd,r:Vd/(phiCV*Vcb),n:G.length,par:!!parallel});
+      };
+      if(parallel){ mk('corte paralelo al borde (×2, ψed = 1)',rows.front,Math.abs(Vcomp)); }
+      else {
+        if(vc==='12'||vc==='1') mk(rows.front.length<n?'Caso 1: fila delantera':'Caso 1: todos los anclajes',rows.front,Math.abs(Vcomp)*rows.front.length/n);
+        if((vc==='12'||vc==='2') && rows.back!==rows.front && dmax>dmin+0.5) mk('Caso 2: fila trasera, corte total',rows.back,Math.abs(Vcomp));
+        if(vc==='3') mk('Caso 3: fila delantera, corte total',rows.front,Math.abs(Vcomp));
+        if(vc==='2' && !(dmax>dmin+0.5)) mk('Caso 2: una sola fila, corte total',rows.back,Math.abs(Vcomp));
+      }
+      cases.forEach(c=>{c.edge=e;c.ax=ax;});
+      return cases.sort((a,b)=>b.r-a.r)[0];
+    }
+    const res=[];
+    if(Math.abs(Vx)>0){ const a=vbreak('x',Math.sign(Vx),Vx,false); if(a) res.push(a);
+      for(const e of [1,-1]){ const b=vbreak('y',e,Vx,true); if(b){ b.edge=(e>0?'y2':'y1'); b.label+=' (V_x junto al borde '+(e>0?'+Y':'−Y')+')'; res.push(b);} } }
+    if(Math.abs(Vy)>0){ const a=vbreak('y',Math.sign(Vy),Vy,false); if(a) res.push(a);
+      for(const e of [1,-1]){ const b=vbreak('x',e,Vy,true); if(b){ b.edge=(e>0?'x2':'x1'); b.label+=' (V_y junto al borde '+(e>0?'+X':'−X')+')'; res.push(b);} } }
+    if(!res.length) na('17.7.2','Desprendimiento del hormigón en corte, V<sub>cb</sub>','sin borde en la dirección del corte');
+    else { res.sort((a,b)=>b.r-a.r); VB=res[0];
+      add('17.7.2','Desprendimiento en corte, V<sub>cb'+(VB.n>1?'g':'')+'</sub> · '+VB.label,VB.Vcb,phiCV,VB.Vd,'hacia el borde '+VB.edge);
+      memo.push(['17.7.2 · Desprendimiento en corte',res.map(c=>`${c.label} → borde ${c.edge}
+  c_a1 = ${f2(c.ca1,1)} mm${c.red?' (reducido por 17.7.2.1.2: elemento angosto y delgado)':''}   c_a2 = ${fmm(Math.min(c.c1,c.c2))} mm   ℓ_e = ${le} mm
+  A_Vco = 4,5 c_a1² = 4,5 × ${f2(c.ca1,1)}² = ${f2(c.AVco,0)} mm²
+  A_Vc = [mín(1,5c_a1 ; c_a2,izq) + s + mín(1,5c_a1 ; c_a2,der)] × mín(1,5c_a1 ; h_a) = (${f2(Math.min(1.5*c.ca1,c.c1),1)} + ${f2(c.spread,1)} + ${f2(Math.min(1.5*c.ca1,c.c2),1)}) × ${f2(Math.min(1.5*c.ca1,ha),1)} = ${f2(c.AVc,0)} mm²
+  V_b = mín(${coef} (ℓe/da)^0,2 √da λa √f'c c_a1^1,5 ; 3,7 λa √f'c c_a1^1,5) = mín(${f2(c.Vb1/U,2)} ; ${f2(c.Vb2/U,2)}) = ${f2(c.Vb/U,2)} ${un}
+  ψec,V = 1/(1 + e'V/(1,5 c_a1)) = ${f2(c.pec,3)}  (e'V = ${f2(c.eV,1)} mm)   ψed,V = ${c.par?'1,0 (corte paralelo)':(Math.min(c.c1,c.c2)>=1.5*c.ca1?'1,0 (c_a2 ≥ 1,5 c_a1)':'0,7 + 0,3 c_a2/(1,5 c_a1) = '+f2(c.ped,3))}
+  ψc,V = ${pcV}   ψh,V = √(1,5 c_a1/h_a) ≥ 1 = ${f2(c.phv,3)}
+  V_cb${c.n>1?'g':''} = (A_Vc/A_Vco) ψec,V ψed,V ψc,V ψh,V V_b${c.par?' × 2':''} = ${f2(c.AVc/c.AVco,3)} × ${f2(c.pec,3)} × ${f2(c.ped,3)} × ${pcV} × ${f2(c.phv,3)} × ${f2(c.Vb/U,2)}${c.par?' × 2':''}
+  V_cb = ${f2(c.Vcb/U,2)} ${un}   φ = ${phiCV}   →   φV_cb = ${f2(phiCV*c.Vcb/U,2)} ${un}   vs   ${f2(c.Vd/U,2)} ${un}   (${f2(c.r,3)})`).join('\n\n')]); }
+    // 17.7.3 cabeceo
+    const kcp=hef<65?1:2; const all=breakout(A,0,0); let Ncp=all.Ncb, txt=`N_cp(g) = N_cb(g) con todos los anclajes traccionados, sin excentricidad = ${f2(Ncp/U,2)} ${un}`;
+    if(T==='adhesivo'){ const cNa=10*da*Math.sqrt(v('tuncr')/7.6), tau=crk?v('tcr'):v('tuncr'); const Nba=lamB*tau*Math.PI*da*Lb*n; Ncp=Math.min(Ncp,Nba); txt+=`\nadhesivo: se toma el menor con la adherencia (${f2(Nba/U,2)} ${un})`; }
+    add('17.7.3','Cabeceo (pryout), V<sub>cp'+(n>1?'g':'')+'</sub>',kcp*Ncp,phiCP,Vres,'corte total');
+    memo.push(['17.7.3 · Cabeceo (pryout)',`${txt}
+k_cp = ${kcp} (h_ef ${hef<65?'<':'≥'} 65 mm)   →   V_cp = ${f2(kcp*Ncp/U,2)} ${un}   φ = ${phiCP}   →   φV_cp = ${f2(phiCP*kcp*Ncp/U,2)} ${un}   vs   V_ua = ${f2(Vres/U,2)} ${un}`]);
+  } else { ['17.7.1','17.7.2','17.7.3'].forEach((a,k)=>na(a,['Acero en corte','Desprendimiento en corte','Cabeceo (pryout)'][k],'sin corte')); }
+
+  if(incl) memo.unshift(['Barras inclinadas (criterio adoptado)',`Longitud embebida según la barra L_b = ${f2(Lb,0)} mm
+${A.map(p=>`Anclaje ${p.i}: α_x = ${f2(p.ax,1)}°  α_y = ${f2(p.ay,1)}°  θ = ${f2(p.th,1)}°  h_ef,vert = L_b cos θ = ${f2(p.hv,1)} mm  punta en (${f2(p.bx,1)} ; ${f2(p.by,1)}) mm`).join('\n')}
+Para el cono y el cabeceo se toma la menor h_ef vertical = ${f2(hef,1)} mm.
+
+El Capítulo 17 está planteado para anclajes perpendiculares a la superficie; para barras inclinadas se adopta:
+· Cargas de cada anclaje proyectadas sobre su eje: N_ua,i = tracción según la barra; V_ua,i = componente perpendicular.
+  Con ellas se verifican acero (17.6.1, 17.7.1), arrancamiento (17.6.3) y, sumadas, el cono (17.6.2) y la adherencia.
+· Cono de tracción, descascaramiento lateral, adherencia y cabeceo: con h_ef vertical y la posición de la punta (cabeza o gancho).
+· Desprendimiento en corte: con la posición en la superficie y el corte horizontal total. ℓ_e y la adherencia usan L_b.
+· Distancias mínimas al borde: la menor entre la entrada y la punta.
+Tracción vertical aplicada = ${f2(NuV/U,2)} ${un}   ·   suma de tracciones según las barras = ${f2(Nu/U,2)} ${un}`]);
+  // ---------- 17.8 interacción
+  const zN=Math.max(0,...M.filter(m=>!m.na&&m.art.startsWith('17.6')).map(m=>m.r));
+  const zV=Math.max(0,...M.filter(m=>!m.na&&m.art.startsWith('17.7')).map(m=>m.r));
+  let inter=null;
+  if(Nu>0 && Vres>0){
+    if(zV<=0.2) inter={txt:'V_ua ≤ 0,2 φV_n: se verifica solo tracción (17.8.2)',ok:true,val:zN};
+    else if(zN<=0.2) inter={txt:'N_ua ≤ 0,2 φN_n: se verifica solo corte (17.8.1)',ok:true,val:zV};
+    else inter={txt:`N_ua/φN_n + V_ua/φV_n = ${f2(zN,3)} + ${f2(zV,3)} = ${f2(zN+zV,3)} ≤ 1,2 (17.8.3)`,ok:zN+zV<=1.2,val:(zN+zV)/1.2};
+  }
+  // ---------- 17.9 y 17.3
+  const torq=s('torq')==='1';
+  const smin = T==='tornillo'?Math.max(0.6*hef,6*da):(!post&&!torq?4*da:6*da);
+  const sAct=Math.min(n1>1?s1:INF,n2>1?s2:INF);
+  if(n>1) D.push({art:'17.9.2',name:'Separación mínima entre anclajes',val:f2(sAct,0)+' mm',req:'≥ '+f2(smin,0)+' mm'+(!post?(torq?' (6 d_a, con torque)':' (4 d_a, sin torque)'):''),ok:sAct>=smin});
+  let cmin = !post?(torq?6*da:v('cover')+da/2):(T==='torque'?8*da:T==='desplaz'?10*da:6*da);
+  if(post) cmin=Math.max(cmin,2*v('agg'));
+  const camin=Math.min(...A.map(p=>Math.min(p.c.x1,p.c.x2,p.c.y1,p.c.y2,p.cb.x1,p.cb.x2,p.cb.y1,p.cb.y2)));
+  D.push({art:'17.9.2',name:'Distancia mínima al borde',val:fmm(camin)+' mm',req:'≥ '+f2(cmin,0)+' mm'+(!post?(torq?' (6 d_a)':' (recubrimiento + d_a/2)'):''),ok:camin>=cmin});
+  if(post && T!=='adhesivo'){ const hmax=inf.h?INF:Math.max(2/3*ha,ha-100); D.push({art:'17.9.4',name:'Empotramiento máximo',val:hef+' mm',req:'≤ '+fmm(hmax)+' mm',ok:hef<=hmax}); }
+  D.push({art:'17.3.1',name:"f'c dentro del límite",val:fc+' MPa',req:'≤ '+(post?55:70)+' MPa',ok:fc<=(post?55:70)});
+  D.push({art:'17.3.2',name:'Diámetro del anclaje',val:da+' mm',req:'≤ 100 mm',ok:da<=100});
+  if(T==='tornillo') D.push({art:'17.3.4',name:'Empotramiento del tornillo',val:Lb+' mm',req:`5d_a ≤ h_ef ≤ 10d_a y ≥ 40 mm`,ok:Lb>=5*da&&Lb<=10*da&&Lb>=40});
+  if(post && T!=='adhesivo' && !(v('Npt')>0)) D.push({art:'17.6.3.2.1',name:'N_p de ensayos del producto',val:'sin dato',req:'obligatorio en post-instalados',ok:false,warn:true});
+  const fU=x=>f2(x/U,2), sg=x=>(x<0?'− ':'+ ')+f2(Math.abs(x)/U,2);
+  if(EQ){ const F=EQ.F, Mo=EQ.M;
+    { const f=EQ.f, dx=A.map(p=>p.x-cxA), dy=A.map(p=>p.y-cyA), e=A.map(p=>[-p.tx/p.k,-p.ty/p.k,1/p.k]);
+      const z0=(x,d)=>{ const q=+x.toFixed(d); return f2(q===0?0:q,d); }, fM=x=>z0(x/U,3), fF=x=>z0(x/U,2), n2=x=>z0(x,2);
+      const sm=(arr,d)=>arr.map((x,k)=>{ const q=+(x/U).toFixed(d); const a=Math.abs(q); return (k?(q<0?'− ':'+ '):(q<0?'− ':''))+f2(a,d); }).join(' ');
+      const sum=(g)=>A.reduce((a,p,k)=>a+g(k),0);
+      const fz=A.map((p,k)=>f[k][2]), fx=A.map((p,k)=>f[k][0]), fy=A.map((p,k)=>f[k][1]);
+      const mx=A.map((p,k)=>f[k][2]*dy[k]/1000), my=A.map((p,k)=>-f[k][2]*dx[k]/1000), mz=A.map((p,k)=>(f[k][1]*dx[k]-f[k][0]*dy[k])/1000);
+    memo.unshift(['Equilibrio de la placa · reparto a las barras',`Carga: N_ua = ${fU(F[2])} ${un}   V_ua,x = ${fU(F[0])} ${un}   V_ua,y = ${fU(F[1])} ${un}   en (x ; y ; z) = (${f2(xL,0)} ; ${f2(yL,0)} ; ${f2(zL,0)}) mm
+Centro de los anclajes (x_c ; y_c) = (${f2(cxA,0)} ; ${f2(cyA,0)}) mm   →   e_x = x − x_c = ${f2(xL-cxA,0)} mm   e_y = y − y_c = ${f2(yL-cyA,0)} mm
+
+1) Momentos de la carga respecto del centro de los anclajes
+M_x = N_ua · e_y − V_ua,y · z = ${fU(F[2])} × ${f2((yL-cyA)/1000,3)} − ${fU(F[1])} × ${f2(zL/1000,3)} = ${fM(Mo[0]/1000)} ${un}·m
+M_y = V_ua,x · z − N_ua · e_x = ${fU(F[0])} × ${f2(zL/1000,3)} − ${fU(F[2])} × ${f2((xL-cxA)/1000,3)} = ${fM(Mo[1]/1000)} ${un}·m
+M_z = V_ua,y · e_x − V_ua,x · e_y = ${fU(F[1])} × ${f2((xL-cxA)/1000,3)} − ${fU(F[0])} × ${f2((yL-cyA)/1000,3)} = ${fM(Mo[2]/1000)} ${un}·m
+
+2) Reparto a las barras (placa rígida)
+${incl?`La placa se desplaza como cuerpo rígido; cada barra toma fuerza en proporción a su alargamiento según su eje (las barras inclinadas trabajan principalmente a tracción).`:`Con barras verticales:   N_i = N_ua/n + M_x · y_i/Σy_i² − M_y · x_i/Σx_i²   ;   V_i = V_ua/n + M_z · r_i/Σr_i²   (x_i, y_i, r_i medidos desde el centro)`}${EQ.off.length?`
+Las barras ${EQ.off.map(k=>k+1).join(', ')} quedarían comprimidas: no se cuentan y la compresión la toma la placa apoyada en el hormigón.`:''}
+Fuerza de cada barra F_i = (F_x ; F_y ; F_z)${incl?' y su descomposición según el eje e_i de la barra':''}:
+${A.map((p,k)=>`   Barra ${p.i}:   F = (${fF(fx[k])} ; ${fF(fy[k])} ; ${fF(fz[k])}) ${un}   →   ${p.k>1+1e-9?`e = (${n2(e[k][0])} ; ${n2(e[k][1])} ; ${n2(e[k][2])})   T = F · e = ${fF(p.N)} ${un}   V = √(|F|² − T²) = ${fF(p.V)} ${un}`:`T = F_z = ${fF(p.N)} ${un}   V = √(F_x² + F_y²) = ${fF(p.V)} ${un}`}`).join('\n')}
+
+3) Verificación del equilibrio
+ΣF_x = ${sm(fx,2)} = ${fF(sum(k=>fx[k]))} ${un}   (V_ua,x = ${fU(F[0])})
+ΣF_y = ${sm(fy,2)} = ${fF(sum(k=>fy[k]))} ${un}   (V_ua,y = ${fU(F[1])})
+ΣF_z = ${sm(fz,2)} = ${fF(sum(k=>fz[k]))} ${un}   (N_ua = ${fU(F[2])})
+ΣM_x = Σ F_z,i · y_i = ${sm(mx,3)} = ${fM(sum(k=>mx[k]))} ${un}·m   (M_x = ${fM(Mo[0]/1000)})
+ΣM_y = −Σ F_z,i · x_i = ${sm(my,3)} = ${fM(sum(k=>my[k]))} ${un}·m   (M_y = ${fM(Mo[1]/1000)})
+ΣM_z = Σ (F_y,i · x_i − F_x,i · y_i) = ${sm(mz,3)} = ${fM(sum(k=>mz[k]))} ${un}·m   (M_z = ${fM(Mo[2]/1000)})${EQ.gap?'\nLa diferencia de momento la toma el apoyo de la placa sobre el hormigón.':''}
+
+Barra | Tracción según la barra [${un}] | Corte perpendicular a la barra [${un}]${EQ.off.length?' | Compresión [${un}]':''}
+${A.map((p,k)=>`${p.i} | ${EQ.off.includes(k)?'0':fU(p.N)} | ${fU(p.V)}${EQ.off.length?' | '+(EQ.off.includes(k)?fU(-EQ.T0[k])+' (la toma la placa)':'—'):''}`).join('\n')}`]); } }
+  if(L.mode==='anclaje') memo.unshift(['Cargas según cada barra',`Cada N_ua,i actúa según el eje de su barra y pasa por su baricentro (sin flexión en la barra).
+Componentes globales: F_i = N_ua,i · e_i + (V_x,adic ; V_y,adic ; 0), con e_i = (−tan α_x ; −tan α_y ; 1)/√(1 + tan²α_x + tan²α_y)
+
+Barra | Tracción según la barra [${un}] | Corte perpendicular a la barra [${un}]
+${A.map(p=>`${p.i} | ${fU(p.N)} | ${fU(p.V)}`).join('\n')}
+Resultante:  ΣF_x = ${fU(Vx)}   ΣF_y = ${fU(Vy)}   ΣF_z = ${fU(A.reduce((a,p)=>a+p.N,0))} ${un}`]);
+  memo.unshift(['17.5.3 · Factores de reducción φ',`Acero en tracción φ = ${phiSt[0]}   ·   acero en corte φ = ${phiSt[1]}   (acero ${s('duct')==='1'?'dúctil':'frágil'})
+Desprendimiento y descascaramiento en tracción, adherencia: φ = ${phiCT}   (condición ${supp?'A':'B'}${post?', categoría '+cat:''})
+Arrancamiento: φ = ${phiPO}
+Desprendimiento en corte: φ = ${phiCV}   ·   cabeceo: φ = ${phiCP}`]);
+  if(inter) memo.push(['17.8 · Interacción tracción-corte',`N_ua/φN_n (mayor relación en tracción) = ${f2(zN,3)}
+V_ua/φV_n (mayor relación en corte) = ${f2(zV,3)}
+${inter.txt}   →   ${inter.ok?'verifica':'no verifica'}`]);
+  memo.push(['17.9 · Detalles y límites',D.map(d=>`${d.art}  ${d.name}: ${d.val}   requisito ${d.req}   →   ${d.warn?'falta dato':d.ok?'cumple':'no cumple'}`).join('\n')]);
+  const allOk=M.filter(m=>!m.na).every(m=>m.r<=1) && (!inter||inter.ok) && D.filter(d=>!d.warn).every(d=>d.ok) && !errs.length;
+  { const rk=t=>{ const k=t.split(' ')[0]; return k==='Barras'?0:(k==='Cargas'||k==='Equilibrio')?1:k==='17.5.3'?2:3; }; memo.sort((a,b)=>rk(a[0])-rk(b[0])); }
+  return {EQ,A,Tg,M,D,memo,inter,zN,zV,allOk,errs,notes,U,un,Nu,Vres,Vx,Vy,xL,yL,BK,VB,inf,Lx,Ly,ha,hef,da,T,post,n,zL,NmaxI,VmaxI,mode:L.mode,color:L.color,incl,Lb,NuV,thDeg,Ase,futa,phi:{st:phiSt,ct:phiCT,po:phiPO,cv:phiCV,cp:phiCP}};
+}
+
+// ---------- equilibrio de la placa rígida ----------
+function solve(Am,b){ const n=b.length, M=Am.map((r,i)=>r.concat([b[i]]));
+  for(let c=0;c<n;c++){ let pv=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[pv][c])) pv=r; [M[c],M[pv]]=[M[pv],M[c]];
+    const d=M[c][c]; if(Math.abs(d)<1e-300) continue; for(let r=0;r<n;r++){ if(r===c) continue; const f=M[r][c]/d; if(f) for(let k=c;k<=n;k++) M[r][k]-=f*M[c][k]; } }
+  return M.map((r,i)=>Math.abs(r[i])<1e-300?0:r[n]/r[i]); }
+function plateEq(A,F,cx,cy,xL,yL,zL){
+  const n=A.length, ks=0.01, ex=xL-cx, ey=yL-cy;
+  const Mo=[F[2]*ey-zL*F[1], zL*F[0]-F[2]*ex, F[1]*ex-F[0]*ey];
+  const E=A.map(p=>[-p.tx/p.k,-p.ty/p.k,1/p.k]), Rr=A.map(p=>[p.x-cx,p.y-cy]);
+  const Bm=k=>{ const [rx,ry]=Rr[k]; return [[1,0,0,0,0,-ry],[0,1,0,0,0,rx],[0,0,1,ry,-rx,0]]; };
+  const Kb=(k,on)=>{ const e=E[k]; const K=[[0,0,0],[0,0,0],[0,0,0]]; for(let i=0;i<3;i++) for(let j=0;j<3;j++){ const ee=e[i]*e[j]; K[i][j]=(on?ee:0)+ks*((i===j?1:0)-ee); } return K; };
+  let on=A.map(()=>true), f=[], T=[], T0=null;
+  for(let it=0;it<=n;it++){
+    const K=Array.from({length:6},()=>Array(6).fill(0)), Ki=A.map((p,k)=>Kb(k,on[k]));
+    A.forEach((p,k)=>{ const B=Bm(k), Kk=Ki[k]; for(let a=0;a<6;a++) for(let b=0;b<6;b++){ let sum=0; for(let i=0;i<3;i++) for(let j=0;j<3;j++) sum+=B[i][a]*Kk[i][j]*B[j][b]; K[a][b]+=sum; } });
+    const dg=Math.max(1e-12,...K.map((r,i)=>Math.abs(r[i]))); for(let i=0;i<6;i++) K[i][i]+=1e-9*dg;
+    const q=solve(K,[F[0],F[1],F[2],Mo[0],Mo[1],Mo[2]]);
+    f=A.map((p,k)=>{ const B=Bm(k); const d=[0,1,2].map(i=>B[i].reduce((a,x,j)=>a+x*q[j],0)); return [0,1,2].map(i=>Ki[k][i].reduce((a,x,j)=>a+x*d[j],0)); });
+    T=f.map((fi,k)=>fi[0]*E[k][0]+fi[1]*E[k][1]+fi[2]*E[k][2]); if(!T0) T0=T.slice();
+    const tol=1e-9*Math.max(1,Math.hypot(...F)); const neg=T.map((t,k)=>on[k]&&t<-tol?k:-1).filter(k=>k>=0);
+    if(!neg.length) break; neg.forEach(k=>on[k]=false); if(!on.some(Boolean)) break; }
+  const sF=[0,1,2].map(i=>f.reduce((a,fi)=>a+fi[i],0));
+  const sM=[f.reduce((a,fi,k)=>a+Rr[k][1]*fi[2],0), f.reduce((a,fi,k)=>a-Rr[k][0]*fi[2],0), f.reduce((a,fi,k)=>a+Rr[k][0]*fi[1]-Rr[k][1]*fi[0],0)];
+  const sc=Math.max(1,Math.hypot(...Mo)), gap=[0,1,2].some(i=>Math.abs(sM[i]-Mo[i])>1e-3*sc);
+  return {f,T,T0,F,M:Mo,sF,sM,gap,ks,off:on.map((o,k)=>o?-1:k).filter(k=>k>=0)};
+}
+
+// dirección horizontal del gancho (antes de girarlo con la barra)
+function hookVec(p,A){ const m=s('hookDir'); if(m==='px') return [1,0]; if(m==='nx') return [-1,0]; if(m==='py') return [0,1]; if(m==='ny') return [0,-1];
+  const cx=A.reduce((a,q)=>a+q.x,0)/A.length, cy=A.reduce((a,q)=>a+q.y,0)/A.length; let hx=cx-p.x, hy=cy-p.y; const hl=Math.hypot(hx,hy);
+  if(hl<1e-6){ hx=m==='out'?1:-1; hy=0; return [hx,hy]; } hx/=hl; hy/=hl; return m==='out'?[-hx,-hy]:[hx,hy]; }
+
+// ---------- dibujo 3D ----------
+// gira un vector q con la misma rotación que lleva la vertical (0,0,−1) al eje de la barra p (Rodrigues)
+function rot(p,q){ const k=p.k||1, d=[p.tx/k,p.ty/k,-1/k]; let u=[p.ty/k,-p.tx/k,0]; const sn=Math.hypot(u[0],u[1]); if(sn<1e-9) return q.slice(); u=[u[0]/sn,u[1]/sn,0]; const cs=-d[2];
+  const cr=[u[1]*q[2]-u[2]*q[1],u[2]*q[0]-u[0]*q[2],u[0]*q[1]-u[1]*q[0]], ud=u[0]*q[0]+u[1]*q[1]+u[2]*q[2];
+  return [0,1,2].map(i=>q[i]*cs+cr[i]*sn+u[i]*ud*(1-cs)); }
+function draw(R){
+  const inf=R.inf, hef=R.hef, A=R.A; const ext=Math.max(1.5*hef*1.3,250);
+  const xs=A.map(p=>p.x), ys=A.map(p=>p.y);
+  const x0=inf.x1?Math.min(...xs)-ext:0, x1=inf.x2?Math.max(...xs)+ext:R.Lx, y0=inf.y1?Math.min(...ys)-ext:0, y1=inf.y2?Math.max(...ys)+ext:R.Ly;
+  const z0=inf.h?-(hef+ext*0.6):-R.ha, stick=Math.max(40,0.22*hef);
+  const cConc=cssv('--concrete'), ink=cssv('--ink'), muted=cssv('--muted'), steel=cssv('--steel'), load=R.color||cssv('--load'), shear=R.color||cssv('--shear'), cone=cssv('--cone'), bg=cssv('--surface');
+  const tr=[];
+  // bloque
+  const X=[x0,x1,x1,x0,x0,x1,x1,x0], Y=[y0,y0,y1,y1,y0,y0,y1,y1], Z=[z0,z0,z0,z0,0,0,0,0];
+  tr.push({type:'mesh3d',x:X,y:Y,z:Z,i:[0,0,4,4,0,0,1,1,2,2,3,3],j:[1,2,5,6,1,5,2,6,3,7,0,4],k:[2,3,6,7,5,4,6,5,7,6,4,7],color:cConc,opacity:0.28,flatshading:true,hoverinfo:'skip',showscale:false});
+  const edge=(a,b,dash)=>tr.push({type:'scatter3d',mode:'lines',x:[a[0],b[0]],y:[a[1],b[1]],z:[a[2],b[2]],line:{color:muted,width:dash?2:3,dash:dash?'dash':'solid'},hoverinfo:'skip',showlegend:false});
+  const P=(x,y,z)=>[x,y,z];
+  const sides=[[P(x0,y0,0),P(x1,y0,0),inf.y1],[P(x1,y0,0),P(x1,y1,0),inf.x2],[P(x1,y1,0),P(x0,y1,0),inf.y2],[P(x0,y1,0),P(x0,y0,0),inf.x1]];
+  sides.forEach(([a,b,d])=>{ edge(a,b,d); edge([a[0],a[1],z0],[b[0],b[1],z0],d||inf.h); });
+  [[x0,y0,inf.x1||inf.y1],[x1,y0,inf.x2||inf.y1],[x1,y1,inf.x2||inf.y2],[x0,y1,inf.x1||inf.y2]].forEach(([x,y,d])=>edge([x,y,0],[x,y,z0],d||inf.h));
+  // área proyectada A_Nc y cono
+  if(R.BK){ const B=R.BK, h=B.h;
+    const ax0=Math.max(x0,B.xa-Math.min(1.5*h,B.c.x1)), ax1=Math.min(x1,B.xb+Math.min(1.5*h,B.c.x2)), ay0=Math.max(y0,B.ya-Math.min(1.5*h,B.c.y1)), ay1=Math.min(y1,B.yb+Math.min(1.5*h,B.c.y2));
+    tr.push({type:'scatter3d',mode:'lines',x:[ax0,ax1,ax1,ax0,ax0],y:[ay0,ay0,ay1,ay1,ay0],z:[0.5,0.5,0.5,0.5,0.5],line:{color:cone,width:5},name:'A_Nc',hovertemplate:'A<sub>Nc</sub> = '+f2(B.ANc,0)+' mm²<extra></extra>',showlegend:false});
+    const bx=[[B.xa,B.ya],[B.xb,B.ya],[B.xb,B.yb],[B.xa,B.yb]], tx=[[ax0,ay0],[ax1,ay0],[ax1,ay1],[ax0,ay1]];
+    bx.forEach((b,k)=>tr.push({type:'scatter3d',mode:'lines',x:[b[0],tx[k][0]],y:[b[1],tx[k][1]],z:[-Math.min(hef,h),0],line:{color:cone,width:2,dash:'dot'},hoverinfo:'skip',showlegend:false}));
+  }
+  if(R.VB){ const c=R.VB; const e=c.edge; const h=Math.min(1.5*c.ca1,R.inf.h?1e9:R.ha);
+    const along=c.ax==='x'?'y':'x'; const G=A; const pos=G.map(p=>p[along]); const mn=Math.min(...pos), mx=Math.max(...pos);
+    const w0=mn-Math.min(1.5*c.ca1,c.c1), w1=mx+Math.min(1.5*c.ca1,c.c2);
+    const fx=e==='x1'?x0:e==='x2'?x1:null, fy=e==='y1'?y0:e==='y2'?y1:null;
+    const pts= fx!==null?[[fx,w0,0],[fx,w1,0],[fx,w1,-h],[fx,w0,-h],[fx,w0,0]]:[[w0,fy,0],[w1,fy,0],[w1,fy,-h],[w0,fy,-h],[w0,fy,0]];
+    tr.push({type:'scatter3d',mode:'lines',x:pts.map(p=>p[0]),y:pts.map(p=>p[1]),z:pts.map(p=>p[2]),line:{color:cone,width:5,dash:'dash'},hovertemplate:'A<sub>Vc</sub> = '+f2(c.AVc,0)+' mm²<extra></extra>',showlegend:false});
+  }
+  // placa
+  const pm=Math.max(30,R.da*2.5); const px0=Math.min(...xs)-pm, px1=Math.max(...xs)+pm, py0=Math.min(...ys)-pm, py1=Math.max(...ys)+pm, pz=stick*0.35;
+  tr.push({type:'scatter3d',mode:'lines',x:[px0,px1,px1,px0,px0],y:[py0,py0,py1,py1,py0],z:[pz,pz,pz,pz,pz],line:{color:ink,width:3},hoverinfo:'skip',showlegend:false});
+  // anclajes
+  const w=Math.max(5,Math.min(12,R.da/1.5));
+  A.forEach(p=>{
+    tr.push({type:'scatter3d',mode:'lines',x:[p.x-stick*p.tx,p.bx],y:[p.y-stick*p.ty,p.by],z:[stick,-p.hv],line:{color:steel,width:w},hovertemplate:`Anclaje ${p.i}<br>x = ${f2(p.x,0)} · y = ${f2(p.y,0)} mm<br>N = ${f2(p.N/R.U,2)} ${R.un} · V = ${f2(p.V/R.U,2)} ${R.un}<extra></extra>`,showlegend:false});
+    if(R.T==='cabeza'){ const r=Math.max(R.da*1.2,Math.sqrt(Math.max(1,v('Abrg'))+Math.PI/4*R.da*R.da)/1.7);
+      [[r,0,0],[0,r,0]].forEach(q=>{ const a=rot(p,q); tr.push({type:'scatter3d',mode:'lines',x:[p.bx-a[0],p.bx+a[0]],y:[p.by-a[1],p.by+a[1]],z:[-p.hv-a[2],-p.hv+a[2]],line:{color:steel,width:w+3},hoverinfo:'skip',showlegend:false}); }); }
+    if(R.T==='gancho'){ const eh=Math.min(v('eh'),4.5*R.da)||3*R.da; const cx=R.A.reduce((a,q)=>a+q.x,0)/R.n, cy=R.A.reduce((a,q)=>a+q.y,0)/R.n;
+      // dirección horizontal del gancho (hacia el centro del grupo o hacia afuera) y luego girada con la barra
+      const [hx,hy]=hookVec(p,R.A);
+      const a=rot(p,[hx*eh,hy*eh,0]); tr.push({type:'scatter3d',mode:'lines',x:[p.bx,p.bx+a[0]],y:[p.by,p.by+a[1]],z:[-p.hv,-p.hv+a[2]],line:{color:steel,width:w},hoverinfo:'skip',showlegend:false}); }
+    if(R.T==='adhesivo') tr.push({type:'scatter3d',mode:'lines',x:[p.x,p.bx],y:[p.y,p.by],z:[0,-p.hv],line:{color:cone,width:w+8},opacity:0.35,hoverinfo:'skip',showlegend:false});
+    if(R.post && R.T!=='adhesivo') tr.push({type:'scatter3d',mode:'lines',x:[p.bx,p.bx-Math.min(60,hef*0.3)*p.tx],y:[p.by,p.by-Math.min(60,hef*0.3)*p.ty],z:[-p.hv,-p.hv+Math.min(60,hef*0.3)],line:{color:ink,width:w+4},hoverinfo:'skip',showlegend:false});
+  });
+  // cargas
+  const Lz=Math.max(hef*0.9,200);
+  if(R.mode==='anclaje'){ const mx=Math.max(1e-9,...A.map(p=>Math.max(p.Na,Math.hypot(p.ex,p.ey))));
+    A.forEach(p=>{ const t0=[p.x-stick*p.tx,p.y-stick*p.ty,stick];
+      if(p.Na>0){ const e=[-p.tx/p.k,-p.ty/p.k,1/p.k], l=Lz*(0.35+0.65*p.Na/mx), t1=[t0[0]+e[0]*l,t0[1]+e[1]*l,t0[2]+e[2]*l];
+        tr.push({type:'scatter3d',mode:'lines',x:[t0[0],t1[0]],y:[t0[1],t1[1]],z:[t0[2],t1[2]],line:{color:load,width:6},hovertemplate:`N<sub>ua,${p.i}</sub> = ${f2(p.Na/R.U,2)} ${R.un} (según la barra)<extra></extra>`,showlegend:false});
+        tr.push({type:'cone',x:[t1[0]],y:[t1[1]],z:[t1[2]],u:[e[0]],v:[e[1]],w:[e[2]],sizemode:'absolute',sizeref:Lz*0.18,anchor:'tip',colorscale:[[0,load],[1,load]],showscale:false,hoverinfo:'skip'}); }
+      const V=Math.hypot(p.ex,p.ey); if(V>0){ const l=Lz*(0.35+0.65*V/mx), ux=p.ex/V, uy=p.ey/V; tr.push({type:'scatter3d',mode:'lines',x:[t0[0],t0[0]+ux*l],y:[t0[1],t0[1]+uy*l],z:[stick,stick],line:{color:shear,width:6},hovertemplate:`V<sub>ua,${p.i}</sub> adicional = ${f2(V/R.U,2)} ${R.un}<extra></extra>`,showlegend:false});
+        tr.push({type:'cone',x:[t0[0]+ux*l],y:[t0[1]+uy*l],z:[stick],u:[ux],v:[uy],w:[0],sizemode:'absolute',sizeref:Lz*0.18,anchor:'tip',colorscale:[[0,shear],[1,shear]],showscale:false,hoverinfo:'skip'}); } });
+  } else {
+  const zA=Math.max(stick,R.zL||0); if(R.zL>stick) tr.push({type:'scatter3d',mode:'lines',x:[R.xL,R.xL],y:[R.yL,R.yL],z:[stick*0.35,zA],line:{color:muted,width:2,dash:'dot'},hoverinfo:'skip',showlegend:false});
+  if(R.NuV>0){ tr.push({type:'scatter3d',mode:'lines',x:[R.xL,R.xL],y:[R.yL,R.yL],z:[zA,zA+Lz],line:{color:load,width:7},hovertemplate:'N<sub>ua</sub> = '+f2(R.NuV/R.U,2)+' '+R.un+'<extra></extra>',showlegend:false});
+    tr.push({type:'cone',x:[R.xL],y:[R.yL],z:[zA+Lz],u:[0],v:[0],w:[1],sizemode:'absolute',sizeref:Lz*0.22,anchor:'tip',colorscale:[[0,load],[1,load]],showscale:false,hoverinfo:'skip'}); }
+  if(R.Vres>0){ const ux=R.Vx/R.Vres, uy=R.Vy/R.Vres, L=Math.max(hef*0.9,200);
+    tr.push({type:'scatter3d',mode:'lines',x:[R.xL,R.xL+ux*L],y:[R.yL,R.yL+uy*L],z:[zA,zA],line:{color:shear,width:7},hovertemplate:'V<sub>ua</sub> = '+f2(R.Vres/R.U,2)+' '+R.un+'<extra></extra>',showlegend:false});
+    tr.push({type:'cone',x:[R.xL+ux*L],y:[R.yL+uy*L],z:[zA],u:[ux],v:[uy],w:[0],sizemode:'absolute',sizeref:L*0.22,anchor:'tip',colorscale:[[0,shear],[1,shear]],showscale:false,hoverinfo:'skip'}); }
+  }
+  const infTxt=[]; if(inf.x1) infTxt.push([x0,(y0+y1)/2,0,'∞']); if(inf.x2) infTxt.push([x1,(y0+y1)/2,0,'∞']); if(inf.y1) infTxt.push([(x0+x1)/2,y0,0,'∞']); if(inf.y2) infTxt.push([(x0+x1)/2,y1,0,'∞']); if(inf.h) infTxt.push([(x0+x1)/2,y0,z0,'∞']);
+  if(infTxt.length) tr.push({type:'scatter3d',mode:'text',x:infTxt.map(t=>t[0]),y:infTxt.map(t=>t[1]),z:infTxt.map(t=>t[2]),text:infTxt.map(t=>t[3]),textfont:{size:20,color:muted},hoverinfo:'skip',showlegend:false});
+  const ax=t=>({title:{text:t,font:{color:muted,size:12}},color:muted,gridcolor:cssv('--line'),zerolinecolor:cssv('--line'),backgroundcolor:bg,showbackground:false,tickfont:{family:'IBM Plex Mono',size:10}});
+  Plotly.react('p3d',tr,{paper_bgcolor:bg,margin:{l:0,r:0,t:0,b:0},showlegend:false,scene:{aspectmode:'data',xaxis:ax('x [mm]'),yaxis:ax('y [mm]'),zaxis:ax('z [mm]'),camera:{eye:{x:1.5,y:-1.6,z:1.0}}},font:{family:'IBM Plex Sans',color:ink}},{displaylogo:false,responsive:true,modeBarButtonsToRemove:['toImage']});
+}
+
+// ---------- salida ----------
+const PAL=['#2E5B87','#5E3FA0','#2F7A4E','#A8741F','#B0118A','#1E7A8C','#6B5B2E','#7A4FA0'];
+let cases=[{name:'Izaje',N:0.8,Ns:0,Vx:0,Vy:0,x:265,y:40,color:PAL[0]}];
+let aLoads=[{N:0.4,Vx:0,Vy:0},{N:0.4,Vx:0,Vy:0}];
+let showSel='auto', lastN=0;
+let angs=[];
+function renderAngRows(){
+  const A=anchorsXY(); while(angs.length<A.length) angs.push({ax:v('angx')||0,ay:v('angy')||0}); angs.length=A.length;
+  $('angTbl').tBodies[0].innerHTML=A.map((p,k)=>`<tr><td>${k+1}</td><td>${f2(p.x,0)}</td><td>${f2(p.y,0)}</td>`+['ax','ay'].map(f=>`<td><input type="number" step="1" data-k="${k}" data-f="${f}" value="${+angs[k][f]||0}" aria-label="${f} del anclaje ${k+1}"></td>`).join('')+'</tr>').join('');
+  $('angTbl').tBodies[0].querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{ angs[+el.dataset.k][el.dataset.f]=parseFloat(el.value)||0; schedule(); }));
+}
+function angPreset(mode){ const A=anchorsXY(), cx=A.reduce((a,p)=>a+p.x,0)/A.length, cy=A.reduce((a,p)=>a+p.y,0)/A.length, mx=Math.abs(v('angx')||0), my=Math.abs(v('angy')||0);
+  const sg=d=>Math.abs(d)<0.5?0:Math.sign(d)*(mode==='in'?-1:1);
+  angs=A.map(p=> mode==='all'?{ax:v('angx')||0,ay:v('angy')||0}:{ax:sg(p.x-cx)*mx,ay:sg(p.y-cy)*my}); renderAngRows(); render(); }
+$('angAll').onclick=()=>angPreset('all'); $('angOut').onclick=()=>angPreset('out'); $('angIn').onclick=()=>angPreset('in');
+function anchorsXY(){ const n1=Math.max(1,Math.round(v('n1'))), n2=Math.max(1,Math.round(v('n2'))), s1=n1>1?v('s1'):0, s2=n2>1?v('s2'):0, xg=v('xg'), yg=v('yg'); const A=[]; for(let j=0;j<n2;j++) for(let i=0;i<n1;i++) A.push({x:xg+(i-(n1-1)/2)*s1, y:yg+(j-(n2-1)/2)*s2}); return A; }
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function renderCaseRows(){
+  const tb=$('cases').tBodies[0];
+  tb.innerHTML=cases.map((c,k)=>`<tr><td><input class="sw" type="color" data-k="${k}" data-f="color" value="${esc(c.color||PAL[0])}" aria-label="Color del caso"></td><td><input data-k="${k}" data-f="name" value="${esc(c.name)}" aria-label="Nombre del caso"></td>`+
+    ['N','Ns','Vx','Vy','x','y','z'].map(f=>`<td${f==='Ns'?' data-show="adhesivo"':''}><input type="number" step="${'xyz'.includes(f)?5:0.1}" data-k="${k}" data-f="${f}" value="${+c[f]||0}" aria-label="${f}"></td>`).join('')+
+    `<td>${cases.length>1?`<button type="button" class="x" data-del="${k}" aria-label="Quitar caso">×</button>`:''}</td></tr>`).join('');
+  tb.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{ const k=+el.dataset.k, f=el.dataset.f; cases[k][f]=(f==='name'||f==='color')?el.value:(parseFloat(el.value)||0); schedule(); }));
+  tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ cases.splice(+b.dataset.del,1); showSel='auto'; renderCaseRows(); render(); });
+  syncVis();
+}
+function renderALoadRows(){
+  const A=anchorsXY(); while(aLoads.length<A.length) aLoads.push({N:0,Vx:0,Vy:0}); aLoads.length=A.length; lastN=A.length;
+  const tb=$('aLoads').tBodies[0];
+  tb.innerHTML=A.map((p,k)=>`<tr><td>${k+1}</td><td>${f2(p.x,0)}</td><td>${f2(p.y,0)}</td>`+['N','Vx','Vy'].map(f=>`<td><input type="number" step="0.1" data-k="${k}" data-f="${f}" value="${+aLoads[k][f]||0}" aria-label="${f} del anclaje ${k+1}"></td>`).join('')+'</tr>').join('');
+  tb.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{ aLoads[+el.dataset.k][el.dataset.f]=parseFloat(el.value)||0; schedule(); }));
+}
+$('addCase').onclick=()=>{ const last=cases[cases.length-1]; cases.push({name:'Caso '+(cases.length+1),N:last?last.N:0,Ns:0,Vx:0,Vy:0,x:last?last.x:v('xg'),y:last?last.y:v('yg'),z:last?(+last.z||0):0,color:PAL[cases.length%PAL.length]}); renderCaseRows(); render(); };
+$('showCase').addEventListener('change',()=>{ showSel=$('showCase').value; render(); });
+function pill(r,na,warn){ if(na) return `<span class="pill ${warn?'warn':'na'}">${warn?'Falta dato':'No aplica'}</span>`; return r<=1?'<span class="pill ok">Verifica</span>':'<span class="pill bad">No verifica</span>'; }
+const worst=R=>Math.max(R.zN,R.zV,R.inter?R.inter.val:0,R.allOk?0:1e-9);
+function render(){
+  syncVis();
+  const mode=s('loadMode');
+  if(mode==='anclaje' && anchorsXY().length!==lastN) renderALoadRows();
+  if($('angInd').checked && (anchorsXY().length!==angs.length || !$('angTbl').tBodies[0].rows.length)) renderAngRows();
+  const list = mode==='anclaje' ? [{mode:'anclaje',name:'Cargas por anclaje',per:aLoads,Ns:v('NusA')||0}] : cases.map(c=>({mode:'placa',...c}));
+  let RR; try{ RR=list.map(L=>calc(L)); }catch(e){ $('errBox').hidden=false; $('errBox').textContent='Error de cálculo: '+e.message; return; }
+  let gi=0; RR.forEach((r,k)=>{ if(worst(r)>worst(RR[gi])) gi=k; });
+  const nm=k=>esc(list[k].name||('Caso '+(k+1)));
+  $('showCase').innerHTML=['<option value="auto">El que gobierna'+(RR.length>1?' ('+nm(gi)+')':'')+'</option>'].concat(list.map((L,k)=>`<option value="${k}">${nm(k)}</option>`)).join('');
+  if(showSel!=='auto' && +showSel>=list.length) showSel='auto'; $('showCase').value=showSel;
+  $('showWrap').hidden=list.length<2; $('sumWrap').hidden=list.length<2;
+  const si= showSel==='auto'?gi:+showSel; const R=RR[si];
+  const msgs=R.errs.concat(R.notes); $('errBox').hidden=!msgs.length; $('errBox').innerHTML=msgs.join('<br>');
+  try{ draw(R); }catch(e){}
+  const u=R.un, U=R.U;
+  $('caseSum').tBodies[0].innerHTML=RR.map((r,k)=>`<tr class="${k===gi?'gov':''}"><td><span class="dot" style="background:${esc(list[k].color||PAL[0])}"></span>${nm(k)}</td><td class="num">${f2(r.Nu/U,2)}</td><td class="num">${f2(r.Vres/U,2)}</td><td class="num">${r.Nu>0?f2(r.zN,3):'—'}</td><td class="num">${r.Vres>0?f2(r.zV,3):'—'}</td><td class="num">${r.inter?f2(r.inter.val,3):'—'}</td><td>${k===gi?'Sí':''}</td><td>${r.allOk?'<span class="pill ok">Verifica</span>':'<span class="pill bad">No verifica</span>'}</td></tr>`).join('');
+  $('caseSum').tHead.rows[0].cells[1].innerHTML='N<sub>ua</sub> ['+u+']'; $('caseSum').tHead.rows[0].cells[2].innerHTML='V<sub>ua</sub> ['+u+']';
+  let gov=R.M.filter(m=>!m.na).sort((a,b)=>b.r-a.r)[0];
+  if(R.inter && (!gov || R.inter.val>gov.r)) gov={name:'Interacción tracción-corte (17.8)',r:R.inter.val};
+  const dBad=R.D.find(d=>!d.warn&&!d.ok); if(dBad && (!gov||gov.r<=1)) gov={name:dBad.name+' ('+dBad.art+'): '+dBad.val+', requiere '+dBad.req,r:NaN};
+  const vd=$('verdict'); const eR=RR.find(r=>r.errs.length), nBad=RR.filter(r=>!r.allOk).length;
+  if(eR){ vd.className='verdict warn'; vd.innerHTML='Revisar los datos <small>'+eR.errs[0]+'</small>'; }
+  else if(!RR.some(r=>r.Nu>0||r.Vres>0)){ vd.className='verdict warn'; vd.innerHTML='Cargá la tracción y/o el corte mayorados <small>para ver la verificación.</small>'; }
+  else { vd.className='verdict '+(nBad?'bad':'ok');
+    vd.innerHTML=(!nBad?(RR.length>1?'El anclaje verifica en los '+RR.length+' casos (Capítulo 17 del CIRSOC 201-25)':'El anclaje verifica según el Capítulo 17 del CIRSOC 201-25'):(RR.length>1?'El anclaje no verifica en '+nBad+' de '+RR.length+' casos':'El anclaje no verifica'))
+      +(gov?` <small>${RR.length>1?'Caso mostrado: '+nm(si)+' · ':''}${isNaN(gov.r)?'No cumple':'Gobierna'}: ${gov.name.replace(/<[^>]+>/g,'')}${isNaN(gov.r)?'':' ('+f2(gov.r,2)+')'}</small>`:''); }
+  const kv=[['N<sub>ua</sub> grupo'+(R.incl?' (según barras)':''),f2(R.Nu/U,2)+' '+u],['N<sub>ua,i</sub> máx.',f2(R.NmaxI/U,2)+' '+u],['V<sub>ua</sub>',f2(R.Vres/U,2)+' '+u],['Anclajes traccionados',R.Tg.length+' de '+R.n],
+    ['Tracción: mayor relación',R.Nu>0?f2(R.zN,3):'—'],['Corte: mayor relación',R.Vres>0?f2(R.zV,3):'—'],['Interacción (17.8)',R.inter?f2(R.inter.val,3):'—']].concat(R.incl?[['Inclinación θ máx.',f2(R.thDeg,1)+'°'],['h<sub>ef</sub> vertical mín.',f2(R.hef,0)+' mm']]:[]);
+  $('kv').innerHTML=kv.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
+  const tb=$('modes').tBodies[0];
+  tb.innerHTML=R.M.map(m=>m.na?`<tr><td>${m.art}</td><td class="t">${m.name}<br><span class="hint">${m.why}</span></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td>${pill(0,true,m.warn)}</td></tr>`
+    :`<tr><td>${m.art}</td><td class="t">${m.name}<br><span class="hint">${m.note}</span></td><td class="num">${f2(m.Rn/U,2)}</td><td class="num">${m.phi}</td><td class="num">${f2(m.pR/U,2)}</td><td class="num">${f2(m.Su/U,2)}</td><td class="num">${f2(m.r,3)}</td><td>${pill(m.r)}</td></tr>`).join('')
+    +(R.inter?`<tr><td>17.8</td><td class="t" colspan="5">Interacción tracción-corte: ${R.inter.txt}</td><td class="num">${f2(R.inter.val,3)}</td><td>${R.inter.ok?'<span class="pill ok">Verifica</span>':'<span class="pill bad">No verifica</span>'}</td></tr>`:'');
+  $('modes').tHead.rows[0].cells[2].innerHTML='R<sub>n</sub> ['+u+']'; $('modes').tHead.rows[0].cells[4].innerHTML='φR<sub>n</sub> ['+u+']'; $('modes').tHead.rows[0].cells[5].innerHTML='Solicitación ['+u+']';
+  $('det').tBodies[0].innerHTML=R.D.map(d=>`<tr><td>${d.art}</td><td class="t">${d.name}</td><td>${d.val}</td><td>${d.req}</td><td>${d.warn?'<span class="pill warn">Falta dato</span>':d.ok?'<span class="pill ok">Cumple</span>':'<span class="pill bad">No cumple</span>'}</td></tr>`).join('');
+  $('dist').tBodies[0].innerHTML=R.A.map(p=>`<tr><td>${p.i}</td><td class="num">${f2(p.x,0)}</td><td class="num">${f2(p.y,0)}</td><td class="num">${f2(p.N/U,2)}</td><td class="num">${f2(p.V/U,2)}</td><td class="num">${fmm(p.c.x1)}</td><td class="num">${fmm(p.c.x2)}</td><td class="num">${fmm(p.c.y1)}</td><td class="num">${fmm(p.c.y2)}</td></tr>`).join('');
+  $('dist').tHead.rows[0].cells[3].innerHTML='N<sub>ua,i</sub>'+(R.incl?' según barra':'')+' ['+u+']'; $('dist').tHead.rows[0].cells[4].innerHTML='V<sub>ua,i</sub>'+(R.incl?' ⊥ barra':'')+' ['+u+']';
+  $('memo').innerHTML=R.memo.map(([t,b])=>`<details><summary>${t}</summary>${DESC[t.split(' ')[0]]?`<p class="desc">${DESC[t.split(' ')[0]]}</p>`:''}<div class="calc">${calcHTML(b)}</div></details>`).join('');
+  window.__RR=RR; LAST={RR,list,gi,si}; drawSchems(R);
+}
+function syncVis(){
+  const T=s('tipo'), post=isPost(T), mode=s('loadMode');
+  $('angBox').hidden=!$('angInd').checked; document.querySelectorAll('[data-angl]').forEach(e=>e.innerHTML=e.innerHTML.replace(/^(Magnitud en|Inclinación en)/,$('angInd').checked?'Magnitud en':'Inclinación en'));
+  $('placaBox').hidden=mode!=='placa'; $('anchBox').hidden=mode!=='anclaje';
+  $('loadHint').innerHTML= mode==='placa' ? '(x ; y ; z): punto de aplicación; z es la altura sobre la cara del hormigón (en un cáncamo, donde se unen las patas). Cada caso se reparte por equilibrio de la placa rígida (ΣFx, ΣFy, ΣFz, ΣMx, ΣMy, ΣMz = 0). Cada barra resiste según su eje y, con una rigidez menor, en forma transversal; las barras que quedarían comprimidas no se cuentan. Se verifican todos los casos y se informa el que gobierna.' : 'N<sub>ua,i</sub> es la tracción mayorada de cada barra, aplicada según su eje y por su baricentro (sin flexión). V adicional: corte horizontal que además recibe la barra. Las excentricidades para ψec salen de la resultante de esas cargas.';
+  document.querySelectorAll('[data-show]').forEach(el=>{ const k=el.dataset.show; let on=false;
+    if(k==='rosca') on=s('vast')==='rosca'; else if(k==='cast') on=!post; else if(k==='post') on=post; else if(k==='mech') on=post&&T!=='adhesivo'; else on=k===T;
+    el.hidden=!on; });
+  ['X1','X2','Y1','Y2','H'].forEach(k=>{ const c=$('inf'+k).checked; if(k==='X1'||k==='X2') $('Lx').disabled=$('infX1').checked&&$('infX2').checked; if(k==='Y1'||k==='Y2') $('Ly').disabled=$('infY1').checked&&$('infY2').checked; if(k==='H') $('ha').disabled=c; });
+}
+let lastTipo=s('tipo');
+$('tipo').addEventListener('change',()=>{ const T=s('tipo'); if(isPost(T)!==isPost(lastTipo)) $('kc').value=isPost(T)?7:10; lastTipo=T; });
+$('infAll').addEventListener('change',()=>{ const c=$('infAll').checked; ['infX1','infX2','infY1','infY2','infH'].forEach(k=>$(k).checked=c); render(); });
+['infX1','infX2','infY1','infY2','infH'].forEach(k=>$(k).addEventListener('change',()=>{ $('infAll').checked=['infX1','infX2','infY1','infY2','infH'].every(q=>$(q).checked); }));
+let tmr=null; const schedule=()=>{ clearTimeout(tmr); tmr=setTimeout(render,200); };
+document.querySelectorAll('aside input, aside select').forEach(el=>{ el.addEventListener('input',schedule); el.addEventListener('change',schedule); });
+$('loadMode').addEventListener('change',()=>{ showSel='auto'; renderALoadRows(); });
+$('angInd').addEventListener('change',()=>{ if($('angInd').checked){ angs=[]; renderAngRows(); } });
+['n1','n2','s1','s2','xg','yg'].forEach(k=>$(k).addEventListener('input',()=>{ if($('angInd').checked) renderAngRows(); }));
+
+// ---------- textos explicativos de cada verificación ----------
+const DESC={
+ 'Equilibrio':'La tracción y el corte de cada barra salen del equilibrio de la placa rígida: se calculan los momentos de la carga respecto del centro de los anclajes, se reparten entre las barras y se verifica que ΣF = 0 y ΣM = 0 en x, y, z.',
+ 'Cargas':'La carga de cada barra se aplica según su eje y por su baricentro, de modo que la barra trabaja a tracción pura (más el corte adicional, si lo hay).',
+ 'Barras':'El Capítulo 17 está planteado para anclajes perpendiculares a la superficie del hormigón. Para barras inclinadas se adopta el criterio indicado abajo; conviene justificarlo en la memoria general.',
+ '17.5.3':'Se debe cumplir φR<sub>n</sub> ≥ solicitación mayorada para cada modo de falla (17.5.1). Los factores φ salen de la Tabla 17.5.3 según el modo, la condición A (con armadura suplementaria) o B (sin ella) y, en anclajes post-instalados, la categoría del producto.',
+ '17.6.1':'Resistencia del acero de un anclaje en tracción (17.6.1.2): N<sub>sa</sub> = A<sub>se,N</sub> · f<sub>uta</sub>, con f<sub>uta</sub> ≤ mín(1,9 f<sub>ya</sub> ; 860 MPa). Se compara con la tracción del anclaje más solicitado.',
+ '17.6.2':'Desprendimiento del hormigón en tracción (17.6.2.1): N<sub>cbg</sub> = (A<sub>Nc</sub>/A<sub>Nco</sub>) ψ<sub>ec,N</sub> ψ<sub>ed,N</sub> ψ<sub>c,N</sub> ψ<sub>cp,N</sub> N<sub>b</sub>. A<sub>Nco</sub> = 9 h<sub>ef</sub>² es el área proyectada de un anclaje aislado lejos de bordes; A<sub>Nc</sub> es la del grupo, limitada por bordes y separaciones. N<sub>b</sub> = k<sub>c</sub> λ<sub>a</sub> √f\'c h<sub>ef</sub><sup>1,5</sup> (17.6.2.2.1). ψ<sub>ec,N</sub> tiene en cuenta la excentricidad de la carga (17.6.2.3), ψ<sub>ed,N</sub> la cercanía a los bordes (17.6.2.4), ψ<sub>c,N</sub> = 1,25 pre-instalado / 1,4 post-instalado en hormigón no fisurado y 1,0 fisurado (17.6.2.5), y ψ<sub>cp,N</sub> el hendimiento de post-instalados (17.6.2.6). Si hay tres o más bordes a menos de 1,5 h<sub>ef</sub>, h<sub>ef</sub> se reduce según 17.6.2.1.2.',
+ '17.6.3':'Arrancamiento del anclaje (17.6.3): N<sub>pn</sub> = ψ<sub>c,P</sub> N<sub>p</sub>. Anclaje con cabeza: N<sub>p</sub> = 8 A<sub>brg</sub> f\'c. Con gancho: N<sub>p</sub> = 0,9 f\'c e<sub>h</sub> d<sub>a</sub>, con 3 d<sub>a</sub> ≤ e<sub>h</sub> ≤ 4,5 d<sub>a</sub>. Post-instalado: valor de ensayos. ψ<sub>c,P</sub> = 1,4 en hormigón no fisurado y 1,0 fisurado.',
+ '17.6.4':'Descascaramiento lateral (17.6.4), solo para anclajes con cabeza con h<sub>ef</sub> > 2,5 c<sub>a1</sub>: N<sub>sb</sub> = 13 c<sub>a1</sub> √A<sub>brg</sub> λ<sub>a</sub> √f\'c. Si c<sub>a2</sub> &lt; 3 c<sub>a1</sub> se multiplica por (1 + c<sub>a2</sub>/c<sub>a1</sub>)/4. Grupo a lo largo del borde con s &lt; 6 c<sub>a1</sub>: N<sub>sbg</sub> = (1 + s/(6 c<sub>a1</sub>)) N<sub>sb</sub>.',
+ '17.6.5':'Adherencia de anclajes adhesivos (17.6.5): N<sub>ag</sub> = (A<sub>Na</sub>/A<sub>Nao</sub>) ψ<sub>ec,Na</sub> ψ<sub>ed,Na</sub> ψ<sub>cp,Na</sub> N<sub>ba</sub>, con N<sub>ba</sub> = λ<sub>a</sub> τ π d<sub>a</sub> h<sub>ef</sub> y c<sub>Na</sub> = 10 d<sub>a</sub> √(τ<sub>uncr</sub>/7,6).',
+ '17.7.1':'Resistencia del acero en corte (17.7.1.2): V<sub>sa</sub> = 0,6 A<sub>se,V</sub> f<sub>uta</sub> (A<sub>se,V</sub> f<sub>uta</sub> para pernos con cabeza soldados a la placa). Con mortero de nivelación se multiplica por 0,80 (17.7.1.2.1).',
+ '17.7.2':'Desprendimiento del hormigón por corte hacia un borde (17.7.2.1): V<sub>cbg</sub> = (A<sub>Vc</sub>/A<sub>Vco</sub>) ψ<sub>ec,V</sub> ψ<sub>ed,V</sub> ψ<sub>c,V</sub> ψ<sub>h,V</sub> V<sub>b</sub>. A<sub>Vco</sub> = 4,5 c<sub>a1</sub>². V<sub>b</sub> = mín(0,6 (ℓ<sub>e</sub>/d<sub>a</sub>)<sup>0,2</sup> √d<sub>a</sub> λ<sub>a</sub> √f\'c c<sub>a1</sub><sup>1,5</sup> ; 3,7 λ<sub>a</sub> √f\'c c<sub>a1</sub><sup>1,5</sup>) (17.7.2.2). ψ<sub>ec,V</sub> = 1/(1 + e\'<sub>V</sub>/(1,5 c<sub>a1</sub>)). ψ<sub>ed,V</sub> = 0,7 + 0,3 c<sub>a2</sub>/(1,5 c<sub>a1</sub>) ≤ 1. ψ<sub>c,V</sub> depende de la fisuración y de la armadura de borde. ψ<sub>h,V</sub> = √(1,5 c<sub>a1</sub>/h<sub>a</sub>) ≥ 1. Con el corte paralelo al borde, la resistencia se toma dos veces con ψ<sub>ed,V</sub> = 1 (17.7.2.1(c)). En grupos se evalúa la fila delantera con su parte del corte y la trasera con el corte total. Si el elemento es angosto y delgado, c<sub>a1</sub> se reduce según 17.7.2.1.2.',
+ '17.7.3':'Cabeceo (pryout) (17.7.3): V<sub>cpg</sub> = k<sub>cp</sub> N<sub>cpg</sub>, con k<sub>cp</sub> = 1 si h<sub>ef</sub> &lt; 65 mm y 2 si h<sub>ef</sub> ≥ 65 mm. N<sub>cpg</sub> = N<sub>cbg</sub> con todos los anclajes traccionados; en adhesivos se toma el menor con la adherencia.',
+ '17.8':'Tracción y corte simultáneos (17.8): si V<sub>ua</sub> ≤ 0,2 φV<sub>n</sub> se permite verificar solo tracción; si N<sub>ua</sub> ≤ 0,2 φN<sub>n</sub>, solo corte. En los demás casos, N<sub>ua</sub>/φN<sub>n</sub> + V<sub>ua</sub>/φV<sub>n</sub> ≤ 1,2.',
+ '17.9':'Distancias mínimas al borde, separaciones y espesores para evitar el hendimiento (17.9), y límites de aplicación del capítulo (17.3).'
+};
+let LAST=null;
+
+// ---------- formato de los bloques de cálculo ----------
+// convierte el texto plano de la memoria en bloques: párrafos (con grupos), viñetas, tablas y separaciones; con subíndices y exponentes
+function fmtMath(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/([A-Za-zψφτλΣαθℓΔεκ'])_\{?([A-Za-z0-9áéíóúñ.′']+(?:,[A-Za-z0-9áéíóúñ.′']+)*)\}?(?=[\s)\];:=·×/+−\-|→(²ᵀ^,]|$)/g,'$1<sub>$2</sub>')
+  .replace(/\^\(?([0-9,./]+)\)?/g,'<sup>$1</sup>'); }
+function parseCalc(txt){ const B=[]; txt.split('\n').forEach(l=>{ const t=l.trim();
+    if(!t){ B.push({k:'gap'}); return; }
+    if(t.includes(' | ')){ const cells=t.split('|').map(c=>c.trim()); const last=B[B.length-1]; if(last&&last.k==='tbl') last.rows.push(cells); else B.push({k:'tbl',rows:[cells]}); return; }
+    if(t.startsWith('·')){ const last=B[B.length-1]; const item=t.replace(/^·\s*/,''); if(last&&last.k==='ul') last.items.push(item); else B.push({k:'ul',items:[item]}); return; }
+    const last=B[B.length-1]; if(/^\s{2,}/.test(l) && last && last.k==='ul'){ last.items[last.items.length-1]+=' '+t; return; }
+    B.push({k:'p',ind:/^\s{2,}/.test(l),groups:t.split(/\s{3,}/)}); });
+  while(B.length&&B[B.length-1].k==='gap') B.pop(); return B; }
+function calcHTML(txt){ return parseCalc(txt).map(b=>{
+    if(b.k==='gap') return '<div class="gap"></div>';
+    if(b.k==='ul') return '<ul>'+b.items.map(i=>`<li>${fmtMath(i)}</li>`).join('')+'</ul>';
+    if(b.k==='tbl') return '<div class="tbl-wrap"><table><thead><tr>'+b.rows[0].map(c=>`<th>${fmtMath(c)}</th>`).join('')+'</tr></thead><tbody>'+b.rows.slice(1).map(r=>'<tr>'+r.map(c=>`<td>${fmtMath(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
+    return `<p${b.ind?' class="in"':''}>`+b.groups.map(g=>g==='→'?'<span class="g ar">→</span>':`<span class="g">${fmtMath(g).replace(/^→\s*/,'<span class="ar">→</span> ')}</span>`).join('')+'</p>'; }).join(''); }
+
+// ---------- esquemas 2D (elevaciones y planta) ----------
+function schem(cv,R,view,pal,W,H,k){ k=k||W/500;
+  const ctx=cv.getContext('2d'); ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle=pal.bg; ctx.fillRect(0,0,W,H);
+  const A=R.A, inf=R.inf, hef=R.hef, ext=Math.max(1.5*hef*1.3,250);
+  const xs=A.flatMap(p=>[p.x,p.bx]), ys=A.flatMap(p=>[p.y,p.by]);
+  const X0=inf.x1?Math.min(...xs)-ext:0, X1=inf.x2?Math.max(...xs)+ext:R.Lx, Y0=inf.y1?Math.min(...ys)-ext:0, Y1=inf.y2?Math.max(...ys)+ext:R.Ly;
+  const Z0=inf.h?-(Math.max(...A.map(p=>p.hv))+ext*0.4):-R.ha, stick=Math.max(40,0.22*hef);
+  const zTop=Math.max(stick*1.6,(R.zL||0)*1.12+stick*0.4);
+  const pr=q=>view==='xy'?[q[0],q[1]]:view==='xz'?[q[0],q[2]]:[-q[1],q[2]];   // yz mirando hacia −X: +Y a la izquierda
+  let u0,u1,v0,v1; if(view==='xy'){u0=X0;u1=X1;v0=Y0;v1=Y1;} else if(view==='xz'){u0=X0;u1=X1;v0=Z0;v1=zTop;} else {u0=-Y1;u1=-Y0;v0=Z0;v1=zTop;}
+  const m=Math.round(Math.min(W,H)*0.17), sc=Math.min((W-2*m)/((u1-u0)||1),(H-2*m)/((v1-v0)||1));
+  const ox=(W-(u1-u0)*sc)/2, oy=(H-(v1-v0)*sc)/2;
+  const P=q=>{ const [u,v]=pr(q); return [ox+(u-u0)*sc, H-oy-(v-v0)*sc]; };
+  const fs=Math.round(13*k);
+  ctx.lineCap='round'; ctx.lineJoin='round'; ctx.font=`${fs}px "IBM Plex Sans",Calibri,sans-serif`;
+  const line=(a,b,col,w,dash)=>{ ctx.strokeStyle=col; ctx.lineWidth=w*k; ctx.setLineDash((dash||[]).map(x=>x*k)); ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); ctx.setLineDash([]); };
+  const arrow=(a,b,col,w)=>{ line(a,b,col,w); const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), L=Math.max(9*k,w*k*3.2); ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(b[0]-L*Math.cos(ang-0.4),b[1]-L*Math.sin(ang-0.4)); ctx.lineTo(b[0]-L*Math.cos(ang+0.4),b[1]-L*Math.sin(ang+0.4)); ctx.closePath(); ctx.fill(); };
+  const text=(t,q,col,al,bl)=>{ al=al||'left'; bl=bl||'middle'; ctx.textAlign=al; ctx.textBaseline=bl; const wT=ctx.measureText(t).width, hT=fs, pd=3*k;
+    const x0=al==='center'?q[0]-wT/2:al==='right'?q[0]-wT:q[0], y0=bl==='top'?q[1]:bl==='bottom'?q[1]-hT:q[1]-hT/2;
+    ctx.save(); ctx.globalAlpha=0.88; ctx.fillStyle=pal.bg; ctx.fillRect(x0-pd,y0-pd,wT+2*pd,hT+2*pd); ctx.restore(); ctx.fillStyle=col; ctx.fillText(t,q[0],q[1]); };
+  // hormigón
+  const corners = view==='xy' ? [[X0,Y0,0],[X1,Y0,0],[X1,Y1,0],[X0,Y1,0]] : view==='xz' ? [[X0,0,Z0],[X1,0,Z0],[X1,0,0],[X0,0,0]] : [[0,Y0,Z0],[0,Y1,Z0],[0,Y1,0],[0,Y0,0]];
+  const C=corners.map(P); ctx.fillStyle=pal.conc; ctx.beginPath(); C.forEach((c,i)=>i?ctx.lineTo(c[0],c[1]):ctx.moveTo(c[0],c[1])); ctx.closePath(); ctx.fill();
+  const infSide = view==='xy' ? [inf.y1,inf.x2,inf.y2,inf.x1] : view==='xz' ? [inf.h,inf.x2,false,inf.x1] : [inf.h,inf.y1,false,inf.y2];
+  for(let i=0;i<4;i++) line(C[i],C[(i+1)%4],pal.muted,i===2&&view!=='xy'?2.2:1.4,infSide[i]?[6,5]:null);
+  infSide.forEach((f,i)=>{ if(!f) return; const a=C[i], b=C[(i+1)%4]; text('∞',[(a[0]+b[0])/2,(a[1]+b[1])/2],pal.muted,'center','middle'); });
+  // barras
+  const w=Math.max(2.2,Math.min(5,R.da/4)); const cx=A.reduce((a,q)=>a+q.x,0)/A.length, cy=A.reduce((a,q)=>a+q.y,0)/A.length;
+  const labs=[];
+  A.forEach(p=>{
+    const top=[p.x-stick*p.tx,p.y-stick*p.ty,stick], ent=[p.x,p.y,0], tip=[p.bx,p.by,-p.hv];
+    if(view==='xy'){ line(P(ent),P(tip),pal.steel,w,[7,5]); ctx.fillStyle=pal.steel; ctx.beginPath(); ctx.arc(...P(ent),w*1.6,0,7); ctx.fill(); }
+    else line(P(top),P(tip),pal.steel,w);
+    if(R.T==='gancho'){ const eh=Math.min(v('eh'),4.5*R.da)||3*R.da; const [hx,hy]=hookVec(p,A);
+      const a=rot(p,[hx*eh,hy*eh,0]); line(P(tip),P([tip[0]+a[0],tip[1]+a[1],tip[2]+a[2]]),pal.steel,w,view==='xy'?[7,5]:null); }
+    if(R.T==='cabeza'){ const r=Math.max(R.da*1.2,Math.sqrt(Math.max(1,v('Abrg'))+Math.PI/4*R.da*R.da)/1.7);
+      [[r,0,0],[0,r,0]].forEach(q=>{ const a=rot(p,q); line(P([tip[0]-a[0],tip[1]-a[1],tip[2]-a[2]]),P([tip[0]+a[0],tip[1]+a[1],tip[2]+a[2]]),pal.steel,w+2); }); }
+    labs.push({i:p.i,q:view==='xy'?P(ent):P(tip),out:Math.sign(pr([p.x,p.y,0])[0]-pr([cx,cy,0])[0])||1});
+  });
+  // números de las barras (en planta junto a la entrada; en elevación junto a la punta). Las que se superponen se agrupan
+  const grp=[]; labs.forEach(l=>{ const g=grp.find(g=>Math.hypot(g.q[0]-l.q[0],g.q[1]-l.q[1])<10*k); if(g) g.ids.push(l.i); else grp.push({q:l.q,out:l.out,ids:[l.i]}); });
+  ctx.font=`600 ${fs}px "IBM Plex Sans",Calibri,sans-serif`;
+  grp.forEach(g=>{ const t=g.ids.join('-'); if(view==='xy') text(t,[g.q[0]+9*k,g.q[1]-9*k],pal.ink,'left','bottom'); else text(t,[g.q[0]+g.out*8*k,g.q[1]+8*k],pal.ink,g.out>0?'left':'right','top'); });
+  ctx.font=`${fs}px "IBM Plex Sans",Calibri,sans-serif`;
+  // h_ef y ángulo en elevación
+  if(view!=='xy'){ const p=A.reduce((a,q)=>q.hv<a.hv?q:a,A[0]); const u=pr([p.bx,p.by,0])[0]; const x=ox+(u-u0)*sc; const d=Math.max(...C.map(c=>c[0]))+10;
+    const yA=P([p.bx,p.by,0])[1], yB=P([p.bx,p.by,-p.hv])[1]; const xd=Math.min(W-fs-16*k,d+6*k); line([xd,yA],[xd,yB],pal.muted,1); line([xd-5*k,yA],[xd+5*k,yA],pal.muted,1); line([xd-5*k,yB],[xd+5*k,yB],pal.muted,1);
+    ctx.save(); ctx.translate(xd+5*k,(yA+yB)/2); ctx.rotate(-Math.PI/2); text('hef = '+f2(p.hv,0)+' mm',[0,0],pal.ink,'center','top'); ctx.restore(); }
+  // placa
+  if(view!=='xy'){ const us=A.map(p=>pr([p.x,p.y,0])[0]); const pm=Math.max(30,R.da*2.5); const zp=stick*0.35;
+    const a=[ox+(Math.min(...us)-pm-u0)*sc, H-oy-(zp-v0)*sc], b=[ox+(Math.max(...us)+pm-u0)*sc, a[1]]; line(a,b,pal.ink,3); }
+  // cargas
+  const col=R.color||pal.load, colV=R.color||pal.shear, Lp=Math.min(W,H)*0.16, un=R.un;
+  const fmt=x=>f2(x/R.U,2)+' '+un;
+  if(R.mode==='anclaje'){ const mxA=Math.max(1e-9,...A.map(p=>Math.max(p.Na,Math.hypot(p.ex,p.ey))));
+    A.forEach(p=>{ const top=view==='xy'?[p.x,p.y,0]:[p.x-stick*p.tx,p.y-stick*p.ty,stick], b0=P(top);
+      if(p.Na>0){ const e=[-p.tx/p.k,-p.ty/p.k,1/p.k], b1=P([top[0]+e[0]*1000,top[1]+e[1]*1000,top[2]+e[2]*1000]); const dx=b1[0]-b0[0], dy=b1[1]-b0[1], frac=Math.hypot(dx,dy)/(1000*sc), l=Lp*(0.45+0.55*p.Na/mxA);
+        if(frac<0.08){ ctx.strokeStyle=col; ctx.lineWidth=2*k; ctx.beginPath(); ctx.arc(b0[0],b0[1],8*k,0,7); ctx.stroke(); ctx.fillStyle=col; ctx.beginPath(); ctx.arc(b0[0],b0[1],2.8*k,0,7); ctx.fill(); text('N'+p.i+' = '+fmt(p.Na),[b0[0]+12*k,b0[1]+12*k],col,'left','top'); }
+        else { const L2=l*frac/Math.hypot(dx,dy); const t=[b0[0]+dx*L2,b0[1]+dy*L2]; arrow(b0,t,col,3); text('N'+p.i+' = '+fmt(p.Na),[t[0]+(dx>=0?6:-6),t[1]-4],col,dx>=0?'left':'right','bottom'); } }
+      const V=Math.hypot(p.ex,p.ey); if(V>0){ const l=Lp*(0.45+0.55*V/mxA);
+        if(view==='xy'){ const t=[b0[0]+p.ex/V*l,b0[1]-p.ey/V*l]; arrow(b0,t,colV,3); text('V'+p.i+' = '+fmt(V),[t[0]+6,t[1]-6],colV,'left','bottom'); }
+        else { const Vu=view==='xz'?p.ex:-p.ey; if(Math.abs(Vu)>0){ const t=[b0[0]+Math.sign(Vu)*l*Math.abs(Vu)/V,b0[1]]; arrow(b0,t,colV,3); text('V'+p.i+' = '+fmt(Math.abs(Vu)),[t[0],t[1]+8],colV,Vu>0?'right':'left','top'); } } } });
+  }
+  const pts = R.mode==='anclaje' ? [] : [{x:R.xL,y:R.yL,z:Math.max(stick,R.zL||0),N:R.NuV,Vx:R.Vx,Vy:R.Vy}];
+  const mx=Math.max(1e-9,...pts.map(q=>Math.max(Math.abs(q.N),Math.hypot(q.Vx,q.Vy))));
+  pts.forEach(q=>{ const base=P([q.x,q.y,view==='xy'?0:(q.z||stick)]); if(view!=='xy' && q.z>stick) line(P([q.x,q.y,stick*0.35]),base,pal.muted,1.2,[4,4]);
+    const Vu = view==='xy'?null : view==='xz'?q.Vx:-q.Vy;
+    if(view==='xy'){ if(q.N>0){ ctx.strokeStyle=col; ctx.lineWidth=2*k; ctx.beginPath(); ctx.arc(base[0],base[1],8*k,0,7); ctx.stroke(); ctx.fillStyle=col; ctx.beginPath(); ctx.arc(base[0],base[1],2.8*k,0,7); ctx.fill(); text('N = '+fmt(q.N),[base[0]+12*k,base[1]+12*k],col,'left','top'); }
+      const V=Math.hypot(q.Vx,q.Vy); if(V>0){ const l=Lp*(R.mode==='anclaje'?0.45+0.55*V/mx:1); const e=[base[0]+q.Vx/V*l, base[1]-q.Vy/V*l]; arrow(base,e,colV,3); text('V = '+fmt(V),[e[0]+6,e[1]-6],colV,'left','bottom'); } }
+    else { if(q.N>0){ const l=Lp*(R.mode==='anclaje'?0.45+0.55*q.N/mx:1); const e=[base[0],base[1]-l]; arrow(base,e,col,3); text('N = '+fmt(q.N),[e[0]+6,e[1]+4],col,'left','top'); }
+      if(Vu){ const l=Lp*(R.mode==='anclaje'?0.45+0.55*Math.abs(Vu)/mx:1); const e=[base[0]+Math.sign(Vu)*l,base[1]]; arrow(base,e,colV,3); text((view==='xz'?'V_x = ':'V_y = ')+fmt(Math.abs(Vu)),[e[0],e[1]+8],colV,Vu>0?'right':'left','top'); } } });
+  // ejes
+  const ax0=[14,H-14]; const lab=view==='xy'?['x','y']:view==='xz'?['x','z']:['−y','z'];
+  arrow(ax0,[ax0[0]+34,ax0[1]],pal.muted,1.4); arrow(ax0,[ax0[0],ax0[1]-34],pal.muted,1.4);
+  text(lab[0],[ax0[0]+38,ax0[1]],pal.muted,'left','middle'); text(lab[1],[ax0[0],ax0[1]-40],pal.muted,'center','bottom');
+}
+function drawSchems(R){
+  const pal={bg:cssv('--bg'),ink:cssv('--ink'),muted:cssv('--muted'),conc:cssv('--concrete'),steel:cssv('--steel'),load:cssv('--load'),shear:cssv('--shear')};
+  [['scXZ','xz'],['scYZ','yz'],['scXY','xy']].forEach(([id,vw])=>{ const cv=$(id); if(!cv||!cv.getContext) return; const dpr=window.devicePixelRatio||1, W=cv.clientWidth||400, H=cv.clientHeight||280;
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); const ctx=cv.getContext('2d'); try{ schem(cv,R,vw,pal,cv.width,cv.height,dpr); }catch(e){} });
+}
+const PAL_PRINT={bg:'#FFFFFF',ink:'#1B2226',muted:'#5B656A',conc:'#E4E7E5',steel:'#A8741F',load:'#B0118A',shear:'#5E3FA0'};
+function schemPNG(R,vw){ const cv=document.createElement('canvas'); cv.width=1400; cv.height=760; schem(cv,R,vw,PAL_PRINT,1400,760,2.4); return cv.toDataURL('image/png'); }
+
+// ---------- memoria en Word (.docx) ----------
+const X=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const plain=t=>String(t).replace(/<sup>([^<]*)<\/sup>/g,'^$1').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+// texto con <sub>/<sup> → runs de Word con subíndices
+function runs(html,rpr){ rpr=rpr||''; const out=[]; const re=/<(sub|sup)>([^<]*)<\/\1>|([^<]+)|<[^>]+>/g; let m;
+  while((m=re.exec(html))){ if(m[3]!=null) out.push(`<w:r><w:rPr>${rpr}</w:rPr><w:t xml:space="preserve">${X(m[3].replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'))}</w:t></w:r>`);
+    else if(m[1]) out.push(`<w:r><w:rPr>${rpr}<w:vertAlign w:val="${m[1]==='sub'?'subscript':'superscript'}"/></w:rPr><w:t xml:space="preserve">${X(m[2])}</w:t></w:r>`); }
+  return out.join(''); }
+const Wp=(html,style,rpr)=>`<w:p>${style?`<w:pPr><w:pStyle w:val="${style}"/></w:pPr>`:''}${runs(html,rpr)}</w:p>`;
+function Wcalc(txt){ const P=(h,ind)=>`<w:p><w:pPr><w:pStyle w:val="Calc"/>${ind?'<w:ind w:left="567"/>':''}</w:pPr>${runs(h)}</w:p>`; const out=[P('')];
+  parseCalc(txt).forEach(b=>{
+    if(b.k==='gap') out.push(P(''));
+    else if(b.k==='ul') b.items.forEach(i=>out.push(P('•  '+fmtMath(i),true)));
+    else if(b.k==='tbl'){ out.push(P('')); out.push(Wtbl(b.rows.map(r=>r.map(c=>fmtMath(c))))); }
+    else out.push(P(b.groups.map(g=>fmtMath(g)).join('     '),b.ind)); });
+  out.push(P('')); return out.join(''); }
+function Wtbl(rows,widths){ const n=rows[0].length, tot=9200; const w0=widths||rows[0].map(()=>1), sw=w0.reduce((a,x)=>a+x,0); const ws=w0.map(x=>Math.floor(x*tot/sw));
+  const bd=['top','left','bottom','right','insideH','insideV'].map(b=>`<w:${b} w:val="single" w:sz="4" w:space="0" w:color="9AA5AA"/>`).join('');
+  return `<w:tbl><w:tblPr><w:tblW w:w="${tot}" w:type="dxa"/><w:tblBorders>${bd}</w:tblBorders><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${ws.map(x=>`<w:gridCol w:w="${x}"/>`).join('')}</w:tblGrid>`+
+   rows.map((r,i)=>`<w:tr>${i===0?'<w:trPr><w:tblHeader/></w:trPr>':''}${r.map((c,j)=>`<w:tc><w:tcPr><w:tcW w:w="${ws[j]}" w:type="dxa"/>${i===0?'<w:shd w:val="clear" w:color="auto" w:fill="E8ECEA"/>':''}</w:tcPr><w:p><w:pPr><w:spacing w:before="30" w:after="30"/></w:pPr>${runs(String(c),(i===0?'<w:b/>':'')+'<w:sz w:val="18"/>')}</w:p></w:tc>`).join('')}</w:tr>`).join('')+`</w:tbl>`+Wp('');
+}
+let IMGS=[];
+function Wimg(dataURL,wcm,ratio,cap){ const id=IMGS.length+1, rid='rIdImg'+id; IMGS.push({name:'image'+id+'.png',rid,b64:dataURL.split(',')[1]});
+  const cx=Math.round(wcm*360000), cy=Math.round(wcm*ratio*360000);
+  return `<w:p><w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Imagen ${id}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${id}" name="image${id}.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`+(cap?Wp(cap,'Caption'):'');
+}
+const optTxt=id=>{ const el=$(id); return el&&el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].text:s(id); };
+async function buildDocx(){
+  if(!LAST) throw new Error('sin cálculo');
+  if(!window.JSZip) throw new Error('no se pudo cargar la librería JSZip');
+  IMGS=[]; const {RR,list,gi,si}=LAST; const R0=RR[si], U=R0.U, un=R0.un, T=R0.T, post=R0.post; const b=[];
+  const inf=R0.inf, fmtF=x=>f2(x/U,2)+' '+un;
+  b.push(Wp('Memoria de cálculo · Verificación de anclajes al hormigón','Title'));
+  b.push(Wtbl([['Proyecto',projName||'sin nombre'],['Fecha',new Date().toLocaleDateString('es-AR')],['Norma','CIRSOC 201-25, Capítulo 17 · Anclajes al hormigón (acción sísmica, 17.10, no incluida)'],['Unidades','Geometría en mm · tensiones en MPa · fuerzas mayoradas en '+un+(un==='t'?' (1 t = 10 kN)':'')]],[2200,7400]));
+  const nmC=k=>list[k].name||('Caso '+(k+1)), multi=RR.length>1;
+  const memoOf=(r,keys)=>r.memo.filter(([t])=>keys.includes(t.split(' ')[0]));
+  const putMemo=([t,body],r)=>{ b.push(Wp(t,'Heading3')); const key=t.split(' ')[0], d=DESC[key]; if(d) b.push(Wp(d,'Desc')); b.push(Wcalc(body));
+    const m=r&&r.M.find(q=>!q.na&&q.art===key);
+    if(m) b.push(Wp(`φR<sub>n</sub> = ${f2(m.pR/U,2)} ${un}  ${m.r<=1?'≥':'<'}  solicitación última = ${f2(m.Su/U,2)} ${un}   →   relación ${f2(m.r,3)}: ${m.r<=1?'VERIFICA':'NO VERIFICA'}`,'Result',`<w:color w:val="${m.r<=1?'2F7A4E':'8E3B5A'}"/>`)); };
+  let fig=1;
+  // ================= 1. GEOMETRÍA, ARMADURAS Y CARGAS =================
+  b.push(`<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:pageBreakBefore w:val="0"/></w:pPr>${runs('1. Hormigón, anclajes y cargas')}</w:p>`);
+  b.push(Wp('1.1 Dimensiones del hormigón','Heading2'));
+  b.push(Wtbl([['Dato','Valor'],
+    ['Largo en X, L<sub>x</sub>', (inf.x1||inf.x2)?'infinito'+(inf.x1&&inf.x2?'':' hacia '+(inf.x1?'−X':'+X')):v('Lx')+' mm'],
+    ['Ancho en Y, L<sub>y</sub>', (inf.y1||inf.y2)?'infinito'+(inf.y1&&inf.y2?'':' hacia '+(inf.y1?'−Y':'+Y')):v('Ly')+' mm'],
+    ['Espesor, h<sub>a</sub>', inf.h?'infinito':v('ha')+' mm'], ["f'c", v('fc')+' MPa'], ['Tipo de hormigón', optTxt('lw')], ['Estado en servicio', optTxt('crk')],
+    ['Armadura suplementaria', optTxt('supp')], ['Armadura de borde (ψ<sub>c,V</sub>)', optTxt('edgeR')], ['Recubrimiento del anclaje', v('cover')+' mm'], ['Tamaño máximo del agregado', v('agg')+' mm']],[4200,5400]));
+  b.push(Wp('Origen de coordenadas en la esquina −X −Y de la cara superior del hormigón; z positivo hacia arriba.'));
+  b.push(Wp('1.2 Anclajes: características y disposición','Heading2'));
+  const an=[['Dato','Valor'],['Tipo (17.1.2)',optTxt('tipo')],['Comportamiento del acero',optTxt('duct')],['Vástago',optTxt('vast')],['Diámetro d<sub>a</sub>',v('da')+' mm'],
+    ['Área efectiva A<sub>se</sub>',f2(R0.Ase,1)+' mm²'],['f<sub>ya</sub> / f<sub>uta</sub> (f<sub>uta</sub> de cálculo)',v('fya')+' / '+v('futa')+' MPa ('+f2(R0.futa,0)+' MPa)'],['Longitud embebida según la barra, L<sub>b</sub>',v('hef')+' mm'],['k<sub>c</sub>',v('kc')]];
+  if(T==='gancho') an.push(['Longitud del gancho e<sub>h</sub>',v('eh')+' mm']); if(T==='cabeza') an.push(['Área de apoyo A<sub>brg</sub>',v('Abrg')+' mm²']);
+  if(!post) an.push(['Apretado con torque',optTxt('torq')]); else an.push(['Categoría',optTxt('cat')]);
+  if(post && T!=='adhesivo') an.push(['N<sub>p</sub> de ensayos',v('Npt')+' '+un]); if(T==='adhesivo') an.push(['τ<sub>cr</sub> / τ<sub>uncr</sub>',v('tcr')+' / '+v('tuncr')+' MPa']);
+  an.push(['Placa sobre mortero',optTxt('grout')]);
+  b.push(Wtbl(an,[4200,5400]));
+  b.push(Wp(`Grupo: n<sub>1</sub> = ${v('n1')} en X con s<sub>1</sub> = ${v('s1')} mm; n<sub>2</sub> = ${v('n2')} en Y con s<sub>2</sub> = ${v('s2')} mm; centro del grupo (${v('xg')} ; ${v('yg')}) mm.`));
+  b.push(Wtbl([['#','Entrada x ; y [mm]','α<sub>x</sub> [°]','α<sub>y</sub> [°]','θ [°]','h<sub>ef</sub> vertical [mm]','Punta x ; y [mm]','c<sub>mín</sub> [mm]']].concat(R0.A.map(p=>[p.i,f2(p.x,0)+' ; '+f2(p.y,0),f2(p.ax,1),f2(p.ay,1),f2(p.th,1),f2(p.hv,1),f2(p.bx,1)+' ; '+f2(p.by,1),fmm(Math.min(p.c.x1,p.c.x2,p.c.y1,p.c.y2,p.cb.x1,p.cb.x2,p.cb.y1,p.cb.y2))]))));
+  memoOf(R0,['Barras']).forEach(e=>putMemo(e,null));
+  b.push(Wp('1.3 Cargas mayoradas: disposición y valores','Heading2'));
+  if(list[0].mode==='anclaje'){ b.push(Wp('Cargas indicadas para cada barra: N<sub>ua,i</sub> actúa según el eje de la barra y pasa por su baricentro (N positiva = tracción). V adicional: corte horizontal que además recibe la barra.'));
+    b.push(Wtbl([['#','N<sub>ua,i</sub> según la barra ['+un+']','V<sub>ua,x,i</sub> adicional ['+un+']','V<sub>ua,y,i</sub> adicional ['+un+']']].concat(R0.A.map(p=>[p.i,f2(p.Na/U,2),f2(p.ex/U,2),f2(p.ey/U,2)])))); }
+  else { b.push(Wp('Cargas aplicadas sobre la placa en el punto (x ; y ; z), con z la altura sobre la cara del hormigón. N positiva = tracción (hacia arriba).'));
+    b.push(Wtbl([['Caso','N<sub>ua</sub> ['+un+']','V<sub>ua,x</sub> ['+un+']','V<sub>ua,y</sub> ['+un+']','x [mm]','y [mm]','z [mm]']].concat(list.map(c=>[c.name||'',f2(+c.N||0,2),f2(+c.Vx||0,2),f2(+c.Vy||0,2),f2(+c.x||0,0),f2(+c.y||0,0),f2(+c.z||0,0)])))); }
+  b.push(Wp('1.4 Dibujos','Heading2'));
+  try{ const root=document.documentElement, prev=root.getAttribute('data-theme'); root.setAttribute('data-theme','light'); draw(R0);
+    const gd=$('p3d'), sc0=gd.layout.scene||{};
+    // cámara alejada para que entren el bloque, las barras y las flechas de carga; dominio completo y sin márgenes
+    const lay=Object.assign({},gd.layout,{width:1400,height:900,margin:{l:10,r:10,t:10,b:10},scene:Object.assign({},sc0,{domain:{x:[0,1],y:[0,1]},camera:{eye:{x:1.95,y:-2.1,z:1.35},center:{x:0,y:0,z:-0.05}}})});
+    const url=await Plotly.toImage({data:gd.data,layout:lay},{format:'png',width:1400,height:900}); if(prev==null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme',prev);
+    b.push(Wimg(url,15.5,900/1400,`Figura ${fig++}. Vista 3D: hormigón, anclajes, área proyectada del cono y cargas${multi?' ('+X(nmC(si))+')':''}.`)); }catch(e){}
+  RR.forEach((r,k)=>{ const tag=multi?' · '+X(nmC(k)):'';
+    b.push(Wimg(schemPNG(r,'xy'),13,760/1400,`Figura ${fig++}. Planta (plano xy)${tag}.`));
+    b.push(Wimg(schemPNG(r,'xz'),13,760/1400,`Figura ${fig++}. Elevación en el plano xz, mirando hacia +Y${tag}.`));
+    b.push(Wimg(schemPNG(r,'yz'),13,760/1400,`Figura ${fig++}. Elevación en el plano yz, mirando hacia −X${tag}.`)); });
+  // ================= 2. EQUILIBRIO =================
+  b.push(Wp('2. Equilibrio: tracción, compresión y corte de cada barra','Heading1'));
+  RR.forEach((r,k)=>{ if(multi) b.push(Wp('2.'+(k+1)+' '+X(nmC(k)),'Heading2'));
+    memoOf(r,['Equilibrio','Cargas']).forEach(e=>putMemo(e,r));
+
+  });
+  // ================= 3. MODOS DE FALLA =================
+  b.push(Wp('3. Verificación de los modos de falla (CIRSOC 201-25, Capítulo 17)','Heading1'));
+  RR.forEach((r,k)=>{ if(multi) b.push(`<w:p><w:pPr><w:pStyle w:val="Heading2"/>${k?'<w:pageBreakBefore/>':''}</w:pPr>${runs('3.'+(k+1)+' '+nmC(k))}</w:p>`);
+    memoOf(r,['17.5.3']).forEach(e=>putMemo(e,r));
+    r.memo.filter(([t])=>/^17\.(6|7)/.test(t)).forEach(e=>putMemo(e,r));
+    { const nas=r.M.filter(m=>m.na); if(nas.length){ b.push(Wp('Modos que no aplican','Heading3')); nas.forEach(m=>b.push(Wp(`${m.art} · ${m.name}: ${m.why}.`,'Desc'))); } }
+    memoOf(r,['17.8','17.9']).forEach(e=>putMemo(e,r));
+    b.push(Wp('Cuadro resumen de verificaciones'+(multi?' · '+nmC(k):''),'Heading3'));
+    const rows=[['Art.','Modo de falla','Solicitación última','Resistencia nominal R<sub>n</sub>','φ','Resistencia de diseño φR<sub>n</sub>','Relación','Verifica']];
+    r.M.filter(m=>!m.na).forEach(m=>rows.push([m.art,m.name,f2(m.Su/U,2),f2(m.Rn/U,2),m.phi,f2(m.pR/U,2),f2(m.r,3),m.r<=1?'Sí':'No']));
+    if(r.inter) rows.push(['17.8','Interacción tracción-corte','—','—','—','—',f2(r.inter.val,3),r.inter.ok?'Sí':'No']);
+    r.D.forEach(d=>rows.push([d.art,d.name,d.val,'—','—',d.req,'—',d.warn?'Falta dato':d.ok?'Sí':'No']));
+    b.push(Wtbl(rows,[750,2700,1050,1150,550,1350,900,1150]));
+    b.push(Wp('Fuerzas en '+un+'.',null,'<w:sz w:val="17"/>'));
+    let gov=r.M.filter(m=>!m.na).sort((a,c)=>c.r-a.r)[0]; let govTxt=gov?`${plain(gov.name)} (${gov.art}), relación ${f2(gov.r,3)}`:'—';
+    if(r.inter && (!gov || r.inter.val>gov.r)) govTxt=`interacción tracción-corte (17.8), ${f2(r.inter.val,3)}`;
+    b.push(Wp(`Mecanismo que gobierna: ${X(govTxt)}.`,'Result'));
+    const dBad=r.D.filter(d=>!d.warn&&!d.ok);
+    b.push(Wp(r.allOk?'Resultado: VERIFICA.':'Resultado: NO VERIFICA'+(dBad.length?' (no cumple: '+dBad.map(d=>X(d.name)).join(', ')+')':'')+'.','Result',`<w:color w:val="${r.allOk?'2F7A4E':'8E3B5A'}"/>`));
+  });
+  if(multi){ b.push(Wp('3.'+(RR.length+1)+' Resumen de casos','Heading2'));
+    b.push(Wtbl([['Caso','Tracción N<sub>ua</sub>/φN<sub>n</sub>','Corte V<sub>ua</sub>/φV<sub>n</sub>','Interacción','Resultado']].concat(RR.map((r,k)=>[nmC(k)+(k===gi?' (gobierna)':''),r.Nu>0?f2(r.zN,3):'—',r.Vres>0?f2(r.zV,3):'—',r.inter?f2(r.inter.val,3):'—',r.allOk?'Verifica':'No verifica'])))); }
+  const nBad=RR.filter(r=>!r.allOk).length;
+  b.push(Wp(nBad?`Conclusión: el anclaje NO verifica en ${nBad} de ${RR.length} caso(s).`:`Conclusión: el anclaje verifica en ${multi?'todos los casos':'el caso analizado'} según el Capítulo 17 del CIRSOC 201-25.`,null,'<w:b/>'));
+  b.push(Wp('Notas','Heading2'));
+  ['Modos de acero y arrancamiento: anclaje más solicitado. Desprendimiento, descascaramiento lateral y adherencia: grupo (Tabla 17.5.2).',
+   'Si no verifica el desprendimiento, 17.5.2.1 permite reemplazarlo por una armadura del anclaje (φ = 0,75) desarrollada según el Capítulo 25 a ambos lados de la superficie de falla.',
+   'Los datos de anclajes post-instalados (N<sub>p</sub>, τ, k<sub>c</sub>, categoría) deben salir del informe de ensayos del producto (ACI 355.2 / 355.4).'].forEach(t=>b.push(Wp('· '+t)));
+  const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${NS}><w:body>${b.join('')}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1247" w:bottom="1417" w:left="1418" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="es-AR"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="288" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>`+
+   `<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="6" w:color="2E5B87"/></w:pBdr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/><w:color w:val="1F3B57"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pageBreakBefore/><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="4" w:color="2E5B87"/></w:pBdr><w:spacing w:before="360" w:after="200"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="30"/><w:color w:val="1F3B57"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="320" w:after="120"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="25"/><w:color w:val="2E5B87"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="300" w:after="80"/><w:outlineLvl w:val="2"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="1F3B57"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Desc"><w:name w:val="Explicacion"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="120"/><w:jc w:val="both"/></w:pPr><w:rPr><w:color w:val="3A4449"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Calc"><w:name w:val="Calculo"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:keepLines/><w:pBdr><w:left w:val="single" w:sz="18" w:space="8" w:color="9AB4CC"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F3F5F4"/><w:spacing w:after="0" w:line="264" w:lineRule="auto"/><w:ind w:left="284" w:right="113"/></w:pPr><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Cambria"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Result"><w:name w:val="Resultado"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="100" w:after="160"/><w:ind w:left="284"/></w:pPr><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Caption"><w:name w:val="caption"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="60" w:after="280"/><w:jc w:val="center"/></w:pPr><w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="5B656A"/></w:rPr></w:style></w:styles>`;
+  const z=new JSZip();
+  z.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`);
+  z.file('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  z.file('word/_rels/document.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${IMGS.map(i=>`<Relationship Id="${i.rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${i.name}"/>`).join('')}</Relationships>`);
+  z.file('word/document.xml',doc); z.file('word/styles.xml',styles);
+  IMGS.forEach(i=>z.file('word/media/'+i.name,i.b64,{base64:true}));
+  return z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+$('wordBtn').onclick=async()=>{ const m=$('wordMsg'); m.textContent='Generando…';
+  try{ const blob=await buildDocx(); const fn=((projName||'Anclajes').replace(/[\/:*?"<>|]+/g,'-').trim())+' - Memoria de calculo.docx';
+    let dl=null; try{ dl=await window.claude?.use?.('downloads'); }catch(e){}
+    if(dl){ try{ await dl.save({filename:fn,data:blob}); m.textContent='Memoria descargada.'; }catch(e){ m.textContent=e&&e.code==='declined'?'Descarga cancelada.':e&&e.code==='rate_limited'?'Ya hay una descarga pendiente.':'No se pudo descargar en esta vista.'; } }
+    else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); m.textContent='Memoria descargada.'; }
+    window.__lastDocx=blob;
+  }catch(e){ m.textContent='No se pudo generar la memoria: '+e.message; } };
+window.addEventListener('resize',()=>{ if(LAST) drawSchems(LAST.RR[LAST.si]); });
+
+// ---------- descargar HTML (claude.ai) ----------
+(async()=>{ try{ const dl=await window.claude?.use?.('downloads'); if(!dl) return; const b=$('dlHtml'); b.hidden=false;
+  b.onclick=async()=>{ $('dlMsg').textContent=''; try{ await dl.save({filename:'Verificacion de Anclajes.html',data:SRC}); $('dlMsg').textContent='Archivo guardado.'; }
+    catch(e){ $('dlMsg').textContent = e&&e.code==='declined' ? 'Descarga cancelada.' : e&&e.code==='rate_limited' ? 'Ya hay una descarga pendiente; esperá un momento.' : 'No se pudo descargar en esta vista.'; } };
+ }catch(e){} })();
+
+// ---------- proyectos ----------
+let projName='';
+function getState(){ const o={}; KEYS.forEach(k=>o[k]=$(k).value); CHK.forEach(k=>o[k]=$(k).checked); o.cases=JSON.parse(JSON.stringify(cases)); o.aLoads=JSON.parse(JSON.stringify(aLoads)); o.angs=JSON.parse(JSON.stringify(angs)); return o; }
+function setState(o){ KEYS.forEach(k=>{ if(o[k]!=null&&$(k)) $(k).value=o[k]; }); CHK.forEach(k=>{ if(o[k]!=null) $(k).checked=!!o[k]; });
+  if(Array.isArray(o.cases)&&o.cases.length) cases=o.cases; else if(o.Nu!=null) cases=[{name:'Caso 1',N:+o.Nu||0,Ns:+o.Nus||0,Vx:+o.Vx||0,Vy:+o.Vy||0,x:+o.xL||0,y:+o.yL||0,color:PAL[0]}];
+  if(Array.isArray(o.aLoads)) aLoads=o.aLoads; angs=Array.isArray(o.angs)?o.angs:[]; if(o.angInd) renderAngRows(); if(!o.loadMode) $('loadMode').value='placa';
+  lastTipo=s('tipo'); showSel='auto'; renderCaseRows(); renderALoadRows(); render(); }
+function setName(n){ projName=n; $('projName').textContent=n||'Proyecto sin guardar'; try{localStorage.setItem('anc-name',n||'');}catch(e){} }
+try{ setName(localStorage.getItem('anc-name')||''); }catch(e){}
+const msg=t=>{ $('pMsg').textContent=t; clearTimeout(msg.t); msg.t=setTimeout(()=>$('pMsg').textContent='',5000); };
+const panels=['pSavePanel','pClearPanel']; const only=id=>panels.forEach(p=>$(p).hidden=p!==id);
+const fileName=n=>(n||'Proyecto').replace(/[\/:*?"<>|]+/g,'-').trim()+'.json';
+const projJSON=n=>JSON.stringify({app:'Verificación de Anclajes al Hormigón',version:1,nombre:n,guardado:new Date().toISOString(),datos:getState()},null,1);
+let dlCap=null; (async()=>{ try{ dlCap=await window.claude?.use?.('downloads'); }catch(e){} })();
+async function saveAs(n){
+  const data=projJSON(n);
+  if(window.showSaveFilePicker){ try{
+      const h=await showSaveFilePicker({suggestedName:fileName(n),types:[{description:'Proyecto de anclajes (JSON)',accept:{'application/json':['.json']}}]});
+      const w=await h.createWritable(); await w.write(data); await w.close();
+      setName(h.name.replace(/\.json$/i,'')); only(null); msg('Proyecto guardado como "'+h.name+'".'); return;
+    }catch(e){ if(e&&e.name==='AbortError'){ msg('Guardado cancelado.'); return; } } }
+  if(dlCap){ try{ await dlCap.save({filename:fileName(n),data}); setName(n); only(null); msg('Proyecto descargado: '+fileName(n)); }
+    catch(e){ msg(e&&e.code==='declined'?'Guardado cancelado.':'No se pudo descargar en esta vista.'); } return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:'application/json'})); a.download=fileName(n);
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); setName(n); only(null); msg('Proyecto descargado: '+fileName(n));
+}
+$('pSave').onclick=()=>{ if(window.showSaveFilePicker && window.top===window){ saveAs(projName||'Proyecto'); return; } only('pSavePanel'); $('pSaveName').value=projName; $('pSaveName').focus(); };
+$('pSaveCancel').onclick=()=>only(null);
+const doSave=()=>{ const n=$('pSaveName').value.trim(); if(!n){ msg('Escribí un nombre para el proyecto.'); return; } saveAs(n); };
+$('pSaveOk').onclick=doSave; $('pSaveName').addEventListener('keydown',e=>{ if(e.key==='Enter') doSave(); });
+$('pOpen').onclick=()=>{ only(null); $('pFile').value=''; $('pFile').click(); };
+$('pFile').addEventListener('change',()=>{ const fl=$('pFile').files[0]; if(!fl) return;
+  const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); const st=o.datos||o; if(!st||st.tipo==null) throw 0;
+      setState(st); setName(o.nombre||fl.name.replace(/\.json$/i,'')); msg('Proyecto "'+fl.name+'" abierto.'); }
+    catch(e){ msg('El archivo elegido no es un proyecto válido de esta herramienta.'); } };
+  rd.onerror=()=>msg('No se pudo leer el archivo.'); rd.readAsText(fl); });
+$('pClear').onclick=()=>only('pClearPanel');
+$('pClearCancel').onclick=()=>only(null);
+$('pClearOk').onclick=()=>{ setState({Lx:1000,Ly:1000,ha:400,fc:30,lw:'1',crk:'0',supp:'0',edgeR:'1.0',cover:20,agg:19,tipo:'cabeza',duct:'1',vast:'rosca',da:16,nt:0.5,fya:250,futa:400,hef:200,angx:0,angy:0,angInd:false,hookDir:'in',angs:[],Abrg:300,eh:60,torq:'0',cat:'1',kc:10,Npt:0,tcr:1.4,tuncr:4.5,weld:'0',grout:'0',n1:1,s1:0,n2:1,s2:0,xg:500,yg:500,unit:'t',vcase:'12',loadMode:'placa',NusA:0,cases:[{name:'Caso 1',N:0,Ns:0,Vx:0,Vy:0,x:500,y:500,color:PAL[0]}],aLoads:[{N:0,Vx:0,Vy:0}],infAll:false,infX1:false,infX2:false,infY1:false,infY2:false,infH:false}); setName(''); only(null); msg('Datos limpiados: cargá el hormigón, el anclaje y las solicitaciones.'); };
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render()); }catch(e){}
+renderCaseRows(); renderALoadRows(); render();
+})();
+</script>
+
+</body>
+</html>

@@ -320,7 +320,7 @@ const KEYS=['Lx','Ly','ha','fc','lw','crk','supp','edgeR','cover','agg','tipo','
 const CHK=['autoG','angInd','infAll','infX1','infX2','infY1','infY2','infH'];
 const CMF=new Set(['Lx','Ly','ha','s1','s2','xg','yg']); const v=id=>parseFloat($(id).value)*(CMF.has(id)?10:1); const s=id=>$(id).value;
 const f2=(x,d=2)=>isFinite(x)?x.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
-const fmm=x=>x>=INF/2?'∞':f2(x,0);
+const fmm=x=>x>=INF/2?'∞':f2(x,0); const fcm=x=>x>=INF/2?'∞':f2(x/10,1);
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const isPost=t=>!['cabeza','gancho'].includes(t);
 
@@ -425,14 +425,14 @@ N_sa = A_se,N · f_uta = ${f2(Nsa/U,2)} ${un}
     BK=breakout(Tg,eNx,eNy);
     add('17.6.2','Desprendimiento del hormigón en tracción, N<sub>cb'+(Tg.length>1?'g':'')+'</sub>',BK.Ncb,phiCT,Nu,'grupo traccionado');
     memo.push(['17.6.2 · Desprendimiento en tracción (cono)',`Anclajes traccionados: ${Tg.length} de ${n}
-Bordes del grupo: c−X = ${fmm(BK.c.x1)} · c+X = ${fmm(BK.c.x2)} · c−Y = ${fmm(BK.c.y1)} · c+Y = ${fmm(BK.c.y2)} mm
+Bordes del grupo: c−X = ${fcm(BK.c.x1)} · c+X = ${fcm(BK.c.x2)} · c−Y = ${fcm(BK.c.y1)} · c+Y = ${fcm(BK.c.y2)} cm
 Bordes a menos de 1,5 h_ef: ${BK.near}${BK.red?`  →  17.6.2.1.2: h'ef = máx(c_a,máx/1,5 ; s_máx/3) = ${f2(BK.h,1)} mm`:`  →  h_ef = ${f2(BK.h,0)} mm`}
 A_Nco = 9 h_ef² = ${f2(BK.ANco,0)} mm²
 A_Nc = [mín(1,5h_ef ; c−X) + s_x + mín(1,5h_ef ; c+X)] × [mín(1,5h_ef ; c−Y) + s_y + mín(1,5h_ef ; c+Y)]
      = (${f2(Math.min(1.5*BK.h,BK.c.x1),1)} + ${f2(BK.xb-BK.xa,1)} + ${f2(Math.min(1.5*BK.h,BK.c.x2),1)}) × (${f2(Math.min(1.5*BK.h,BK.c.y1),1)} + ${f2(BK.yb-BK.ya,1)} + ${f2(Math.min(1.5*BK.h,BK.c.y2),1)}) = ${f2(BK.ANc,0)} mm²   (≤ n · A_Nco)
 A_Nc/A_Nco = ${f2(BK.ANc/BK.ANco,3)}
 N_b = k_c λa √f'c h_ef^1,5 = ${kc} × ${lamA} × ${f2(Math.sqrt(fc),3)} × ${f2(Math.pow(BK.h,1.5),1)} = ${f2(BK.Nb/U,2)} ${un}${BK.Nb2?`   (tope 17.6.2.2.3: 3,9 λa √f'c h_ef^(5/3) = ${f2(BK.Nb2/U,2)} ${un})`:''}
-ψec,N = 1/(1 + e'N,x/(1,5 h_ef)) × 1/(1 + e'N,y/(1,5 h_ef)) = ${f2(BK.pex,3)} × ${f2(BK.pey,3)}   (e'N = ${f2(eNx,1)} ; ${f2(eNy,1)} mm)
+ψec,N = 1/(1 + e'N,x/(1,5 h_ef)) × 1/(1 + e'N,y/(1,5 h_ef)) = ${f2(BK.pex,3)} × ${f2(BK.pey,3)}   (e'N = ${f2(eNx/10,1)} ; ${f2(eNy/10,1)} cm)
 ψed,N = ${BK.camin>=1.5*BK.h?'1,0   (c_a,mín = '+fmm(BK.camin)+' mm ≥ 1,5 h_ef)':'0,7 + 0,3 × c_a,mín/(1,5 h_ef) = 0,7 + 0,3 × '+f2(BK.camin,1)+'/'+f2(1.5*BK.h,1)+' = '+f2(BK.ped,3)}
 ψc,N = ${BK.pc}   ψcp,N = ${f2(BK.pcp,3)}${post&&!crk&&!supp?`   (c_ac = ${f2(cac,0)} mm)`:''}
 N_cb${Tg.length>1?'g':''} = (A_Nc/A_Nco) ψec,N ψed,N ψc,N ψcp,N N_b = ${f2(BK.ANc/BK.ANco,3)} × ${f2(BK.pex*BK.pey,3)} × ${f2(BK.ped,3)} × ${BK.pc} × ${f2(BK.pcp,3)} × ${f2(BK.Nb/U,2)}
@@ -559,9 +559,9 @@ N_a(g) = ${f2(Nag/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(Nu/U,2)} ${un}`]);
 k_cp = ${kcp} (h_ef ${hef<65?'<':'≥'} 65 mm)   →   V_cp = ${f2(kcp*Ncp/U,2)} ${un}   φ = ${phiCP}   →   φV_cp = ${f2(phiCP*kcp*Ncp/U,2)} ${un}   vs   V_ua = ${f2(Vres/U,2)} ${un}`]);
   } else { ['17.7.1','17.7.2','17.7.3'].forEach((a,k)=>na(a,['Acero en corte','Desprendimiento en corte','Cabeceo (pryout)'][k],'sin corte')); }
 
-  if(incl) memo.unshift(['Barras inclinadas (criterio adoptado)',`Longitud embebida según la barra L_b = ${f2(Lb,0)} mm
-${A.map(p=>`Anclaje ${p.i}: α_x = ${f2(p.ax,1)}°  α_y = ${f2(p.ay,1)}°  θ = ${f2(p.th,1)}°  h_ef,vert = L_b cos θ = ${f2(p.hv,1)} mm  punta en (${f2(p.bx,1)} ; ${f2(p.by,1)}) mm`).join('\n')}
-Para el cono y el cabeceo se toma la menor h_ef vertical = ${f2(hef,1)} mm.
+  if(incl) memo.unshift(['Barras inclinadas (criterio adoptado)',`Longitud embebida según la barra L_b = ${f2(Lb/10,1)} cm
+${A.map(p=>`Anclaje ${p.i}: α_x = ${f2(p.ax,1)}°  α_y = ${f2(p.ay,1)}°  θ = ${f2(p.th,1)}°  h_ef,vert = L_b cos θ = ${f2(p.hv/10,1)} cm  punta en (${f2(p.bx/10,1)} ; ${f2(p.by/10,1)}) cm`).join('\n')}
+Para el cono y el cabeceo se toma la menor h_ef vertical = ${f2(hef/10,1)} cm.
 
 El Capítulo 17 está planteado para anclajes perpendiculares a la superficie; para barras inclinadas se adopta:
 · Cargas de cada anclaje proyectadas sobre su eje: N_ua,i = tracción según la barra; V_ua,i = componente perpendicular.
@@ -583,11 +583,11 @@ Tracción vertical aplicada = ${f2(NuV/U,2)} ${un}   ·   suma de tracciones seg
   const torq=s('torq')==='1';
   const smin = T==='tornillo'?Math.max(0.6*hef,6*da):(!post&&!torq?4*da:6*da);
   const sAct=Math.min(n1>1?s1:INF,n2>1?s2:INF);
-  if(n>1) D.push({art:'17.9.2',name:'Separación mínima entre anclajes',val:f2(sAct,0)+' mm',req:'≥ '+f2(smin,0)+' mm'+(!post?(torq?' (6 d_a, con torque)':' (4 d_a, sin torque)'):''),ok:sAct>=smin});
+  if(n>1) D.push({art:'17.9.2',name:'Separación mínima entre anclajes',val:fcm(sAct)+' cm',req:'≥ '+fcm(smin)+' cm'+(!post?(torq?' (6 d_a, con torque)':' (4 d_a, sin torque)'):''),ok:sAct>=smin});
   let cmin = !post?(torq?6*da:v('cover')+da/2):(T==='torque'?8*da:T==='desplaz'?10*da:6*da);
   if(post) cmin=Math.max(cmin,2*v('agg'));
   const camin=Math.min(...A.map(p=>Math.min(p.c.x1,p.c.x2,p.c.y1,p.c.y2,p.cb.x1,p.cb.x2,p.cb.y1,p.cb.y2)));
-  D.push({art:'17.9.2',name:'Distancia mínima al borde',val:fmm(camin)+' mm',req:'≥ '+f2(cmin,0)+' mm'+(!post?(torq?' (6 d_a)':' (recubrimiento + d_a/2)'):''),ok:camin>=cmin});
+  D.push({art:'17.9.2',name:'Distancia mínima al borde',val:fcm(camin)+' cm',req:'≥ '+fcm(cmin)+' cm'+(!post?(torq?' (6 d_a)':' (recubrimiento + d_a/2)'):''),ok:camin>=cmin});
   if(post && T!=='adhesivo'){ const hmax=inf.h?INF:Math.max(2/3*ha,ha-100); D.push({art:'17.9.4',name:'Empotramiento máximo',val:hef+' mm',req:'≤ '+fmm(hmax)+' mm',ok:hef<=hmax}); }
   D.push({art:'17.3.1',name:"f'c dentro del límite",val:fc+' MPa',req:'≤ '+(post?55:70)+' MPa',ok:fc<=(post?55:70)});
   D.push({art:'17.3.2',name:'Diámetro del anclaje',val:da+' mm',req:'≤ 100 mm',ok:da<=100});
@@ -603,11 +603,11 @@ Tracción vertical aplicada = ${f2(NuV/U,2)} ${un}   ·   suma de tracciones seg
       const mx=A.map((p,k)=>f[k][2]*dy[k]/1000), my=A.map((p,k)=>-f[k][2]*dx[k]/1000), mz=A.map((p,k)=>(f[k][1]*dx[k]-f[k][0]*dy[k])/1000);
     const LL=LOADS||[], lm=k=>LL.map(l=>l[k]/1000);
     memo.unshift(['Equilibrio de la placa · reparto a las barras',`Cargas aplicadas (actúan juntas y se suman)
-Carga | F_x [${un}] | F_y [${un}] | F_z [${un}] | M_x [${un}·m] | M_y [${un}·m] | (x ; y ; z) [mm]
-${LL.map(l=>`${l.name||'—'} | ${fF(l.Fx)} | ${fF(l.Fy)} | ${fF(l.Fz)} | ${fM(l.Mx/1000)} | ${fM(l.My/1000)} | (${f2(l.x,0)} ; ${f2(l.y,0)} ; ${f2(l.z,0)})`).join('\n')}
+Carga | F_x [${un}] | F_y [${un}] | F_z [${un}] | M_x [${un}·m] | M_y [${un}·m] | (x ; y ; z) [cm]
+${LL.map(l=>`${l.name||'—'} | ${fF(l.Fx)} | ${fF(l.Fy)} | ${fF(l.Fz)} | ${fM(l.Mx/1000)} | ${fM(l.My/1000)} | (${f2(l.x/10,1)} ; ${f2(l.y/10,1)} ; ${f2(l.z/10,1)})`).join('\n')}
 
 Resultante:   F_x = ${fF(F[0])} ${un}   F_y = ${fF(F[1])} ${un}   F_z = ${fF(F[2])} ${un}
-Centro de los anclajes (x_c ; y_c) = (${f2(cxA,0)} ; ${f2(cyA,0)}) mm   ·   e_x = x − x_c   ·   e_y = y − y_c
+Centro de los anclajes (x_c ; y_c) = (${f2(cxA/10,1)} ; ${f2(cyA/10,1)}) cm   ·   e_x = x − x_c   ·   e_y = y − y_c
 
 1) Momentos respecto del centro de los anclajes
 M_x = Σ (F_z · e_y − F_y · z + M_x) = ${sm(lm('mx'),3)} = ${fM(Mo[0]/1000)} ${un}·m
@@ -636,7 +636,8 @@ Componentes globales: F_i = N_ua,i · e_i + (V_x,adic ; V_y,adic ; 0), con e_i =
 Barra | Tracción según la barra [${un}] | Corte perpendicular a la barra [${un}]
 ${A.map(p=>`${p.i} | ${fU(p.N)} | ${fU(p.V)}`).join('\n')}
 Resultante:  ΣF_x = ${fU(Vx)}   ΣF_y = ${fU(Vy)}   ΣF_z = ${fU(A.reduce((a,p)=>a+p.N,0))} ${un}`]);
-  memo.unshift(['17.5.3 · Factores de reducción φ',`Acero en tracción φ = ${phiSt[0]}   ·   acero en corte φ = ${phiSt[1]}   (acero ${s('duct')==='1'?'dúctil':'frágil'})
+  memo.unshift(['17.5.3 · Factores de reducción φ',`Unidades: posiciones y distancias en cm. Las ecuaciones del reglamento se evalúan en mm y MPa (resultado en N), como están planteadas en la norma.
+Acero en tracción φ = ${phiSt[0]}   ·   acero en corte φ = ${phiSt[1]}   (acero ${s('duct')==='1'?'dúctil':'frágil'})
 Desprendimiento y descascaramiento en tracción, adherencia: φ = ${phiCT}   (condición ${supp?'A':'B'}${post?', categoría '+cat:''})
 Arrancamiento: φ = ${phiPO}
 Desprendimiento en corte: φ = ${phiCV}   ·   cabeceo: φ = ${phiCP}`]);

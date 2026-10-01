@@ -722,6 +722,8 @@ function failBodies(R){
 function rot(p,q){ const k=p.k||1, d=[p.tx/k,p.ty/k,-1/k]; let u=[p.ty/k,-p.tx/k,0]; const sn=Math.hypot(u[0],u[1]); if(sn<1e-9) return q.slice(); u=[u[0]/sn,u[1]/sn,0]; const cs=-d[2];
   const cr=[u[1]*q[2]-u[2]*q[1],u[2]*q[0]-u[0]*q[2],u[0]*q[1]-u[1]*q[0]], ud=u[0]*q[0]+u[1]*q[1]+u[2]*q[2];
   return [0,1,2].map(i=>q[i]*cs+cr[i]*sn+u[i]*ud*(1-cs)); }
+function camEye(){ const w=($('p3d')&&$('p3d').clientWidth)||800, f=w<500?2.1:w<800?1.75:1.6;
+  return {eye:{x:1.25*f,y:-1.35*f,z:0.9*f},center:{x:0,y:0,z:-0.08}}; }
 function draw(R){
   const inf=R.inf, hef=R.hef, A=R.A; const ext=Math.max(1.5*hef*1.3,250);
   const xs=A.map(p=>p.x), ys=A.map(p=>p.y);
@@ -794,7 +796,7 @@ function draw(R){
   const infTxt=[]; if(inf.x1) infTxt.push([x0,(y0+y1)/2,0,'∞']); if(inf.x2) infTxt.push([x1,(y0+y1)/2,0,'∞']); if(inf.y1) infTxt.push([(x0+x1)/2,y0,0,'∞']); if(inf.y2) infTxt.push([(x0+x1)/2,y1,0,'∞']); if(inf.h) infTxt.push([(x0+x1)/2,y0,z0,'∞']);
   if(infTxt.length) tr.push({type:'scatter3d',mode:'text',x:infTxt.map(t=>t[0]),y:infTxt.map(t=>t[1]),z:infTxt.map(t=>t[2]),text:infTxt.map(t=>t[3]),textfont:{size:20,color:muted},hoverinfo:'skip',showlegend:false});
   const ax=t=>({title:{text:t,font:{color:muted,size:12}},color:muted,gridcolor:cssv('--line'),zerolinecolor:cssv('--line'),backgroundcolor:bg,showbackground:false,tickfont:{family:'IBM Plex Mono',size:10}});
-  Plotly.react('p3d',tr,{paper_bgcolor:bg,margin:{l:0,r:0,t:0,b:0},showlegend:false,scene:{aspectmode:'data',xaxis:ax('x [mm]'),yaxis:ax('y [mm]'),zaxis:ax('z [mm]'),camera:{eye:{x:1.5,y:-1.6,z:1.0}}},font:{family:'IBM Plex Sans',color:ink}},{displaylogo:false,responsive:true,modeBarButtonsToRemove:['toImage']});
+  Plotly.react('p3d',tr,{uirevision:'p3d',paper_bgcolor:bg,margin:{l:0,r:0,t:0,b:0},showlegend:false,scene:{aspectmode:'data',xaxis:ax('x [mm]'),yaxis:ax('y [mm]'),zaxis:ax('z [mm]'),camera:camEye()},font:{family:'IBM Plex Sans',color:ink}},{displaylogo:false,responsive:true,modeBarButtonsToRemove:['toImage']});
 }
 
 // ---------- salida ----------

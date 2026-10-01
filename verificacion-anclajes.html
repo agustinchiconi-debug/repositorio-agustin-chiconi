@@ -55,7 +55,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visi
 select{font-family:var(--sans)}
 .tbl-wrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
-th{font-weight:500;font-size:11px;color:var(--muted);text-align:left;padding:4px 4px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.04em}
+th{font-weight:500;font-size:11px;color:var(--muted);text-align:left;padding:4px 4px;border-bottom:1px solid var(--line);letter-spacing:.02em}
 td{padding:3px 4px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px;vertical-align:top}
 td.t{font-family:var(--sans);font-size:12.5px}
 td.num,th.num{text-align:right}
@@ -66,7 +66,7 @@ button:hover{border-color:var(--accent)}
 .main{display:grid;gap:16px;min-width:0}
 .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .kv div{display:grid;gap:1px;padding:7px 9px;background:var(--bg);border-radius:4px}
-.kv span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.kv span{font-size:11px;color:var(--muted);letter-spacing:.02em}
 .kv b{font-family:var(--mono);font-weight:500;font-size:15px}
 .pill{font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;white-space:nowrap;font-family:var(--sans)}
 .pill.ok{background:var(--ok-soft);color:var(--ok)}
@@ -838,8 +838,11 @@ const worst=R=>Math.max(R.zN,R.zV,R.inter?R.inter.val:0,R.allOk?0:1e-9);
 function applyAuto(){ const on=$('autoG').checked; $('xg').disabled=on; $('yg').disabled=on; if(!on) return;
   if(!$('infX1').checked && !$('infX2').checked) $('xg').value=+(v('Lx')/20).toFixed(2);
   if(!$('infY1').checked && !$('infY2').checked) $('yg').value=+(v('Ly')/20).toFixed(2); }
+function cargaHdr(){ const u=s('unit'), h=$('cases').tHead.rows[0].cells;
+  [['F<sub>x</sub>',u],['F<sub>y</sub>',u],['F<sub>z</sub>',u],['M<sub>x</sub>',u+'·m'],['M<sub>y</sub>',u+'·m'],['F<sub>z,s</sub>',u]].forEach(([t,un],i)=>h[i+2].innerHTML=t+' ['+un+']');
+  $('aLoads').tHead.rows[0].cells[3].innerHTML='N<sub>ua,i</sub> según la barra ['+u+']'; $('aLoads').tHead.rows[0].cells[4].innerHTML='V<sub>ua,x,i</sub> adicional ['+u+']'; $('aLoads').tHead.rows[0].cells[5].innerHTML='V<sub>ua,y,i</sub> adicional ['+u+']'; }
 function render(){
-  applyAuto();
+  applyAuto(); try{ cargaHdr(); }catch(e){}
   syncVis();
   const mode=s('loadMode');
   if(mode==='anclaje' && anchorsXY().length!==lastN) renderALoadRows();

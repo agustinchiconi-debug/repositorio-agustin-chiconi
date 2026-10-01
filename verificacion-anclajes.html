@@ -112,7 +112,7 @@ details summary{padding:4px 0}
 .sec{display:grid;gap:10px;padding-top:10px;border-top:1px solid var(--line)}
 .sec:first-of-type{border-top:0;padding-top:0}
 .err{color:var(--bad);font-size:13px;margin:0}
-.author{text-align:right;font-size:11px;color:var(--muted);opacity:.75;letter-spacing:.02em;padding-top:4px}
+.author{font-size:12px;color:var(--muted);opacity:.8;letter-spacing:.02em}
 .schem{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .schem figure{margin:0;display:grid;gap:4px}
 .schem canvas{width:100%;height:280px;background:var(--bg);border-radius:4px}
@@ -134,7 +134,7 @@ button.x{padding:2px 8px;color:var(--muted)}
 <body>
 <div class="wrap">
   <header>
-    <div class="row" style="gap:14px"><h1>Verificación de Anclajes al Hormigón</h1><button type="button" id="dlHtml" hidden>Descargar HTML</button><span class="hint" id="dlMsg"></span></div>
+    <div class="row" style="gap:14px"><div style="display:grid;gap:2px"><h1>Verificación de Anclajes al Hormigón</h1><span class="author">Ing. Agustín Chiconi</span></div><button type="button" id="dlHtml" hidden>Descargar HTML</button><span class="hint" id="dlMsg"></span></div>
     <p>CIRSOC 201-25, Capítulo 17 (17.1 a 17.9): tracción, corte, interacción y detalles contra el hendimiento. Geometría en mm; cargas mayoradas en t o kN (g = 10). Sismo (17.10): INPRES-CIRSOC 103 Parte II-2021, no incluido.</p>
   </header>
   <div class="projbar" role="toolbar" aria-label="Proyecto">
@@ -310,7 +310,6 @@ button.x{padding:2px 8px;color:var(--muted)}
       </section>
     </div>
   </div>
-  <footer class="author">Ing. Agustín Chiconi</footer>
 </div>
 
 <script id="app">

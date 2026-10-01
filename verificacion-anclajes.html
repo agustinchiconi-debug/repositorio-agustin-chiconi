@@ -112,6 +112,7 @@ details summary{padding:4px 0}
 .sec{display:grid;gap:10px;padding-top:10px;border-top:1px solid var(--line)}
 .sec:first-of-type{border-top:0;padding-top:0}
 .err{color:var(--bad);font-size:13px;margin:0}
+.author{text-align:right;font-size:11px;color:var(--muted);opacity:.75;letter-spacing:.02em;padding-top:4px}
 .schem{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .schem figure{margin:0;display:grid;gap:4px}
 .schem canvas{width:100%;height:280px;background:var(--bg);border-radius:4px}
@@ -309,6 +310,7 @@ button.x{padding:2px 8px;color:var(--muted)}
       </section>
     </div>
   </div>
+  <footer class="author">Ing. Agustín Chiconi</footer>
 </div>
 
 <script id="app">
@@ -616,9 +618,9 @@ M_z = Σ (F_y · e_x − F_x · e_y) = ${sm(lm('mz'),3)} = ${fM(Mo[2]/1000)} ${u
 
 2) Reparto a las barras (placa rígida)
 ${incl?`La placa se desplaza como cuerpo rígido; cada barra toma fuerza en proporción a su alargamiento según su eje (las barras inclinadas trabajan principalmente a tracción).`:`Con barras verticales:   N_i = N_ua/n + M_x · y_i/Σy_i² − M_y · x_i/Σx_i²   ;   V_i = V_ua/n + M_z · r_i/Σr_i²   (x_i, y_i, r_i medidos desde el centro)`}${EQ.off.length?`
-${EQ.off.length>1?'Las barras '+EQ.off.map(k=>k+1).join(', ')+' quedan comprimidas':'La barra '+(EQ.off[0]+1)+' queda comprimida'}: toma esa compresión en el equilibrio y no se verifica, porque el Capítulo 17 solo trata tracción y corte.`:''}
+${EQ.off.length>1?'Las barras '+EQ.off.map(k=>k+1).join(', ')+' quedan comprimidas':'La barra '+(EQ.off[0]+1)+' queda comprimida'}: no trabaja a tracción y esa compresión la toma la placa apoyada en el hormigón.`:''}
 Fuerza de cada barra F_i = (F_x ; F_y ; F_z)${incl?' y su descomposición según el eje e_i de la barra':''}:
-${A.map((p,k)=>`   Barra ${p.i}:   F = (${fF(fx[k])} ; ${fF(fy[k])} ; ${fF(fz[k])}) ${un}   →   ${p.k>1+1e-9?`e = (${n2(e[k][0])} ; ${n2(e[k][1])} ; ${n2(e[k][2])})   ${EQ.off.includes(k)?'compresión = '+fF(-EQ.T0[k])+' '+un+' (no se verifica)':'T = F · e = '+fF(p.N)+' '+un}   V = √(|F|² − T²) = ${fF(p.V)} ${un}`:(EQ.off.includes(k)?`compresión = ${fF(-EQ.T0[k])} ${un} (no se verifica)`:`T = F_z = ${fF(p.N)} ${un}`)+`   V = √(F_x² + F_y²) = ${fF(p.V)} ${un}`}`).join('\n')}
+${A.map((p,k)=>`   Barra ${p.i}:   F = (${fF(fx[k])} ; ${fF(fy[k])} ; ${fF(fz[k])}) ${un}   →   ${p.k>1+1e-9?`e = (${n2(e[k][0])} ; ${n2(e[k][1])} ; ${n2(e[k][2])})   ${EQ.off.includes(k)?'compresión = '+fF(-EQ.T0[k])+' '+un+' (la toma la placa)':'T = F · e = '+fF(p.N)+' '+un}   V = √(|F|² − T²) = ${fF(p.V)} ${un}`:(EQ.off.includes(k)?`compresión = ${fF(-EQ.T0[k])} ${un} (la toma la placa)`:`T = F_z = ${fF(p.N)} ${un}`)+`   V = √(F_x² + F_y²) = ${fF(p.V)} ${un}`}`).join('\n')}
 
 3) Verificación del equilibrio
 ΣF_x = ${sm(fx,2)} = ${fF(sum(k=>fx[k]))} ${un}   (V_ua,x = ${fU(F[0])})
@@ -629,7 +631,7 @@ ${A.map((p,k)=>`   Barra ${p.i}:   F = (${fF(fx[k])} ; ${fF(fy[k])} ; ${fF(fz[k]
 ΣM_z = Σ (F_y,i · x_i − F_x,i · y_i) = ${sm(mz,3)} = ${fM(sum(k=>mz[k]))} ${un}·m   (M_z = ${fM(Mo[2]/1000)})${EQ.gap?'\nLa diferencia de momento la toma el apoyo de la placa sobre el hormigón.':''}
 
 Barra | Tracción según la barra [${un}] | Corte perpendicular a la barra [${un}]${EQ.off.length?' | Compresión ['+un+']':''}
-${A.map((p,k)=>`${p.i} | ${EQ.off.includes(k)?'0':fU(p.N)} | ${fU(p.V)}${EQ.off.length?' | '+(EQ.off.includes(k)?fU(-EQ.T0[k])+' (no se verifica)':'—'):''}`).join('\n')}`]); } }
+${A.map((p,k)=>`${p.i} | ${EQ.off.includes(k)?'0':fU(p.N)} | ${fU(p.V)}${EQ.off.length?' | '+(EQ.off.includes(k)?fU(-EQ.T0[k])+' (la toma la placa)':'—'):''}`).join('\n')}`]); } }
   if(L.mode==='anclaje') memo.unshift(['Cargas según cada barra',`Cada N_ua,i actúa según el eje de su barra y pasa por su baricentro (sin flexión en la barra).
 Componentes globales: F_i = N_ua,i · e_i + (V_x,adic ; V_y,adic ; 0), con e_i = (−tan α_x ; −tan α_y ; 1)/√(1 + tan²α_x + tan²α_y)
 
@@ -668,7 +670,7 @@ function plateEq(A,F,cx,cy,Mo){
     const q=solve(K,[F[0],F[1],F[2],Mo[0],Mo[1],Mo[2]]);
     f=A.map((p,k)=>{ const B=Bm(k); const d=[0,1,2].map(i=>B[i].reduce((a,x,j)=>a+x*q[j],0)); return [0,1,2].map(i=>Ki[k][i].reduce((a,x,j)=>a+x*d[j],0)); });
     T=f.map((fi,k)=>fi[0]*E[k][0]+fi[1]*E[k][1]+fi[2]*E[k][2]); if(!T0) T0=T.slice();
-    // todas las barras toman tracción o compresión en el equilibrio; las comprimidas no se verifican (el Cap. 17 solo trata tracción y corte)
+    // las barras que resultan comprimidas no trabajan: esa compresión la toma el apoyo de la placa sobre el hormigón en ese punto
     break; }
   const sF=[0,1,2].map(i=>f.reduce((a,fi)=>a+fi[i],0));
   const sM=[f.reduce((a,fi,k)=>a+Rr[k][1]*fi[2],0), f.reduce((a,fi,k)=>a-Rr[k][0]*fi[2],0), f.reduce((a,fi,k)=>a+Rr[k][0]*fi[1]-Rr[k][1]*fi[0],0)];
@@ -884,7 +886,7 @@ function syncVis(){
   const T=s('tipo'), post=isPost(T), mode=s('loadMode');
   $('angBox').hidden=!$('angInd').checked; document.querySelectorAll('[data-angl]').forEach(e=>e.innerHTML=e.innerHTML.replace(/^(Magnitud en|Inclinación en)/,$('angInd').checked?'Magnitud en':'Inclinación en'));
   $('placaBox').hidden=mode!=='placa'; $('anchBox').hidden=mode!=='anclaje';
-  $('loadHint').innerHTML= mode==='placa' ? 'Las cargas de la tabla actúan juntas: se suman sus fuerzas y los momentos respecto del centro de los anclajes. z es la altura del punto de aplicación sobre la cara del hormigón (en un cáncamo, donde se unen las patas). La combinación se reparte por equilibrio de la placa rígida (ΣFx, ΣFy, ΣFz, ΣMx, ΣMy, ΣMz = 0). Cada barra resiste según su eje y, con una rigidez menor, en forma transversal; las barras comprimidas toman su compresión en el equilibrio, pero no se verifican (el Capítulo 17 solo trata tracción y corte). ' : 'N<sub>ua,i</sub> es la tracción mayorada de cada barra, aplicada según su eje y por su baricentro (sin flexión). V adicional: corte horizontal que además recibe la barra. Las excentricidades para ψec salen de la resultante de esas cargas.';
+  $('loadHint').innerHTML= mode==='placa' ? 'Las cargas de la tabla actúan juntas: se suman sus fuerzas y los momentos respecto del centro de los anclajes. z es la altura del punto de aplicación sobre la cara del hormigón (en un cáncamo, donde se unen las patas). La combinación se reparte por equilibrio de la placa rígida (ΣFx, ΣFy, ΣFz, ΣMx, ΣMy, ΣMz = 0). Cada barra resiste según su eje y, con una rigidez menor, en forma transversal; las barras que quedarían comprimidas no se cuentan. ' : 'N<sub>ua,i</sub> es la tracción mayorada de cada barra, aplicada según su eje y por su baricentro (sin flexión). V adicional: corte horizontal que además recibe la barra. Las excentricidades para ψec salen de la resultante de esas cargas.';
   document.querySelectorAll('[data-show]').forEach(el=>{ const k=el.dataset.show; let on=false;
     if(k==='rosca') on=s('vast')==='rosca'; else if(k==='cast') on=!post; else if(k==='post') on=post; else if(k==='mech') on=post&&T!=='adhesivo'; else on=k===T;
     el.hidden=!on; });
@@ -1061,7 +1063,7 @@ async function buildDocx(){
   IMGS=[]; const {RR,list,gi,si}=LAST; const R0=RR[si], U=R0.U, un=R0.un, T=R0.T, post=R0.post; const b=[];
   const inf=R0.inf, fmtF=x=>f2(x/U,2)+' '+un;
   b.push(Wp('Memoria de cálculo · Verificación de anclajes al hormigón','Title'));
-  b.push(Wtbl([['Proyecto',projName||'sin nombre'],['Fecha',new Date().toLocaleDateString('es-AR')],['Norma','CIRSOC 201-25, Capítulo 17 · Anclajes al hormigón (acción sísmica, 17.10, no incluida)'],['Unidades','Geometría en mm · tensiones en MPa · fuerzas mayoradas en '+un+(un==='t'?' (1 t = 10 kN)':'')]],[2200,7400]));
+  b.push(Wtbl([['Proyecto',projName||'sin nombre'],['Autor','Ing. Agustín Chiconi'],['Fecha',new Date().toLocaleDateString('es-AR')],['Norma','CIRSOC 201-25, Capítulo 17 · Anclajes al hormigón (acción sísmica, 17.10, no incluida)'],['Unidades','Geometría en mm · tensiones en MPa · fuerzas mayoradas en '+un+(un==='t'?' (1 t = 10 kN)':'')]],[2200,7400]));
   const nmC=k=>list[k].name||('Caso '+(k+1)), multi=RR.length>1;
   const memoOf=(r,keys)=>r.memo.filter(([t])=>keys.includes(t.split(' ')[0]));
   const putMemo=([t,body],r)=>{ b.push(Wp(t,'Heading3')); const key=t.split(' ')[0], d=DESC[key]; if(d) b.push(Wp(d,'Desc')); b.push(Wcalc(body));

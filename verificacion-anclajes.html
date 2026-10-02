@@ -253,11 +253,12 @@ button.x{padding:2px 8px;color:var(--muted)}
         </div>
         <div class="fields">
           <label class="full"><span>Filas que toman el corte hacia el borde (17.7.2.1)</span><select id="vcase">
-            <option value="12">Casos 1 y 2: gobierna el más desfavorable</option>
+            <option value="12">Automático según la Figura C 17.7.2.1b</option>
             <option value="1">Caso 1: fila delantera con su parte del corte</option>
             <option value="2">Caso 2: fila trasera con el corte total</option>
             <option value="3">Caso 3: fila delantera con el corte total</option>
           </select></label>
+          <p class="hint full" style="grid-column:1/-1">Automático: con separación entre filas s ≥ c<sub>a1,1</sub> gobierna el peor entre el caso 1 y el caso 2; con s &lt; c<sub>a1,1</sub>, el caso 3; con pernos con cabeza soldados a la placa, el caso 2.</p>
         </div>
         <p class="hint" id="loadHint"></p>
       </div>
@@ -398,28 +399,54 @@ function calc(L){
   const phiSt=s('duct')==='1'?[0.75,0.65]:[0.65,0.60];
   const phiCT = !post ? (supp?0.75:0.70) : [[0.75,0.65],[0.65,0.55],[0.55,0.45]][cat-1][supp?0:1];
   const phiPO = !post ? 0.70 : [0.65,0.55,0.45][cat-1];
-  const phiCV = supp?0.75:0.70, phiCP = !post?0.70:[0.65,0.55,0.45][cat-1];
+  // Tabla 17.5.3(c): el cabeceo (arrancamiento del hormigón en corte) tiene φ = 0,70 para todos los anclajes y categorías
+  const phiCV = supp?0.75:0.70, phiCP = 0.70;
   const cac = hef*(T==='adhesivo'?2:T==='sobre'?2.5:4);
   const kc=v('kc');
+  // separación máxima entre anclajes contiguos (17.6.2.1.2 y 17.7.2.1.2): mayor salto entre posiciones consecutivas
+  const maxGap=vals=>{ const u=[...vals].sort((a,b)=>a-b).filter((q,i,arr)=>!i||q-arr[i-1]>0.5); let g=0; for(let i=1;i<u.length;i++) g=Math.max(g,u[i]-u[i-1]); return g; };
+  // 17.6.2.5.1(a): 1,25 pre-instalados; 1,4 post-instalados con k_c = 7; con k_c de ensayos, del informe del producto (se adopta 1,0)
+  const pcN = crk?1:(!post?1.25:(Math.abs(kc-7)<1e-9?1.4:1.0));
+  if(post && !crk && Math.abs(kc-7)>1e-9) notes.push('k<sub>c</sub> distinto de 7 en un anclaje post-instalado: ψ<sub>c,N</sub> sale del informe del producto (17.6.2.5.1); se adopta 1,0.');
   const M=[], D=[], memo=[];
   const add=(art,name,Rn,phi,Su,note,extra)=>{ const pR=phi*Rn; M.push({art,name,Rn,phi,pR,Su,r:(Rn>0&&Su>0)?Su/pR:(Su>0?Infinity:0),na:false,note,...(extra||{})}); };
   const na=(art,name,why)=>M.push({art,name,na:true,why});
+  // extensión del grupo para A_Nc / A_Na: con barras inclinadas se toma, en cada dirección, la menor separación
+  // entre la medida en la superficie (entrada) y en la punta, y la menor distancia a cada borde (criterio conservador)
+  function grpExt(G){
+    const mm=a=>[Math.min(...a),Math.max(...a)];
+    const [ex0,ex1]=mm(G.map(p=>p.x)), [tx0,tx1]=mm(G.map(p=>p.bx)), [ey0,ey1]=mm(G.map(p=>p.y)), [ty0,ty1]=mm(G.map(p=>p.by));
+    const tX=(tx1-tx0)<=(ex1-ex0)+1e-9, tY=(ty1-ty0)<=(ey1-ey0)+1e-9;
+    const xa=tX?tx0:ex0, xb=tX?tx1:ex1, ya=tY?ty0:ey0, yb=tY?ty1:ey1;
+    const c={x1:inf.x1?INF:Math.min(ex0,tx0), x2:inf.x2?INF:Lx-Math.max(ex1,tx1), y1:inf.y1?INF:Math.min(ey0,ty0), y2:inf.y2?INF:Ly-Math.max(ey1,ty1)};
+    return {xa,xb,ya,yb,c,xs:G.map(p=>tX?p.bx:p.x),ys:G.map(p=>tY?p.by:p.y),sxAt:tX?'punta':'entrada',syAt:tY?'punta':'entrada'};
+  }
   // ---------- desprendimiento en tracción de un subconjunto (reutilizado para cabeceo)
   function breakout(G,eNx,eNy){
-    const xs=G.map(p=>p.bx), ys=G.map(p=>p.by); const xa=Math.min(...xs), xb=Math.max(...xs), ya=Math.min(...ys), yb=Math.max(...ys);
-    const c={x1:inf.x1?INF:xa, x2:inf.x2?INF:Lx-xb, y1:inf.y1?INF:ya, y2:inf.y2?INF:Ly-yb};
+    const GE=grpExt(G), {xa,xb,ya,yb,c,xs,ys}=GE;
     const cs=[c.x1,c.x2,c.y1,c.y2]; const near=cs.filter(q=>q<1.5*hef);
-    let smax=0; for(const a of G) for(const b of G){ smax=Math.max(smax,Math.abs(a.x-b.x),Math.abs(a.y-b.y)); }
+    const smax=Math.max(maxGap(xs),maxGap(ys));
     let h=hef, red=false; if(near.length>=3){ h=Math.min(hef,Math.max(Math.max(...near)/1.5,smax/3)); red=true; }
     const ANco=9*h*h, ANc=Math.min((Math.min(1.5*h,c.x1)+(xb-xa)+Math.min(1.5*h,c.x2))*(Math.min(1.5*h,c.y1)+(yb-ya)+Math.min(1.5*h,c.y2)),G.length*ANco);
+    // 17.6.2.2.3: pernos y bulones con cabeza pre-instalados con 280 ≤ h_ef ≤ 635 mm → N_b se calcula con h_ef^(5/3)
     let Nb=kc*lamA*Math.sqrt(fc)*Math.pow(h,1.5), Nb2=0;
-    if(T==='cabeza' && hef>=280 && hef<=635){ Nb2=3.9*lamA*Math.sqrt(fc)*Math.pow(h,5/3); Nb=Math.min(Nb,Nb2); }
+    if(T==='cabeza' && hef>=280 && hef<=635){ Nb2=Nb; Nb=3.9*lamA*Math.sqrt(fc)*Math.pow(h,5/3); }
     const pex=Math.min(1,1/(1+Math.abs(eNx)/(1.5*h))), pey=Math.min(1,1/(1+Math.abs(eNy)/(1.5*h)));
     const camin=Math.min(...cs); const ped=camin>=1.5*h?1:0.7+0.3*camin/(1.5*h);
-    const pc=crk?1:(post?1.4:1.25);
+    const pc=pcN;
     const pcp=(post && !crk && !supp)?(camin>=cac?1:Math.min(1,Math.max(camin,1.5*h)/cac)):1;
     const Ncb=ANc/ANco*pex*pey*ped*pc*pcp*Nb;
-    return {c,h,red,near:near.length,smax,ANco,ANc,Nb,Nb2,pex,pey,ped,pc,pcp,Ncb,camin,xa,xb,ya,yb};
+    return {c,h,red,near:near.length,smax,ANco,ANc,Nb,Nb2,pex,pey,ped,pc,pcp,Ncb,camin,xa,xb,ya,yb,sxAt:GE.sxAt,syAt:GE.syAt};
+  }
+  // ---------- adherencia de un subconjunto de anclajes adhesivos (17.6.5; reutilizada para el cabeceo, 17.7.3.1.2)
+  function bondG(G,eNx,eNy){
+    const tau=crk?v('tcr'):v('tuncr'), cNa=10*da*Math.sqrt(v('tuncr')/7.6);
+    const {xa,xb,ya,yb,c}=grpExt(G);
+    const ANao=(2*cNa)**2, ANa=Math.min((Math.min(cNa,c.x1)+(xb-xa)+Math.min(cNa,c.x2))*(Math.min(cNa,c.y1)+(yb-ya)+Math.min(cNa,c.y2)),G.length*ANao);
+    const Nba=lamB*tau*Math.PI*da*Lb; const camin=Math.min(c.x1,c.x2,c.y1,c.y2);
+    const pex=Math.min(1,1/(1+Math.abs(eNx)/cNa)), pey=Math.min(1,1/(1+Math.abs(eNy)/cNa)), ped=camin>=cNa?1:0.7+0.3*camin/cNa;
+    const pcp=(!crk&&!supp)?(camin>=cac?1:Math.min(1,Math.max(camin,cNa)/cac)):1;
+    return {tau,cNa,ANao,ANa,Nba,pex,pey,ped,pcp,Nag:ANa/ANao*pex*pey*ped*pcp*Nba};
   }
   let BK=null, BD=null;
   const Tg=Tset.filter(p=>p.N>1e-6);
@@ -433,19 +460,20 @@ function calc(L){
     add('17.6.1','Acero del anclaje en tracción, N<sub>sa</sub>',Nsa,phiSt[0],NmaxI,'anclaje más solicitado');
     memo.push(['17.6.1 · Acero en tracción',`A_se,N = ${f2(Ase,1)} mm²   (${s('vast')==='liso'?'π/4·d_a²':'π/4·(d_a − 0,9743/n_t)²'})
 f_uta = mín(f_uta ; 1,9 f_ya ; 860) = ${f2(futa,0)} MPa
-N_sa = A_se,N · f_uta = ${f2(Nsa/U,2)} ${un}
+N_sa = A_se,N · f_uta = ${f2(Ase,1)} × ${f2(futa,0)} = ${f2(Nsa/U,2)} ${un}
 φ = ${phiSt[0]} (${s('duct')==='1'?'dúctil':'frágil'})   →   φN_sa = ${f2(phiSt[0]*Nsa/U,2)} ${un}   vs   N_ua,i = ${f2(NmaxI/U,2)} ${un}`]);
     // 17.6.2 desprendimiento
     BK=breakout(Tg,eNx,eNy);
     add('17.6.2','Desprendimiento del hormigón en tracción, N<sub>cb'+(Tg.length>1?'g':'')+'</sub>',BK.Ncb,phiCT,Nu,'grupo traccionado');
     memo.push(['17.6.2 · Desprendimiento en tracción (cono)',`Anclajes traccionados: ${Tg.length} de ${n}
 Bordes del grupo: c−X = ${fcm(BK.c.x1)} · c+X = ${fcm(BK.c.x2)} · c−Y = ${fcm(BK.c.y1)} · c+Y = ${fcm(BK.c.y2)} cm
-Bordes a menos de 1,5 h_ef: ${BK.near}${BK.red?`  →  17.6.2.1.2: h'ef = máx(c_a,máx/1,5 ; s_máx/3) = ${f2(BK.h,1)} mm`:`  →  h_ef = ${f2(BK.h,0)} mm`}
-A_Nco = 9 h_ef² = ${f2(BK.ANco,0)} mm²
+Bordes a menos de 1,5 h_ef: ${BK.near}${BK.red?`  →  17.6.2.1.2: h'ef = mín[h_ef ; máx(c_a,máx/1,5 ; s/3)] = ${f2(BK.h,1)} mm   (s = separación máxima entre anclajes contiguos = ${f2(BK.smax,0)} mm)`:`  →  h_ef = ${incl?`L_b cos θ = ${f2(Lb,0)} × cos ${f2(thDeg,1)}° = `:''}${f2(BK.h,1)} mm`}
+A_Nco = 9 h_ef² = 9 × ${f2(BK.h,1)}² = ${f2(BK.ANco,0)} mm²
 A_Nc = [mín(1,5h_ef ; c−X) + s_x + mín(1,5h_ef ; c+X)] × [mín(1,5h_ef ; c−Y) + s_y + mín(1,5h_ef ; c+Y)]
      = (${f2(Math.min(1.5*BK.h,BK.c.x1),1)} + ${f2(BK.xb-BK.xa,1)} + ${f2(Math.min(1.5*BK.h,BK.c.x2),1)}) × (${f2(Math.min(1.5*BK.h,BK.c.y1),1)} + ${f2(BK.yb-BK.ya,1)} + ${f2(Math.min(1.5*BK.h,BK.c.y2),1)}) = ${f2(BK.ANc,0)} mm²   (≤ n · A_Nco)
-A_Nc/A_Nco = ${f2(BK.ANc/BK.ANco,3)}
-N_b = k_c λa √f'c h_ef^1,5 = ${kc} × ${lamA} × ${f2(Math.sqrt(fc),3)} × ${f2(Math.pow(BK.h,1.5),1)} = ${f2(BK.Nb/U,2)} ${un}${BK.Nb2?`   (tope 17.6.2.2.3: 3,9 λa √f'c h_ef^(5/3) = ${f2(BK.Nb2/U,2)} ${un})`:''}
+${incl?`s_x medida en la ${BK.sxAt} y s_y en la ${BK.syAt} de las barras (la menor); distancias a los bordes, la menor entre entrada y punta
+`:''}A_Nc/A_Nco = ${f2(BK.ANc/BK.ANco,3)}
+${BK.Nb2?`N_b = 3,9 λa √f'c h_ef^(5/3) = 3,9 × ${lamA} × ${f2(Math.sqrt(fc),3)} × ${f2(Math.pow(BK.h,5/3),1)} = ${f2(BK.Nb/U,2)} ${un}   (17.6.2.2.3: perno o bulón con cabeza con 280 mm ≤ h_ef ≤ 635 mm)`:`N_b = k_c λa √f'c h_ef^1,5 = ${kc} × ${lamA} × ${f2(Math.sqrt(fc),3)} × ${f2(Math.pow(BK.h,1.5),1)} = ${f2(BK.Nb/U,2)} ${un}`}
 ψec,N = 1/(1 + e'N,x/(1,5 h_ef)) × 1/(1 + e'N,y/(1,5 h_ef)) = ${f2(BK.pex,3)} × ${f2(BK.pey,3)}   (e'N = ${f2(eNx/10,1)} ; ${f2(eNy/10,1)} cm)
 ψed,N = ${BK.camin>=1.5*BK.h?'1,0   (c_a,mín = '+fmm(BK.camin)+' mm ≥ 1,5 h_ef)':'0,7 + 0,3 × c_a,mín/(1,5 h_ef) = 0,7 + 0,3 × '+f2(BK.camin,1)+'/'+f2(1.5*BK.h,1)+' = '+f2(BK.ped,3)}
 ψc,N = ${BK.pc}   ψcp,N = ${f2(BK.pcp,3)}${post&&!crk&&!supp?`   (c_ac = ${f2(cac,0)} mm)`:''}
@@ -473,36 +501,33 @@ N_p = 0,9 f'c e_h d_a = 0,9 × ${fc} × ${f2(ehu,0)} × ${da} = ${f2(Np/U,2)} ${
         const G=Tg.filter(p=>hef>2.5*p.cb[e]); if(!G.length) continue;
         const ca1=Math.min(...G.map(p=>p.cb[e])); const perp=e[0]==='x'?['y1','y2']:['x1','x2'];
         const ca2=Math.min(...G.map(p=>Math.min(p.cb[perp[0]],p.cb[perp[1]])));
-        let Nsb=13*ca1*Math.sqrt(v('Abrg'))*lamA*Math.sqrt(fc); if(ca2<3*ca1) Nsb*=(1+Math.min(3,Math.max(1,ca2/ca1)))/4;
+        const Nsb=13*ca1*Math.sqrt(v('Abrg'))*lamA*Math.sqrt(fc), fca2=ca2<3*ca1?(1+Math.min(3,Math.max(1,ca2/ca1)))/4:1;
         const along=G.map(p=>e[0]==='x'?p.by:p.bx); const sAl=Math.max(...along)-Math.min(...along);
-        const Nsbg=(G.length>1 && sAl<6*ca1)?(1+sAl/(6*ca1))*Nsb:Nsb*G.length;
+        // 17.6.4.2: grupo con s < 6 c_a1 → N_sbg = (1 + s/(6 c_a1)) N_sb, con N_sb SIN la corrección por c_a2 (17.6.4.1.1 solo vale para un anclaje)
+        const grp=G.length>1 && sAl<6*ca1, Nsbg=grp?(1+sAl/(6*ca1))*Nsb:Nsb*fca2*G.length;
         const dem=G.reduce((a,p)=>a+p.N,0); const r=dem/(phiCT*Nsbg);
-        if(!best||r>best.r) best={e,ca1,ca2,Nsbg,dem,r,sAl,n:G.length};
+        if(!best||r>best.r) best={e,ca1,ca2,Nsb,fca2,grp,Nsbg,dem,r,sAl,n:G.length};
       }
       if(!best) na('17.6.4','Descascaramiento lateral, N<sub>sb</sub>','h_ef ≤ 2,5 c<sub>a1</sub> en todos los bordes');
-      else { add('17.6.4','Descascaramiento lateral, N<sub>sb'+(best.n>1?'g':'')+'</sub>',best.Nsbg,phiCT,best.dem,'anclajes junto al borde');
-        memo.push(['17.6.4 · Descascaramiento lateral',`Borde ${best.e}: c_a1 = ${f2(best.ca1,0)} mm, c_a2 = ${fmm(best.ca2)} mm, h_ef > 2,5 c_a1
-N_sb = 13 c_a1 √A_brg λa √f'c${best.ca2<3*best.ca1?' × (1 + c_a2/c_a1)/4':''}   ;   grupo a lo largo del borde s = ${f2(best.sAl,0)} mm
-N_sb(g) = ${f2(best.Nsbg/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(best.dem/U,2)} ${un}`]); }
+      else { add('17.6.4','Descascaramiento lateral, N<sub>sb'+(best.grp?'g':'')+'</sub>',best.Nsbg,phiCT,best.dem,'anclajes junto al borde');
+        memo.push(['17.6.4 · Descascaramiento lateral',`Borde ${best.e}: c_a1 = ${f2(best.ca1,0)} mm, c_a2 = ${fmm(best.ca2)} mm, h_ef > 2,5 c_a1   (${best.n} anclaje${best.n>1?'s':''} junto al borde)
+N_sb = 13 c_a1 √A_brg λa √f'c = 13 × ${f2(best.ca1,0)} × ${f2(Math.sqrt(v('Abrg')),2)} × ${lamA} × ${f2(Math.sqrt(fc),3)} = ${f2(best.Nsb/U,2)} ${un}
+${best.grp?`17.6.4.2: s = ${f2(best.sAl,0)} mm < 6 c_a1 = ${f2(6*best.ca1,0)} mm   →   N_sbg = (1 + s/(6 c_a1)) N_sb = ${f2(1+best.sAl/(6*best.ca1),3)} × ${f2(best.Nsb/U,2)} = ${f2(best.Nsbg/U,2)} ${un}`:`17.6.4.1.1: ${best.fca2<1?`c_a2 < 3 c_a1   →   × (1 + c_a2/c_a1)/4 = ${f2(best.fca2,3)}`:'c_a2 ≥ 3 c_a1   →   sin corrección'}${best.n>1?`   ;   s ≥ 6 c_a1: ${best.n} anclajes independientes`:''}   →   N_sb = ${f2(best.Nsbg/U,2)} ${un}`}
+φ = ${phiCT}   →   φN_sb = ${f2(phiCT*best.Nsbg/U,2)} ${un}   vs   ${f2(best.dem/U,2)} ${un}`]); }
     }
     // 17.6.5 adherencia
     if(T!=='adhesivo') na('17.6.5','Adherencia, N<sub>ag</sub>','solo anclajes adhesivos');
     else {
-      const tau=crk?v('tcr'):v('tuncr'), cNa=10*da*Math.sqrt(v('tuncr')/7.6);
-      const xs=Tg.map(p=>p.bx), ys=Tg.map(p=>p.by); const xa=Math.min(...xs),xb=Math.max(...xs),ya=Math.min(...ys),yb=Math.max(...ys);
-      const c={x1:inf.x1?INF:xa,x2:inf.x2?INF:Lx-xb,y1:inf.y1?INF:ya,y2:inf.y2?INF:Ly-yb};
-      const ANao=(2*cNa)**2, ANa=Math.min((Math.min(cNa,c.x1)+(xb-xa)+Math.min(cNa,c.x2))*(Math.min(cNa,c.y1)+(yb-ya)+Math.min(cNa,c.y2)),Tg.length*ANao);
-      const Nba=lamB*tau*Math.PI*da*Lb; const camin=Math.min(c.x1,c.x2,c.y1,c.y2);
-      const pex=1/(1+Math.abs(eNx)/cNa), pey=1/(1+Math.abs(eNy)/cNa), ped=camin>=cNa?1:0.7+0.3*camin/cNa;
-      const pcp=(!crk&&!supp)?(camin>=cac?1:Math.min(1,Math.max(camin,cNa)/cac)):1;
-      const Nag=ANa/ANao*pex*pey*ped*pcp*Nba;
+      const {tau,cNa,ANao,ANa,Nba,pex,pey,ped,pcp,Nag}=bondG(Tg,eNx,eNy);
       add('17.6.5','Adherencia del adhesivo, N<sub>a'+(Tg.length>1?'g':'')+'</sub>',Nag,phiCT,Nu,'grupo traccionado');
       const Nusi=Nu>0?Nus*NmaxI/Nu:0; if(Nus>0) add('17.5.2.2','Carga sostenida, 0,55 φN<sub>ba</sub>',0.55*Nba,phiCT,Nusi,'anclaje más solicitado');
       memo.push(['17.6.5 · Adherencia',`τ = ${tau} MPa (${crk?'fisurado':'no fisurado'})   λa = ${lamB}
 c_Na = 10 d_a √(τ_uncr/7,6) = ${f2(cNa,1)} mm   A_Nao = ${f2(ANao,0)} mm²   A_Na = ${f2(ANa,0)} mm²
-N_ba = λa τ π d_a h_ef = ${f2(Nba/U,2)} ${un}
+N_ba = λa τ π d_a h_ef = ${lamB} × ${tau} × π × ${da} × ${f2(Lb,0)} = ${f2(Nba/U,2)} ${un}
 ψec,Na = ${f2(pex*pey,3)}   ψed,Na = ${f2(ped,3)}   ψcp,Na = ${f2(pcp,3)}
-N_a(g) = ${f2(Nag/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(Nu/U,2)} ${un}`]);
+N_a(g) = (A_Na/A_Nao) ψec,Na ψed,Na ψcp,Na N_ba = ${f2(ANa/ANao,3)} × ${f2(pex*pey,3)} × ${f2(ped,3)} × ${f2(pcp,3)} × ${f2(Nba/U,2)} = ${f2(Nag/U,2)} ${un}   φ = ${phiCT}   →   φN_a = ${f2(phiCT*Nag/U,2)} ${un}   vs   ${f2(Nu/U,2)} ${un}${Nus>0?`
+17.5.2.2 · carga sostenida en el anclaje más solicitado: N_ua,s = N_ua,s,total × N_ua,i/N_ua = ${f2(Nus/U,2)} × ${f2(NmaxI/U,2)}/${f2(Nu/U,2)} = ${f2(Nusi/U,2)} ${un}
+0,55 φ N_ba = 0,55 × ${phiCT} × ${f2(Nba/U,2)} = ${f2(0.55*phiCT*Nba/U,2)} ${un}   ${Nusi<=0.55*phiCT*Nba?'≥':'<'}   N_ua,s = ${f2(Nusi/U,2)} ${un}`:''}`]);
       D.push({art:'17.3.3',name:'Empotramiento del adhesivo',val:Lb+' mm',req:`4d_a = ${4*da} ≤ h_ef ≤ 20d_a = ${20*da}`,ok:Lb>=4*da&&Lb<=20*da});
     }
   } else { ['17.6.1','17.6.2','17.6.3','17.6.4','17.6.5'].forEach((a,k)=>na(a,['Acero en tracción','Desprendimiento en tracción','Arrancamiento','Descascaramiento lateral','Adherencia'][k],'sin tracción')); }
@@ -514,7 +539,7 @@ N_a(g) = ${f2(Nag/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(Nu/U,2)} ${un}`]);
     const cV = (T==='cabeza' && s('weld')!=='1')?1:0.6; // 17.7.1.2 (a) perno con cabeza soldado: A_se f_uta ; (b) resto: 0,6
     let Vsa=(T==='cabeza'?(s('weld')==='1'?1:0.6):0.6)*Ase*futa; if(s('grout')==='1') Vsa*=0.8;
     add('17.7.1','Acero del anclaje en corte, V<sub>sa</sub>',Vsa,phiSt[1],VmaxI,'anclaje más solicitado');
-    memo.push(['17.7.1 · Acero en corte',`V_sa = ${T==='cabeza'&&s('weld')==='1'?'A_se f_uta (perno con cabeza soldado)':'0,6 A_se f_uta'}${s('grout')==='1'?' × 0,80 (mortero)':''} = ${f2(Vsa/U,2)} ${un}
+    memo.push(['17.7.1 · Acero en corte',`V_sa = ${T==='cabeza'&&s('weld')==='1'?'A_se,V f_uta (perno con cabeza soldado, 17.7.1.2a)':'0,6 A_se,V f_uta (17.7.1.2b)'}${s('grout')==='1'?' × 0,80 (mortero, 17.7.1.2.1)':''} = ${T==='cabeza'&&s('weld')==='1'?'':'0,6 × '}${f2(Ase,1)} × ${f2(futa,0)}${s('grout')==='1'?' × 0,80':''} = ${f2(Vsa/U,2)} ${un}
 φ = ${phiSt[1]}   →   φV_sa = ${f2(phiSt[1]*Vsa/U,2)} ${un}   vs   V_ua,i = ${f2(VmaxI/U,2)} ${un}`]);
     const le=Math.min(Lb,8*da); const coef=(T==='cabeza'&&s('weld')==='1')?0.66:0.6;
     const pcV=crk?v('edgeR'):1.4;
@@ -522,29 +547,34 @@ N_a(g) = ${f2(Nag/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(Nu/U,2)} ${un}`]);
     function vbreak(ax,sgn,Vcomp,parallel){
       const e = ax==='x'?(sgn>0?'x2':'x1'):(sgn>0?'y2':'y1'); const perp=ax==='x'?['y1','y2']:['x1','x2'];
       if(inf[e]) return null;
-      const ds=A.map(p=>p.c[e]); const dmin=Math.min(...ds), dmax=Math.max(...ds);
+      // filas paralelas al borde, ordenadas desde la más cercana (c_a1,1) a la más alejada
+      const dU=A.map(p=>p.c[e]).sort((a,b)=>a-b).filter((q,i,arr)=>!i||q-arr[i-1]>0.5);
+      const dmin=dU[0], dmax=dU[dU.length-1], multi=dU.length>1, sRow=multi?dU[1]-dU[0]:0;
       const rows={front:A.filter(p=>Math.abs(p.c[e]-dmin)<0.5), back:A.filter(p=>Math.abs(p.c[e]-dmax)<0.5)};
-      const cases=[]; const vc=s('vcase');
-      const mk=(label,G,Vd)=>{
-        let ca1=G[0].c[e]; const pos=G.map(p=>ax==='x'?p.y:p.x); const spread=Math.max(...pos)-Math.min(...pos);
+      const cases=[]; const vc=s('vcase'), welded=T==='cabeza'&&s('weld')==='1', V=Math.abs(Vcomp);
+      const mk=(label,G,Vd,tag)=>{
+        let ca1=G[0].c[e]; const ca1r=ca1; const pos=G.map(p=>ax==='x'?p.y:p.x); const spread=Math.max(...pos)-Math.min(...pos), sAdj=maxGap(pos);
         const c1=Math.min(...G.map(p=>p.c[perp[0]])), c2=Math.min(...G.map(p=>p.c[perp[1]]));
-        let red=false; if(c1<1.5*ca1 && c2<1.5*ca1 && ha<1.5*ca1){ ca1=Math.max(Math.max(c1,c2)/1.5,ha/1.5,spread/3); red=true; }
+        // 17.7.2.1.2: elemento angosto y delgado → c_a1 no mayor que máx(c_a2,máx/1,5 ; h_a/1,5 ; s/3), con s = separación máxima entre anclajes contiguos medida a lo largo del borde
+        let red=false; if(c1<1.5*ca1 && c2<1.5*ca1 && ha<1.5*ca1){ const lim=Math.max(Math.max(c1,c2)/1.5,ha/1.5,sAdj/3); if(lim<ca1){ ca1=lim; red=true; } }
         const AVco=4.5*ca1*ca1, AVc=Math.min((Math.min(1.5*ca1,c1)+spread+Math.min(1.5*ca1,c2))*Math.min(1.5*ca1,ha),G.length*AVco);
         const Vb1=coef*Math.pow(le/da,0.2)*Math.sqrt(da)*lamA*Math.sqrt(fc)*Math.pow(ca1,1.5), Vb2=3.7*lamA*Math.sqrt(fc)*Math.pow(ca1,1.5), Vb=Math.min(Vb1,Vb2);
-        const cG=G.reduce((a,p)=>a+(ax==='x'?p.y:p.x),0)/G.length; const eV=Math.abs((ax==='x'?lineY:lineX)-cG);
+        const cG=G.reduce((a,p)=>a+(ax==='x'?p.y:p.x),0)/G.length; const eV=parallel?0:Math.abs((ax==='x'?lineY:lineX)-cG);
         const pec=Math.min(1,1/(1+eV/(1.5*ca1)));
         const ca2=Math.min(c1,c2); const ped=parallel?1:(ca2>=1.5*ca1?1:0.7+0.3*ca2/(1.5*ca1));
         const phv=ha<1.5*ca1?Math.sqrt(1.5*ca1/ha):1;
         const Vcb=AVc/AVco*pec*ped*pcV*phv*Vb*(parallel?2:1);
-        cases.push({label,ca1,red,c1,c2,spread,AVco,AVc,Vb1,Vb2,Vb,eV,pec,ped,phv,Vcb,Vd,r:Vd/(phiCV*Vcb),n:G.length,par:!!parallel});
+        cases.push({label,tag:(parallel?'corte paralelo al borde · ':'')+tag,ca1,ca1r,red,c1,c2,spread,sAdj,AVco,AVc,Vb1,Vb2,Vb,eV,pec,ped,phv,Vcb,Vd,r:Vd/(phiCV*Vcb),n:G.length,par:!!parallel});
       };
-      if(parallel){ mk('corte paralelo al borde (×2, ψed = 1)',rows.front,Math.abs(Vcomp)); }
-      else {
-        if(vc==='12'||vc==='1') mk(rows.front.length<n?'Caso 1: fila delantera':'Caso 1: todos los anclajes',rows.front,Math.abs(Vcomp)*rows.front.length/n);
-        if((vc==='12'||vc==='2') && rows.back!==rows.front && dmax>dmin+0.5) mk('Caso 2: fila trasera, corte total',rows.back,Math.abs(Vcomp));
-        if(vc==='3') mk('Caso 3: fila delantera, corte total',rows.front,Math.abs(Vcomp));
-        if(vc==='2' && !(dmax>dmin+0.5)) mk('Caso 2: una sola fila, corte total',rows.back,Math.abs(Vcomp));
-      }
+      // Figura C 17.7.2.1b: s ≥ c_a1,1 → casos 1 y 2; s < c_a1,1 → caso 3; anclajes soldados a la placa → solo caso 2
+      const pre=parallel?'Corte paralelo al borde (×2, ψed,V = 1) · ':'', sTxt=`s = ${f2(sRow/10,1)} cm`, cTxt=`c_a1,1 = ${f2(dmin/10,1)} cm`;
+      if(!multi) mk(pre+(n>1?'una fila paralela al borde con el corte total':'un anclaje con el corte total'),rows.front,V,n>1?'una fila':'un anclaje');
+      else if(vc==='1') mk(pre+'Caso 1: fila delantera con su parte del corte',rows.front,V*rows.front.length/n,'caso 1');
+      else if(vc==='2') mk(pre+'Caso 2: fila trasera con el corte total',rows.back,V,'caso 2');
+      else if(vc==='3') mk(pre+'Caso 3: fila delantera con el corte total',rows.front,V,'caso 3');
+      else if(welded) mk(pre+'Caso 2 (anclajes soldados a la placa): fila trasera con el corte total',rows.back,V,'caso 2');
+      else if(sRow>=dmin){ mk(pre+`Caso 1 (${sTxt} ≥ ${cTxt}): fila delantera con su parte del corte`,rows.front,V*rows.front.length/n,'caso 1'); mk(pre+'Caso 2: fila trasera con el corte total',rows.back,V,'caso 2'); }
+      else mk(pre+`Caso 3 (${sTxt} < ${cTxt}): fila delantera con el corte total`,rows.front,V,'caso 3');
       cases.forEach(c=>{c.edge=e;c.ax=ax;});
       return cases.sort((a,b)=>b.r-a.r)[0];
     }
@@ -555,19 +585,21 @@ N_a(g) = ${f2(Nag/U,2)} ${un}   φ = ${phiCT}   vs   ${f2(Nu/U,2)} ${un}`]);
       for(const e of [1,-1]){ const b=vbreak('x',e,Vy,true); if(b){ b.edge=(e>0?'x2':'x1'); b.label+=' (V_y junto al borde '+(e>0?'+X':'−X')+')'; res.push(b);} } }
     if(!res.length) na('17.7.2','Desprendimiento del hormigón en corte, V<sub>cb</sub>','sin borde en la dirección del corte');
     else { res.sort((a,b)=>b.r-a.r); VB=res[0];
-      add('17.7.2','Desprendimiento en corte, V<sub>cb'+(VB.n>1?'g':'')+'</sub> · '+VB.label,VB.Vcb,phiCV,VB.Vd,'hacia el borde '+VB.edge);
+      add('17.7.2','Desprendimiento en corte, V<sub>cb'+(VB.n>1?'g':'')+'</sub> · '+VB.tag,VB.Vcb,phiCV,VB.Vd,'borde '+({x1:'−X',x2:'+X',y1:'−Y',y2:'+Y'}[VB.edge]));
       memo.push(['17.7.2 · Desprendimiento en corte',res.map(c=>`${c.label} → borde ${c.edge}
-  c_a1 = ${f2(c.ca1,1)} mm${c.red?' (reducido por 17.7.2.1.2: elemento angosto y delgado)':''}   c_a2 = ${fmm(Math.min(c.c1,c.c2))} mm   ℓ_e = ${le} mm
+  c_a1 = ${f2(c.ca1,1)} mm${c.red?` (17.7.2.1.2, elemento angosto y delgado: c_a1 real = ${f2(c.ca1r,0)} mm → máx(c_a2,máx/1,5 ; h_a/1,5 ; s/3) = máx(${f2(Math.max(c.c1,c.c2)/1.5,1)} ; ${f2(ha/1.5,1)} ; ${f2(c.sAdj/3,1)}))`:''}   c_a2 = ${fmm(Math.min(c.c1,c.c2))} mm   ℓ_e = ${le} mm
   A_Vco = 4,5 c_a1² = 4,5 × ${f2(c.ca1,1)}² = ${f2(c.AVco,0)} mm²
   A_Vc = [mín(1,5c_a1 ; c_a2,izq) + s + mín(1,5c_a1 ; c_a2,der)] × mín(1,5c_a1 ; h_a) = (${f2(Math.min(1.5*c.ca1,c.c1),1)} + ${f2(c.spread,1)} + ${f2(Math.min(1.5*c.ca1,c.c2),1)}) × ${f2(Math.min(1.5*c.ca1,ha),1)} = ${f2(c.AVc,0)} mm²
-  V_b = mín(${coef} (ℓe/da)^0,2 √da λa √f'c c_a1^1,5 ; 3,7 λa √f'c c_a1^1,5) = mín(${f2(c.Vb1/U,2)} ; ${f2(c.Vb2/U,2)}) = ${f2(c.Vb/U,2)} ${un}
+  V_b,a = ${coef} (ℓe/da)^0,2 √da λa √f'c c_a1^1,5 = ${coef} × (${f2(le,0)}/${da})^0,2 × ${f2(Math.sqrt(da),3)} × ${lamA} × ${f2(Math.sqrt(fc),3)} × ${f2(Math.pow(c.ca1,1.5),1)} = ${f2(c.Vb1/U,2)} ${un}
+  V_b,b = 3,7 λa √f'c c_a1^1,5 = 3,7 × ${lamA} × ${f2(Math.sqrt(fc),3)} × ${f2(Math.pow(c.ca1,1.5),1)} = ${f2(c.Vb2/U,2)} ${un}   →   V_b = mín = ${f2(c.Vb/U,2)} ${un}
   ψec,V = 1/(1 + e'V/(1,5 c_a1)) = ${f2(c.pec,3)}  (e'V = ${f2(c.eV,1)} mm)   ψed,V = ${c.par?'1,0 (corte paralelo)':(Math.min(c.c1,c.c2)>=1.5*c.ca1?'1,0 (c_a2 ≥ 1,5 c_a1)':'0,7 + 0,3 c_a2/(1,5 c_a1) = '+f2(c.ped,3))}
   ψc,V = ${pcV}   ψh,V = √(1,5 c_a1/h_a) ≥ 1 = ${f2(c.phv,3)}
   V_cb${c.n>1?'g':''} = (A_Vc/A_Vco) ψec,V ψed,V ψc,V ψh,V V_b${c.par?' × 2':''} = ${f2(c.AVc/c.AVco,3)} × ${f2(c.pec,3)} × ${f2(c.ped,3)} × ${pcV} × ${f2(c.phv,3)} × ${f2(c.Vb/U,2)}${c.par?' × 2':''}
   V_cb = ${f2(c.Vcb/U,2)} ${un}   φ = ${phiCV}   →   φV_cb = ${f2(phiCV*c.Vcb/U,2)} ${un}   vs   ${f2(c.Vd/U,2)} ${un}   (${f2(c.r,3)})`).join('\n\n')]); }
     // 17.7.3 cabeceo
     const kcp=hef<65?1:2; const all=breakout(A,0,0); let Ncp=all.Ncb, txt=`N_cp(g) = N_cb(g) con todos los anclajes traccionados, sin excentricidad = ${f2(Ncp/U,2)} ${un}`;
-    if(T==='adhesivo'){ const cNa=10*da*Math.sqrt(v('tuncr')/7.6), tau=crk?v('tcr'):v('tuncr'); const Nba=lamB*tau*Math.PI*da*Lb*n; Ncp=Math.min(Ncp,Nba); txt+=`\nadhesivo: se toma el menor con la adherencia (${f2(Nba/U,2)} ${un})`; }
+    // 17.7.3.1.2: en adhesivos N_cpg es el menor entre N_ag (ec. 17.6.5.1b) y N_cbg (ec. 17.6.2.1b)
+    if(T==='adhesivo'){ const bg=bondG(A,0,0); Ncp=Math.min(Ncp,bg.Nag); txt+=`\nadhesivo: N_ag con todos los anclajes = (A_Na/A_Nao) ψed,Na ψcp,Na N_ba = ${f2(bg.ANa/bg.ANao,3)} × ${f2(bg.ped,3)} × ${f2(bg.pcp,3)} × ${f2(bg.Nba/U,2)} = ${f2(bg.Nag/U,2)} ${un}   →   N_cp(g) = mín(N_cb(g) ; N_ag) = ${f2(Ncp/U,2)} ${un}`; }
     add('17.7.3','Cabeceo (pryout), V<sub>cp'+(n>1?'g':'')+'</sub>',kcp*Ncp,phiCP,Vres,'corte total');
     memo.push(['17.7.3 · Cabeceo (pryout)',`${txt}
 k_cp = ${kcp} (h_ef ${hef<65?'<':'≥'} 65 mm)   →   V_cp = ${f2(kcp*Ncp/U,2)} ${un}   φ = ${phiCP}   →   φV_cp = ${f2(phiCP*kcp*Ncp/U,2)} ${un}   vs   V_ua = ${f2(Vres/U,2)} ${un}`]);
@@ -591,17 +623,21 @@ Tracción vertical aplicada = ${f2(NuV/U,2)} ${un}   ·   suma de tracciones seg
   if(Nu>0 && Vres>0){
     if(zV<=0.2) inter={txt:'V_ua ≤ 0,2 φV_n: se verifica solo tracción (17.8.2)',ok:true,val:zN};
     else if(zN<=0.2) inter={txt:'N_ua ≤ 0,2 φN_n: se verifica solo corte (17.8.1)',ok:true,val:zV};
-    else inter={txt:`N_ua/φN_n + V_ua/φV_n = ${f2(zN,3)} + ${f2(zV,3)} = ${f2(zN+zV,3)} ≤ 1,2 (17.8.3)`,ok:zN+zV<=1.2,val:(zN+zV)/1.2};
+    else inter={txt:`N_ua/φN_n + V_ua/φV_n = ${f2(zN,3)} + ${f2(zV,3)} = ${f2(zN+zV,3)} ${zN+zV<=1.2?'≤':'>'} 1,2 (17.8.3)`,ok:zN+zV<=1.2,val:(zN+zV)/1.2};
   }
   // ---------- 17.9 y 17.3
   const torq=s('torq')==='1';
   const smin = T==='tornillo'?Math.max(0.6*hef,6*da):(!post&&!torq?4*da:6*da);
-  const sAct=Math.min(n1>1?s1:INF,n2>1?s2:INF);
+  let sAct=Math.min(n1>1?s1:INF,n2>1?s2:INF);
+  if(incl){ for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){ const a=A[i], b=A[j]; sAct=Math.min(sAct,Math.hypot(a.x-b.x,a.y-b.y),Math.hypot(a.bx-b.bx,a.by-b.by)); } }
   if(n>1) D.push({art:'17.9.2',name:'Separación mínima entre anclajes',val:fcm(sAct)+' cm',req:'≥ '+fcm(smin)+' cm'+(!post?(torq?' (6 d_a, con torque)':' (4 d_a, sin torque)'):''),ok:sAct>=smin});
-  let cmin = !post?(torq?6*da:v('cover')+da/2):(T==='torque'?8*da:T==='desplaz'?10*da:6*da);
-  if(post) cmin=Math.max(cmin,2*v('agg'));
+  // Tabla 17.9.2(a): post-instalados → mayor de (a) recubrimiento (20.5.1.3), (b) 2 × tamaño máx. del agregado, (c) Tabla 17.9.2(b)
+  const cTab=T==='torque'?8*da:T==='desplaz'?10*da:6*da, cCov=v('cover')+da/2;
+  let cmin = !post?(torq?6*da:cCov):Math.max(cTab,2*v('agg'),cCov);
+  const cminTxt = !post?(torq?' (6 d_a)':' (recubrimiento + d_a/2)'):` (mayor de: recubrimiento + d_a/2 = ${fcm(cCov)} ; 2 × agregado = ${fcm(2*v('agg'))} ; Tabla 17.9.2(b) = ${fcm(cTab)} cm)`;
   const camin=Math.min(...A.map(p=>Math.min(p.c.x1,p.c.x2,p.c.y1,p.c.y2,p.cb.x1,p.cb.x2,p.cb.y1,p.cb.y2)));
-  D.push({art:'17.9.2',name:'Distancia mínima al borde',val:fcm(camin)+' cm',req:'≥ '+fcm(cmin)+' cm'+(!post?(torq?' (6 d_a)':' (recubrimiento + d_a/2)'):''),ok:camin>=cmin});
+  D.push({art:'17.9.2',name:'Distancia mínima al borde',val:fcm(camin)+' cm',req:'≥ '+fcm(cmin)+' cm'+cminTxt,ok:camin>=cmin});
+  if(post && kc>10) D.push({art:'17.6.2.2.2',name:'k<sub>c</sub> de post-instalados',val:String(kc),req:'≤ 10',ok:false});
   if(post && T!=='adhesivo'){ const hmax=inf.h?INF:Math.max(2/3*ha,ha-100); D.push({art:'17.9.4',name:'Empotramiento máximo',val:hef+' mm',req:'≤ '+fmm(hmax)+' mm',ok:hef<=hmax}); }
   D.push({art:'17.3.1',name:"f'c dentro del límite",val:fc+' MPa',req:'≤ '+(post?55:70)+' MPa',ok:fc<=(post?55:70)});
   D.push({art:'17.3.2',name:'Diámetro del anclaje',val:da+' mm',req:'≤ 100 mm',ok:da<=100});
@@ -690,7 +726,8 @@ function plateEq(A,F,cx,cy,Mo,ksIn){
   for(let it=0;it<=n;it++){
     const K=Array.from({length:6},()=>Array(6).fill(0)), Ki=A.map((p,k)=>Kb(k,on[k]));
     A.forEach((p,k)=>{ const B=Bm(k), Kk=Ki[k]; for(let a=0;a<6;a++) for(let b=0;b<6;b++){ let sum=0; for(let i=0;i<3;i++) for(let j=0;j<3;j++) sum+=B[i][a]*Kk[i][j]*B[j][b]; K[a][b]+=sum; } });
-    const dg=Math.max(1e-12,...K.map((r,i)=>Math.abs(r[i]))); for(let i=0;i<6;i++) K[i][i]+=1e-9*dg;
+    // regularización mínima solo para grados de libertad sin rigidez: con 1e-9·máx(diag) se "perdía" parte del corte y el equilibrio no cerraba
+    const dg=Math.max(1e-12,...K.map((r,i)=>Math.abs(r[i]))); for(let i=0;i<6;i++) K[i][i]+=1e-15*dg;
     const q=solve(K,[F[0],F[1],F[2],Mo[0],Mo[1],Mo[2]]);
     f=A.map((p,k)=>{ const B=Bm(k); const d=[0,1,2].map(i=>B[i].reduce((a,x,j)=>a+x*q[j],0)); return [0,1,2].map(i=>Ki[k][i].reduce((a,x,j)=>a+x*d[j],0)); });
     T=f.map((fi,k)=>fi[0]*E[k][0]+fi[1]*E[k][1]+fi[2]*E[k][2]); if(!T0) T0=T.slice();
@@ -943,13 +980,13 @@ const DESC={
  'Barras':'El Capítulo 17 está planteado para anclajes perpendiculares a la superficie del hormigón. Para barras inclinadas se adopta el criterio indicado abajo; conviene justificarlo en la memoria general.',
  '17.5.3':'Se debe cumplir φR<sub>n</sub> ≥ solicitación mayorada para cada modo de falla (17.5.1). Los factores φ salen de la Tabla 17.5.3 según el modo, la condición A (con armadura suplementaria) o B (sin ella) y, en anclajes post-instalados, la categoría del producto.',
  '17.6.1':'Resistencia del acero de un anclaje en tracción (17.6.1.2): N<sub>sa</sub> = A<sub>se,N</sub> · f<sub>uta</sub>, con f<sub>uta</sub> ≤ mín(1,9 f<sub>ya</sub> ; 860 MPa). Se compara con la tracción del anclaje más solicitado.',
- '17.6.2':'Desprendimiento del hormigón en tracción (17.6.2.1): N<sub>cbg</sub> = (A<sub>Nc</sub>/A<sub>Nco</sub>) ψ<sub>ec,N</sub> ψ<sub>ed,N</sub> ψ<sub>c,N</sub> ψ<sub>cp,N</sub> N<sub>b</sub>. A<sub>Nco</sub> = 9 h<sub>ef</sub>² es el área proyectada de un anclaje aislado lejos de bordes; A<sub>Nc</sub> es la del grupo, limitada por bordes y separaciones. N<sub>b</sub> = k<sub>c</sub> λ<sub>a</sub> √f\'c h<sub>ef</sub><sup>1,5</sup> (17.6.2.2.1). ψ<sub>ec,N</sub> tiene en cuenta la excentricidad de la carga (17.6.2.3), ψ<sub>ed,N</sub> la cercanía a los bordes (17.6.2.4), ψ<sub>c,N</sub> = 1,25 pre-instalado / 1,4 post-instalado en hormigón no fisurado y 1,0 fisurado (17.6.2.5), y ψ<sub>cp,N</sub> el hendimiento de post-instalados (17.6.2.6). Si hay tres o más bordes a menos de 1,5 h<sub>ef</sub>, h<sub>ef</sub> se reduce según 17.6.2.1.2.',
+ '17.6.2':'Desprendimiento del hormigón en tracción (17.6.2.1): N<sub>cbg</sub> = (A<sub>Nc</sub>/A<sub>Nco</sub>) ψ<sub>ec,N</sub> ψ<sub>ed,N</sub> ψ<sub>c,N</sub> ψ<sub>cp,N</sub> N<sub>b</sub>. A<sub>Nco</sub> = 9 h<sub>ef</sub>² es el área proyectada de un anclaje aislado lejos de bordes; A<sub>Nc</sub> es la del grupo, limitada por bordes y separaciones. N<sub>b</sub> = k<sub>c</sub> λ<sub>a</sub> √f\'c h<sub>ef</sub><sup>1,5</sup> (17.6.2.2.1); para pernos y bulones con cabeza pre-instalados con 280 mm ≤ h<sub>ef</sub> ≤ 635 mm, N<sub>b</sub> = 3,9 λ<sub>a</sub> √f\'c h<sub>ef</sub><sup>5/3</sup> (17.6.2.2.3). ψ<sub>ec,N</sub> tiene en cuenta la excentricidad de la carga (17.6.2.3), ψ<sub>ed,N</sub> la cercanía a los bordes (17.6.2.4), ψ<sub>c,N</sub> = 1,25 pre-instalado / 1,4 post-instalado con k<sub>c</sub> = 7 en hormigón no fisurado y 1,0 fisurado (17.6.2.5), y ψ<sub>cp,N</sub> el hendimiento de post-instalados (17.6.2.6). Si hay tres o más bordes a menos de 1,5 h<sub>ef</sub>, h<sub>ef</sub> se reduce según 17.6.2.1.2 (s = separación máxima entre anclajes contiguos).',
  '17.6.3':'Arrancamiento del anclaje (17.6.3): N<sub>pn</sub> = ψ<sub>c,P</sub> N<sub>p</sub>. Anclaje con cabeza: N<sub>p</sub> = 8 A<sub>brg</sub> f\'c. Con gancho: N<sub>p</sub> = 0,9 f\'c e<sub>h</sub> d<sub>a</sub>, con 3 d<sub>a</sub> ≤ e<sub>h</sub> ≤ 4,5 d<sub>a</sub>. Post-instalado: valor de ensayos. ψ<sub>c,P</sub> = 1,4 en hormigón no fisurado y 1,0 fisurado.',
- '17.6.4':'Descascaramiento lateral (17.6.4), solo para anclajes con cabeza con h<sub>ef</sub> > 2,5 c<sub>a1</sub>: N<sub>sb</sub> = 13 c<sub>a1</sub> √A<sub>brg</sub> λ<sub>a</sub> √f\'c. Si c<sub>a2</sub> &lt; 3 c<sub>a1</sub> se multiplica por (1 + c<sub>a2</sub>/c<sub>a1</sub>)/4. Grupo a lo largo del borde con s &lt; 6 c<sub>a1</sub>: N<sub>sbg</sub> = (1 + s/(6 c<sub>a1</sub>)) N<sub>sb</sub>.',
+ '17.6.4':'Descascaramiento lateral (17.6.4), solo para anclajes con cabeza con h<sub>ef</sub> > 2,5 c<sub>a1</sub>: N<sub>sb</sub> = 13 c<sub>a1</sub> √A<sub>brg</sub> λ<sub>a</sub> √f\'c. En un anclaje individual, si c<sub>a2</sub> &lt; 3 c<sub>a1</sub> se multiplica por (1 + c<sub>a2</sub>/c<sub>a1</sub>)/4. Grupo a lo largo del borde con s &lt; 6 c<sub>a1</sub>: N<sub>sbg</sub> = (1 + s/(6 c<sub>a1</sub>)) N<sub>sb</sub>, con N<sub>sb</sub> sin la corrección por c<sub>a2</sub> (17.6.4.2).',
  '17.6.5':'Adherencia de anclajes adhesivos (17.6.5): N<sub>ag</sub> = (A<sub>Na</sub>/A<sub>Nao</sub>) ψ<sub>ec,Na</sub> ψ<sub>ed,Na</sub> ψ<sub>cp,Na</sub> N<sub>ba</sub>, con N<sub>ba</sub> = λ<sub>a</sub> τ π d<sub>a</sub> h<sub>ef</sub> y c<sub>Na</sub> = 10 d<sub>a</sub> √(τ<sub>uncr</sub>/7,6).',
  '17.7.1':'Resistencia del acero en corte (17.7.1.2): V<sub>sa</sub> = 0,6 A<sub>se,V</sub> f<sub>uta</sub> (A<sub>se,V</sub> f<sub>uta</sub> para pernos con cabeza soldados a la placa). Con mortero de nivelación se multiplica por 0,80 (17.7.1.2.1).',
- '17.7.2':'Desprendimiento del hormigón por corte hacia un borde (17.7.2.1): V<sub>cbg</sub> = (A<sub>Vc</sub>/A<sub>Vco</sub>) ψ<sub>ec,V</sub> ψ<sub>ed,V</sub> ψ<sub>c,V</sub> ψ<sub>h,V</sub> V<sub>b</sub>. A<sub>Vco</sub> = 4,5 c<sub>a1</sub>². V<sub>b</sub> = mín(0,6 (ℓ<sub>e</sub>/d<sub>a</sub>)<sup>0,2</sup> √d<sub>a</sub> λ<sub>a</sub> √f\'c c<sub>a1</sub><sup>1,5</sup> ; 3,7 λ<sub>a</sub> √f\'c c<sub>a1</sub><sup>1,5</sup>) (17.7.2.2). ψ<sub>ec,V</sub> = 1/(1 + e\'<sub>V</sub>/(1,5 c<sub>a1</sub>)). ψ<sub>ed,V</sub> = 0,7 + 0,3 c<sub>a2</sub>/(1,5 c<sub>a1</sub>) ≤ 1. ψ<sub>c,V</sub> depende de la fisuración y de la armadura de borde. ψ<sub>h,V</sub> = √(1,5 c<sub>a1</sub>/h<sub>a</sub>) ≥ 1. Con el corte paralelo al borde, la resistencia se toma dos veces con ψ<sub>ed,V</sub> = 1 (17.7.2.1(c)). En grupos se evalúa la fila delantera con su parte del corte y la trasera con el corte total. Si el elemento es angosto y delgado, c<sub>a1</sub> se reduce según 17.7.2.1.2.',
- '17.7.3':'Cabeceo (pryout) (17.7.3): V<sub>cpg</sub> = k<sub>cp</sub> N<sub>cpg</sub>, con k<sub>cp</sub> = 1 si h<sub>ef</sub> &lt; 65 mm y 2 si h<sub>ef</sub> ≥ 65 mm. N<sub>cpg</sub> = N<sub>cbg</sub> con todos los anclajes traccionados; en adhesivos se toma el menor con la adherencia.',
+ '17.7.2':'Desprendimiento del hormigón por corte hacia un borde (17.7.2.1): V<sub>cbg</sub> = (A<sub>Vc</sub>/A<sub>Vco</sub>) ψ<sub>ec,V</sub> ψ<sub>ed,V</sub> ψ<sub>c,V</sub> ψ<sub>h,V</sub> V<sub>b</sub>. A<sub>Vco</sub> = 4,5 c<sub>a1</sub>². V<sub>b</sub> = mín(0,6 (ℓ<sub>e</sub>/d<sub>a</sub>)<sup>0,2</sup> √d<sub>a</sub> λ<sub>a</sub> √f\'c c<sub>a1</sub><sup>1,5</sup> ; 3,7 λ<sub>a</sub> √f\'c c<sub>a1</sub><sup>1,5</sup>) (17.7.2.2). ψ<sub>ec,V</sub> = 1/(1 + e\'<sub>V</sub>/(1,5 c<sub>a1</sub>)). ψ<sub>ed,V</sub> = 0,7 + 0,3 c<sub>a2</sub>/(1,5 c<sub>a1</sub>) ≤ 1. ψ<sub>c,V</sub> depende de la fisuración y de la armadura de borde. ψ<sub>h,V</sub> = √(1,5 c<sub>a1</sub>/h<sub>a</sub>) ≥ 1. Con el corte paralelo al borde, la resistencia se toma dos veces con ψ<sub>ed,V</sub> = 1 (17.7.2.1(c)). En grupos con más de una fila se aplica la Figura C 17.7.2.1b: si la separación entre filas s ≥ c<sub>a1,1</sub>, gobierna el peor entre el caso 1 (fila delantera con su parte del corte) y el caso 2 (fila trasera con el corte total); si s &lt; c<sub>a1,1</sub>, el caso 3 (fila delantera con el corte total); con anclajes soldados a la placa, solo el caso 2. Si el elemento es angosto y delgado, c<sub>a1</sub> se limita según 17.7.2.1.2.',
+ '17.7.3':'Cabeceo (pryout) (17.7.3): V<sub>cpg</sub> = k<sub>cp</sub> N<sub>cpg</sub>, con k<sub>cp</sub> = 1 si h<sub>ef</sub> &lt; 65 mm y 2 si h<sub>ef</sub> ≥ 65 mm. N<sub>cpg</sub> = N<sub>cbg</sub> con todos los anclajes traccionados; en adhesivos, el menor entre N<sub>ag</sub> (ec. 17.6.5.1b) y N<sub>cbg</sub> (17.7.3.1.2). φ = 0,70 para todos los anclajes (Tabla 17.5.3(c)).',
  '17.8':'Tracción y corte simultáneos (17.8): si V<sub>ua</sub> ≤ 0,2 φV<sub>n</sub> se permite verificar solo tracción; si N<sub>ua</sub> ≤ 0,2 φN<sub>n</sub>, solo corte. En los demás casos, N<sub>ua</sub>/φN<sub>n</sub> + V<sub>ua</sub>/φV<sub>n</sub> ≤ 1,2.',
  '17.9':'Distancias mínimas al borde, separaciones y espesores para evitar el hendimiento (17.9), y límites de aplicación del capítulo (17.3).'
 };

@@ -201,6 +201,7 @@ button.x{padding:2px 8px;color:var(--muted)}
           <label><span>f<sub>uta</sub> [MPa]</span><input id="futa" type="number" step="10" value="220"></label>
           <label><span>Empotramiento h<sub>ef</sub> [mm] (a lo largo de la barra)</span><input id="hef" type="number" step="5" value="250"></label>
           <label class="capd full"><input type="checkbox" id="angInd"> Inclinación distinta para cada barra</label>
+          <label class="capd full"><input type="checkbox" id="nodo"> Barras unidas en un nudo (reticulado): las cargas se aplican en el nudo</label>
           <label><span data-angl>Inclinación en X, α<sub>x</sub> [°]</span><input id="angx" type="number" step="1" value="0"></label>
           <label><span data-angl>Inclinación en Y, α<sub>y</sub> [°]</span><input id="angy" type="number" step="1" value="0"></label>
           <div class="full" id="angBox" style="grid-column:1/-1;display:grid;gap:6px" hidden>
@@ -244,7 +245,7 @@ button.x{padding:2px 8px;color:var(--muted)}
         </div>
         <div id="placaBox" style="display:grid;gap:8px">
           <div class="tbl-wrap"><table id="cases"><thead><tr><th></th><th>Carga</th><th>F<sub>x</sub></th><th>F<sub>y</sub></th><th>F<sub>z</sub></th><th>M<sub>x</sub></th><th>M<sub>y</sub></th><th data-show="adhesivo">F<sub>z,s</sub></th><th>x [cm]</th><th>y [cm]</th><th>z [cm]</th><th></th></tr></thead><tbody></tbody></table></div>
-          <div class="row"><button type="button" id="addCase">Agregar carga</button><span class="hint">Todas las cargas actúan juntas y se suman. Fuerzas en t o kN (F<sub>z</sub> positiva = hacia arriba, tracción); momentos en t·m o kN·m. (x ; y ; z): punto de aplicación; vacío = centro de los anclajes.</span></div>
+          <div class="row"><button type="button" id="addCase">Agregar carga</button><span class="hint">Todas las cargas actúan juntas y se suman. Fuerzas en t o kN (F<sub>z</sub> positiva = hacia arriba, tracción); momentos en t·m o kN·m. (x ; y): punto de aplicación, vacío = centro de los anclajes. z: altura sobre el hormigón, vacía = punto donde se cortan los ejes de las barras (nudo).</span></div>
         </div>
         <div id="anchBox" style="display:grid;gap:8px" hidden>
           <div class="tbl-wrap"><table id="aLoads"><thead><tr><th>#</th><th>x [cm]</th><th>y [cm]</th><th>N<sub>ua,i</sub> según la barra</th><th>V<sub>ua,x,i</sub> adicional</th><th>V<sub>ua,y,i</sub> adicional</th></tr></thead><tbody></tbody></table></div>
@@ -286,6 +287,8 @@ button.x{padding:2px 8px;color:var(--muted)}
         <div class="verdict" id="verdict"></div>
         <div class="tbl-wrap" id="sumWrap"><table id="caseSum"><thead><tr><th>Caso</th><th class="num">N<sub>ua</sub></th><th class="num">V<sub>ua</sub></th><th class="num">Tracción</th><th class="num">Corte</th><th class="num">Interacción</th><th>Gobierna</th><th></th></tr></thead><tbody></tbody></table></div>
         <div class="kv" id="kv"></div>
+        <div class="tbl-wrap"><table id="barSum"><thead><tr><th>Anclaje</th><th class="num">Tracción</th><th class="num">Compresión</th><th class="num">Corte</th></tr></thead><tbody></tbody></table></div>
+        <p class="hint" id="barSumHint"></p>
       </section>
 
       <section class="panel" aria-label="Modos de falla">
@@ -318,7 +321,7 @@ const $=id=>document.getElementById(id);
 const INF=1e7;
 const SRC=(()=>{ const d=document.documentElement.cloneNode(true); d.querySelectorAll("script").forEach(sc=>{ if(sc.id!=="app" && !/plotly|jszip/.test(sc.src||"")) sc.remove(); }); d.querySelectorAll("#dlHtml").forEach(b=>b.remove()); return "<!doctype html>"+String.fromCharCode(10)+d.outerHTML; })();
 const KEYS=['Lx','Ly','ha','fc','lw','crk','supp','edgeR','cover','agg','tipo','duct','vast','da','nt','fya','futa','hef','angx','angy','hookDir','Abrg','eh','torq','cat','kc','Npt','tcr','tuncr','weld','grout','n1','s1','n2','s2','xg','yg','unit','vcase','loadMode','NusA'];
-const CHK=['autoG','angInd','infAll','infX1','infX2','infY1','infY2','infH'];
+const CHK=['autoG','angInd','nodo','infAll','infX1','infX2','infY1','infY2','infH'];
 const CMF=new Set(['Lx','Ly','ha','s1','s2','xg','yg']); const v=id=>parseFloat($(id).value)*(CMF.has(id)?10:1); const s=id=>$(id).value;
 const f2=(x,d=2)=>isFinite(x)?x.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
 const fmm=x=>x>=INF/2?'∞':f2(x,0); const fcm=x=>x>=INF/2?'∞':f2(x/10,1);
@@ -365,13 +368,23 @@ function calc(L){
   } else {
     // cargas que actúan juntas: fuerzas y momentos se suman respecto del centro de los anclajes
     const cen=(v,d)=>(v===''||v==null||isNaN(+v))?d:+v;
-    LOADS=(L.loads||[L]).map(c=>({name:c.name||'',color:c.color,Fx:(+c.Vx||0)*U,Fy:(+c.Vy||0)*U,Fz:(+c.N||0)*U,Mx:(+c.Mx||0)*U*1000,My:(+c.My||0)*U*1000,Ns:(+c.Ns||0)*U,x:cen(c.x===''?'':+c.x*10,cxA),y:cen(c.y===''?'':+c.y*10,cyA),z:(+c.z||0)*10,cx:c.x,cy:c.y}));
+    // altura a la que se cortan los ejes de las barras (en xz y en yz); si no concurren, null
+    const conc=(pos,tan)=>{ const n2=A.length, pa=pos.reduce((a,v)=>a+v,0)/n2, ta=tan.reduce((a,v)=>a+v,0)/n2; let sxy=0,syy=0; pos.forEach((v,i)=>{ sxy+=(v-pa)*(tan[i]-ta); syy+=(tan[i]-ta)**2; });
+      if(syy<1e-9) return null; const z=sxy/syy; if(!(z>1)) return null; const res=pos.reduce((a,v,i)=>a+((v-pa)-(tan[i]-ta)*z)**2,0)/n2; return res<1?z:null; };
+    const zcx=conc(A.map(p=>p.x),A.map(p=>p.tx)), zcy=conc(A.map(p=>p.y),A.map(p=>p.ty)); const zAuto=zcx!=null?zcx:(zcy!=null?zcy:0);
+    // nudo de reticulado: punto donde se cortan los ejes (x e y a la altura de concurrencia)
+    let NODE=null; if($('nodo').checked){ const zc=zcx!=null?zcx:zcy; if(zc!=null){ const nx=A.reduce((a,p)=>a+(p.x-p.tx*zc),0)/A.length, ny=A.reduce((a,p)=>a+(p.y-p.ty*zc),0)/A.length; NODE={x:nx,y:ny,z:zc}; }
+      else notes.push('Los ejes de las barras no se cortan en un punto: la opción de nudo no se aplica y las cargas quedan en su punto de aplicación.'); }
+    LOADS=(L.loads||[L]).map(c=>({name:c.name||'',color:c.color,Fx:(+c.Vx||0)*U,Fy:(+c.Vy||0)*U,Fz:(+c.N||0)*U,Mx:(+c.Mx||0)*U*1000,My:(+c.My||0)*U*1000,Ns:(+c.Ns||0)*U,x:cen(c.x===''?'':+c.x*10,cxA),y:cen(c.y===''?'':+c.y*10,cyA),z:(c.z===''||c.z==null||isNaN(+c.z))?zAuto:(+c.z)*10,cx:c.x,cy:c.y}));
+    if(NODE) LOADS.forEach(l=>{ l.x=NODE.x; l.y=NODE.y; l.z=NODE.z; });
     Vx=LOADS.reduce((a,l)=>a+l.Fx,0); Vy=LOADS.reduce((a,l)=>a+l.Fy,0); Nu=LOADS.reduce((a,l)=>a+l.Fz,0); Nus=LOADS.reduce((a,l)=>a+l.Ns,0);
     const Mo=[0,0,0]; LOADS.forEach(l=>{ const ex=l.x-cxA, ey=l.y-cyA; l.mx=l.Fz*ey-l.Fy*l.z+l.Mx; l.my=l.Fx*l.z-l.Fz*ex+l.My; l.mz=l.Fy*ex-l.Fx*ey; Mo[0]+=l.mx; Mo[1]+=l.my; Mo[2]+=l.mz; });
     xL=Math.abs(Nu)>1e-9?LOADS.reduce((a,l)=>a+l.Fz*l.x,0)/Nu:cxA; yL=Math.abs(Nu)>1e-9?LOADS.reduce((a,l)=>a+l.Fz*l.y,0)/Nu:cyA; zL=Math.max(0,...LOADS.map(l=>l.z));
     lineY=Math.abs(Vx)>1e-9?LOADS.reduce((a,l)=>a+l.Fx*l.y,0)/Vx:yL; lineX=Math.abs(Vy)>1e-9?LOADS.reduce((a,l)=>a+l.Fy*l.x,0)/Vy:xL;
     // --- equilibrio de la placa rígida (6 ecuaciones): cada barra con rigidez axial según su eje y transversal menor
-    EQ=plateEq(A,[Vx,Vy,Nu],cxA,cyA,Mo);
+    EQ=plateEq(A,[Vx,Vy,Nu],cxA,cyA,Mo,NODE?1e-6:0.01); if(NODE) EQ.node=NODE;
+    { const zc=zcx!=null?zcx:zcy; if(zc!=null && !NODE){ const off=LOADS.filter(l=>(Math.abs(l.Fx)+Math.abs(l.Fy))>1e-6 && Math.abs(l.z-zc)>5);
+      if(off.length){ const dM=off.reduce((a,l)=>a+Math.hypot(l.Fx,l.Fy)*Math.abs(l.z-zc),0); EQ.warn=`Los ejes de las barras se cortan a z = ${f2(zc/10,1)} cm sobre el hormigón, pero hay corte aplicado a otra altura (z = ${off.map(l=>f2(l.z/10,1)).join(' ; ')} cm). Eso genera un momento de ${f2(dM/U/1000,3)} ${un}·m que las barras inclinadas no pueden tomar axialmente, y aparece corte en las barras. Si la carga actúa en el nudo, dejá z vacío (se ubica sola en el punto de concurrencia).`; notes.push(EQ.warn); } } EQ.zc=zc; }
     A.forEach((p,k)=>{ p.vx=EQ.f[k][0]; p.vy=EQ.f[k][1]; p.N=EQ.f[k][2]; p.V=Math.hypot(p.vx,p.vy); });
     Tset=A.filter((p,k)=>EQ.T[k]>1e-6); if(!Tset.length) Tset=[A[0]];
     if(Nu<0) notes.push('N negativa: es compresión sobre la placa; el Capítulo 17 no la verifica.');
@@ -603,7 +616,19 @@ Tracción vertical aplicada = ${f2(NuV/U,2)} ${un}   ·   suma de tracciones seg
       const fz=A.map((p,k)=>f[k][2]), fx=A.map((p,k)=>f[k][0]), fy=A.map((p,k)=>f[k][1]);
       const mx=A.map((p,k)=>f[k][2]*dy[k]/1000), my=A.map((p,k)=>-f[k][2]*dx[k]/1000), mz=A.map((p,k)=>(f[k][1]*dx[k]-f[k][0]*dy[k])/1000);
     const LL=LOADS||[], lm=k=>LL.map(l=>l[k]/1000);
-    memo.unshift(['Equilibrio de la placa · reparto a las barras',`Cargas aplicadas (actúan juntas y se suman)
+    if(EQ.node){ const nd=EQ.node, Nax=A.map((p,k)=>EQ.T[k]), ee=A.map(p=>[-p.tx/p.k,-p.ty/p.k,1/p.k]);
+      const tt=(i)=>A.map((p,k)=>{ const v=Nax[k]*ee[k][i]/U; const q=+v.toFixed(2); return (k?(q<0?'− ':'+ '):(q<0?'− ':''))+f2(Math.abs(q),2); }).join(' ');
+      memo.unshift(['Equilibrio del nudo (reticulado)',`Barras unidas en un nudo: los ejes se cortan en (x ; y ; z) = (${f2(nd.x/10,1)} ; ${f2(nd.y/10,1)} ; ${f2(nd.z/10,1)}) cm. Todas las cargas se aplican en el nudo, así que las barras trabajan solo a esfuerzo axial.
+N_i: esfuerzo axial de la barra i (+ tracción, − compresión); e_i: eje unitario de la barra, hacia el nudo.
+${A.map((p,k)=>`   Barra ${p.i}: α_x = ${f2(p.ax,1)}°  α_y = ${f2(p.ay,1)}°   e = (${f2(Math.abs(ee[k][0])<5e-4?0:ee[k][0],3)} ; ${f2(Math.abs(ee[k][1])<5e-4?0:ee[k][1],3)} ; ${f2(ee[k][2],3)})`).join('\n')}
+
+ΣF_x = Σ N_i · e_x,i = ${tt(0)} = ${fF(F[0])} ${un}   (F_x = ${fF(F[0])})
+ΣF_y = Σ N_i · e_y,i = ${tt(1)} = ${fF(F[1])} ${un}   (F_y = ${fF(F[1])})
+ΣF_z = Σ N_i · e_z,i = ${tt(2)} = ${fF(F[2])} ${un}   (F_z = ${fF(F[2])})
+
+Barra | N_i [${un}] | Tracción [${un}] | Compresión [${un}]
+${A.map((p,k)=>`${p.i} | ${fF(Nax[k])} | ${Nax[k]>0?fF(Nax[k]):'—'} | ${Nax[k]<0?fF(-Nax[k]):'—'}`).join('\n')}${(Mo[0]||Mo[1])&&LL.some(l=>l.Mx||l.My)?'\nLos momentos M_x y M_y aplicados no los toma un nudo articulado: se reparten como en la placa rígida.':''}`]); }
+    else memo.unshift(['Equilibrio de la placa · reparto a las barras',`Cargas aplicadas (actúan juntas y se suman)
 Carga | F_x [${un}] | F_y [${un}] | F_z [${un}] | M_x [${un}·m] | M_y [${un}·m] | (x ; y ; z) [cm]
 ${LL.map(l=>`${l.name||'—'} | ${fF(l.Fx)} | ${fF(l.Fy)} | ${fF(l.Fz)} | ${fM(l.Mx/1000)} | ${fM(l.My/1000)} | (${f2(l.x/10,1)} ; ${f2(l.y/10,1)} ; ${f2(l.z/10,1)})`).join('\n')}
 
@@ -627,7 +652,7 @@ ${A.map((p,k)=>`   Barra ${p.i}:   F = (${fF(fx[k])} ; ${fF(fy[k])} ; ${fF(fz[k]
 ΣF_z = ${sm(fz,2)} = ${fF(sum(k=>fz[k]))} ${un}   (N_ua = ${fU(F[2])})
 ΣM_x = Σ F_z,i · y_i = ${sm(mx,3)} = ${fM(sum(k=>mx[k]))} ${un}·m   (M_x = ${fM(Mo[0]/1000)})
 ΣM_y = −Σ F_z,i · x_i = ${sm(my,3)} = ${fM(sum(k=>my[k]))} ${un}·m   (M_y = ${fM(Mo[1]/1000)})
-ΣM_z = Σ (F_y,i · x_i − F_x,i · y_i) = ${sm(mz,3)} = ${fM(sum(k=>mz[k]))} ${un}·m   (M_z = ${fM(Mo[2]/1000)})${EQ.gap?'\nLa diferencia de momento la toma el apoyo de la placa sobre el hormigón.':''}
+ΣM_z = Σ (F_y,i · x_i − F_x,i · y_i) = ${sm(mz,3)} = ${fM(sum(k=>mz[k]))} ${un}·m   (M_z = ${fM(Mo[2]/1000)})${EQ.zc!=null?'\nLos ejes de las barras se cortan a z = '+f2(EQ.zc/10,1)+' cm sobre la cara del hormigón.':''}${EQ.warn?'\n⚠ '+EQ.warn:''}${EQ.gap?'\nLa diferencia de momento la toma el apoyo de la placa sobre el hormigón.':''}
 
 Barra | Tracción según la barra [${un}] | Corte perpendicular a la barra [${un}]${EQ.off.length?' | Compresión ['+un+']':''}
 ${A.map((p,k)=>`${p.i} | ${EQ.off.includes(k)?'0':fU(p.N)} | ${fU(p.V)}${EQ.off.length?' | '+(EQ.off.includes(k)?fU(-EQ.T0[k])+' (la toma la placa)':'—'):''}`).join('\n')}`]); } }
@@ -648,7 +673,7 @@ ${inter.txt}   →   ${inter.ok?'verifica':'no verifica'}`]);
   memo.push(['17.9 · Detalles y límites',D.map(d=>`${d.art}  ${d.name}: ${d.val}   requisito ${d.req}   →   ${d.warn?'falta dato':d.ok?'cumple':'no cumple'}`).join('\n')]);
   const allOk=M.filter(m=>!m.na).every(m=>m.r<=1) && (!inter||inter.ok) && D.filter(d=>!d.warn).every(d=>d.ok) && !errs.length;
   { const rk=t=>{ const k=t.split(' ')[0]; return k==='Barras'?0:(k==='Cargas'||k==='Equilibrio')?1:k==='17.5.3'?2:3; }; memo.sort((a,b)=>rk(a[0])-rk(b[0])); }
-  return {EQ,loads:LOADS,A,Tg,M,D,memo,inter,zN,zV,allOk,errs,notes,U,un,Nu,Vres,Vx,Vy,xL,yL,BK,VB,inf,Lx,Ly,ha,hef,da,T,post,n,zL,NmaxI,VmaxI,mode:L.mode,color:L.color,incl,Lb,NuV,thDeg,Ase,futa,phi:{st:phiSt,ct:phiCT,po:phiPO,cv:phiCV,cp:phiCP}};
+  return {EQ,node:EQ&&EQ.node||null,loads:LOADS,A,Tg,M,D,memo,inter,zN,zV,allOk,errs,notes,U,un,Nu,Vres,Vx,Vy,xL,yL,BK,VB,inf,Lx,Ly,ha,hef,da,T,post,n,zL,NmaxI,VmaxI,mode:L.mode,color:L.color,incl,Lb,NuV,thDeg,Ase,futa,phi:{st:phiSt,ct:phiCT,po:phiPO,cv:phiCV,cp:phiCP}};
 }
 
 // ---------- equilibrio de la placa rígida ----------
@@ -656,8 +681,8 @@ function solve(Am,b){ const n=b.length, M=Am.map((r,i)=>r.concat([b[i]]));
   for(let c=0;c<n;c++){ let pv=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[pv][c])) pv=r; [M[c],M[pv]]=[M[pv],M[c]];
     const d=M[c][c]; if(Math.abs(d)<1e-300) continue; for(let r=0;r<n;r++){ if(r===c) continue; const f=M[r][c]/d; if(f) for(let k=c;k<=n;k++) M[r][k]-=f*M[c][k]; } }
   return M.map((r,i)=>Math.abs(r[i])<1e-300?0:r[n]/r[i]); }
-function plateEq(A,F,cx,cy,Mo){
-  const n=A.length, ks=0.01;
+function plateEq(A,F,cx,cy,Mo,ksIn){
+  const n=A.length, ks=ksIn==null?0.01:ksIn;
   const E=A.map(p=>[-p.tx/p.k,-p.ty/p.k,1/p.k]), Rr=A.map(p=>[p.x-cx,p.y-cy]);
   const Bm=k=>{ const [rx,ry]=Rr[k]; return [[1,0,0,0,0,-ry],[0,1,0,0,0,rx],[0,0,1,ry,-rx,0]]; };
   const Kb=(k,on)=>{ const e=E[k]; const K=[[0,0,0],[0,0,0],[0,0,0]]; for(let i=0;i<3;i++) for(let j=0;j<3;j++){ const ee=e[i]*e[j]; K[i][j]=(on?ee:0)+ks*((i===j?1:0)-ee); } return K; };
@@ -673,7 +698,7 @@ function plateEq(A,F,cx,cy,Mo){
     break; }
   const sF=[0,1,2].map(i=>f.reduce((a,fi)=>a+fi[i],0));
   const sM=[f.reduce((a,fi,k)=>a+Rr[k][1]*fi[2],0), f.reduce((a,fi,k)=>a-Rr[k][0]*fi[2],0), f.reduce((a,fi,k)=>a+Rr[k][0]*fi[1]-Rr[k][1]*fi[0],0)];
-  const sc=Math.max(1,Math.hypot(...Mo)), gap=[0,1,2].some(i=>Math.abs(sM[i]-Mo[i])>1e-3*sc);
+  const sc=Math.max(Math.hypot(...Mo),Math.hypot(...F)*100,1), gap=[0,1,2].some(i=>Math.abs(sM[i]-Mo[i])>1e-3*sc);
   return {f,T,T0,F,M:Mo,sF,sM,gap,ks,off:T.map((t,k)=>t<-1e-9*Math.max(1,Math.hypot(...F))?k:-1).filter(k=>k>=0)};
 }
 
@@ -764,7 +789,7 @@ function draw(R){
   // anclajes
   const w=Math.max(5,Math.min(12,R.da/1.5));
   A.forEach(p=>{
-    tr.push({type:'scatter3d',mode:'lines',x:[p.x-stick*p.tx,p.bx],y:[p.y-stick*p.ty,p.by],z:[stick,-p.hv],line:{color:steel,width:w},hovertemplate:`Anclaje ${p.i}<br>x = ${f2(p.x,0)} · y = ${f2(p.y,0)} mm<br>N = ${f2(p.N/R.U,2)} ${R.un} · V = ${f2(p.V/R.U,2)} ${R.un}<extra></extra>`,showlegend:false});
+    tr.push({type:'scatter3d',mode:'lines',x:[R.node?p.x-p.tx*R.node.z:p.x-stick*p.tx,p.bx],y:[R.node?p.y-p.ty*R.node.z:p.y-stick*p.ty,p.by],z:[R.node?R.node.z:stick,-p.hv],line:{color:steel,width:w},hovertemplate:`Anclaje ${p.i}<br>x = ${f2(p.x,0)} · y = ${f2(p.y,0)} mm<br>N = ${f2(p.N/R.U,2)} ${R.un} · V = ${f2(p.V/R.U,2)} ${R.un}<extra></extra>`,showlegend:false});
     if(R.T==='cabeza'){ const r=Math.max(R.da*1.2,Math.sqrt(Math.max(1,v('Abrg'))+Math.PI/4*R.da*R.da)/1.7);
       [[r,0,0],[0,r,0]].forEach(q=>{ const a=rot(p,q); tr.push({type:'scatter3d',mode:'lines',x:[p.bx-a[0],p.bx+a[0]],y:[p.by-a[1],p.by+a[1]],z:[-p.hv-a[2],-p.hv+a[2]],line:{color:steel,width:w+3},hoverinfo:'skip',showlegend:false}); }); }
     if(R.T==='gancho'){ const eh=Math.min(v('eh'),4.5*R.da)||3*R.da; const cx=R.A.reduce((a,q)=>a+q.x,0)/R.n, cy=R.A.reduce((a,q)=>a+q.y,0)/R.n;
@@ -801,7 +826,7 @@ function draw(R){
 
 // ---------- salida ----------
 const PAL=['#2E5B87','#5E3FA0','#2F7A4E','#A8741F','#B0118A','#1E7A8C','#6B5B2E','#7A4FA0'];
-let cases=[{name:'Izaje',N:0.8,Ns:0,Vx:0,Vy:0,Mx:0,My:0,x:'',y:'',z:0,color:PAL[0]}];
+let cases=[{name:'Izaje',N:0.8,Ns:0,Vx:0,Vy:0,Mx:0,My:0,x:'',y:'',z:'',color:PAL[0]}];
 let aLoads=[{N:0.4,Vx:0,Vy:0},{N:0.4,Vx:0,Vy:0}];
 let showSel='auto', lastN=0;
 let angs=[];
@@ -819,9 +844,9 @@ const esc=t=>String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g
 function renderCaseRows(){
   const tb=$('cases').tBodies[0];
   tb.innerHTML=cases.map((c,k)=>`<tr><td><input class="sw" type="color" data-k="${k}" data-f="color" value="${esc(c.color||PAL[0])}" aria-label="Color de la carga"></td><td><input data-k="${k}" data-f="name" value="${esc(c.name)}" aria-label="Nombre de la carga"></td>`+
-    ['Vx','Vy','N','Mx','My','Ns','x','y','z'].map(f=>`<td${f==='Ns'?' data-show="adhesivo"':''}><input type="number" step="${'xyz'.includes(f)?0.5:0.1}" data-k="${k}" data-f="${f}" value="${(f==='x'||f==='y')&&(c[f]===''||c[f]==null)?'':(+c[f]||0)}"${f==='x'||f==='y'?' placeholder="centro"':''} aria-label="${f}"></td>`).join('')+
+    ['Vx','Vy','N','Mx','My','Ns','x','y','z'].map(f=>`<td${f==='Ns'?' data-show="adhesivo"':''}><input type="number" step="${'xyz'.includes(f)?0.5:0.1}" data-k="${k}" data-f="${f}"${'xyz'.includes(f)&&$('nodo').checked?' disabled title="Con barras unidas en un nudo, la carga se aplica en el nudo"':''} value="${'xyz'.includes(f)&&(c[f]===''||c[f]==null)?'':(+c[f]||0)}"${f==='x'||f==='y'?' placeholder="centro"':f==='z'?' placeholder="auto"':''} aria-label="${f}"></td>`).join('')+
     `<td>${cases.length>1?`<button type="button" class="x" data-del="${k}" aria-label="Quitar carga">×</button>`:''}</td></tr>`).join('');
-  tb.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{ const k=+el.dataset.k, f=el.dataset.f; cases[k][f]=(f==='name'||f==='color')?el.value:((f==='x'||f==='y')&&el.value.trim()==='')?'':(parseFloat(el.value)||0); schedule(); }));
+  tb.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{ const k=+el.dataset.k, f=el.dataset.f; cases[k][f]=(f==='name'||f==='color')?el.value:('xyz'.includes(f)&&el.value.trim()==='')?'':(parseFloat(el.value)||0); schedule(); }));
   tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ cases.splice(+b.dataset.del,1); showSel='auto'; renderCaseRows(); render(); });
   syncVis();
 }
@@ -831,7 +856,7 @@ function renderALoadRows(){
   tb.innerHTML=A.map((p,k)=>`<tr><td>${k+1}</td><td>${f2(p.x/10,1)}</td><td>${f2(p.y/10,1)}</td>`+['N','Vx','Vy'].map(f=>`<td><input type="number" step="0.1" data-k="${k}" data-f="${f}" value="${+aLoads[k][f]||0}" aria-label="${f} del anclaje ${k+1}"></td>`).join('')+'</tr>').join('');
   tb.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{ aLoads[+el.dataset.k][el.dataset.f]=parseFloat(el.value)||0; schedule(); }));
 }
-$('addCase').onclick=()=>{ const last=cases[cases.length-1]; cases.push({name:'Carga '+(cases.length+1),N:0,Ns:0,Vx:0,Vy:0,Mx:0,My:0,x:last?last.x:'',y:last?last.y:'',z:last?(+last.z||0):0,color:PAL[cases.length%PAL.length]}); renderCaseRows(); render(); };
+$('addCase').onclick=()=>{ const last=cases[cases.length-1]; cases.push({name:'Carga '+(cases.length+1),N:0,Ns:0,Vx:0,Vy:0,Mx:0,My:0,x:last?last.x:'',y:last?last.y:'',z:last?last.z:'',color:PAL[cases.length%PAL.length]}); renderCaseRows(); render(); };
 $('autoG').addEventListener('change',()=>{ applyAuto(); renderALoadRows(); if($('angInd').checked) renderAngRows(); });
 $('failBtn').onclick=()=>{ SHOWFAIL=!SHOWFAIL; $('failBtn').setAttribute('aria-pressed',String(SHOWFAIL)); render(); };
 $('showCase').addEventListener('change',()=>{ showSel=$('showCase').value; render(); });
@@ -874,6 +899,10 @@ function render(){
       +(gov?` <small>${RR.length>1?'Caso mostrado: '+nm(si)+' · ':''}${isNaN(gov.r)?'No cumple':'Gobierna'}: ${gov.name.replace(/<[^>]+>/g,'')}${isNaN(gov.r)?'':' ('+f2(gov.r,2)+')'}</small>`:''); }
   const kv=[['N<sub>ua</sub> grupo'+(R.incl?' (según barras)':''),f2(R.Nu/U,2)+' '+u],['N<sub>ua,i</sub> máx.',f2(R.NmaxI/U,2)+' '+u],['V<sub>ua</sub>',f2(R.Vres/U,2)+' '+u],['Anclajes traccionados',R.Tg.length+' de '+R.n],
     ['Tracción: mayor relación',R.Nu>0?f2(R.zN,3):'—'],['Corte: mayor relación',R.Vres>0?f2(R.zV,3):'—'],['Interacción (17.8)',R.inter?f2(R.inter.val,3):'—']].concat(R.incl?[['Inclinación θ máx.',f2(R.thDeg,1)+'°'],['h<sub>ef</sub> vertical mín.',f2(R.hef,0)+' mm']]:[]);
+  { const off=R.EQ?R.EQ.off:[]; const h=$('barSum').tHead.rows[0].cells;
+    h[1].innerHTML='Tracción'+(R.incl?' según la barra':'')+' ['+u+']'; h[2].innerHTML='Compresión ['+u+']'; h[3].innerHTML='Corte'+(R.incl?' ⊥ barra':'')+' ['+u+']';
+    $('barSum').tBodies[0].innerHTML=R.A.map((p,k)=>{ const c=off.includes(k); return `<tr><td>${p.i}</td><td class="num">${c?'—':f2(p.N/U,2)}</td><td class="num">${c?f2(-R.EQ.T0[k]/U,2):'—'}</td><td class="num">${f2(p.V/U,2)}</td></tr>`; }).join('');
+    $('barSumHint').textContent= R.mode==='anclaje' ? 'Cargas indicadas por barra.' : R.node ? 'Del equilibrio del nudo (reticulado): esfuerzos axiales de cada barra.' : 'Del equilibrio de la placa rígida.'+(off.length?' La compresión de las barras comprimidas la toma la placa apoyada en el hormigón.':''); }
   $('kv').innerHTML=kv.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
   const tb=$('modes').tBodies[0];
   tb.innerHTML=R.M.map(m=>m.na?`<tr><td>${m.art}</td><td class="t">${m.name}<br><span class="hint">${m.why}</span></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td>${pill(0,true,m.warn)}</td></tr>`
@@ -903,6 +932,7 @@ $('infAll').addEventListener('change',()=>{ const c=$('infAll').checked; ['infX1
 let tmr=null; const schedule=()=>{ clearTimeout(tmr); tmr=setTimeout(render,200); };
 document.querySelectorAll('aside input, aside select').forEach(el=>{ el.addEventListener('input',schedule); el.addEventListener('change',schedule); });
 $('loadMode').addEventListener('change',()=>{ showSel='auto'; renderALoadRows(); });
+$('nodo').addEventListener('change',()=>{ renderCaseRows(); render(); });
 $('angInd').addEventListener('change',()=>{ if($('angInd').checked){ angs=[]; renderAngRows(); } });
 ['n1','n2','s1','s2','xg','yg'].forEach(k=>$(k).addEventListener('input',()=>{ if($('angInd').checked) renderAngRows(); }));
 
@@ -950,7 +980,7 @@ function schem(cv,R,view,pal,W,H,k){ k=k||W/500;
   const xs=A.flatMap(p=>[p.x,p.bx]), ys=A.flatMap(p=>[p.y,p.by]);
   const X0=inf.x1?Math.min(...xs)-ext:0, X1=inf.x2?Math.max(...xs)+ext:R.Lx, Y0=inf.y1?Math.min(...ys)-ext:0, Y1=inf.y2?Math.max(...ys)+ext:R.Ly;
   const Z0=inf.h?-(Math.max(...A.map(p=>p.hv))+ext*0.4):-R.ha, stick=Math.max(40,0.22*hef);
-  const zTop=Math.max(stick*1.6,(R.zL||0)*1.12+stick*0.4);
+  const zTop=Math.max(stick*1.6,(R.zL||0)*1.12+stick*0.4,R.node?R.node.z*1.15+stick*0.4:0);
   const pr=q=>view==='xy'?[q[0],q[1]]:view==='xz'?[q[0],q[2]]:[-q[1],q[2]];   // yz mirando hacia −X: +Y a la izquierda
   let u0,u1,v0,v1; if(view==='xy'){u0=X0;u1=X1;v0=Y0;v1=Y1;} else if(view==='xz'){u0=X0;u1=X1;v0=Z0;v1=zTop;} else {u0=-Y1;u1=-Y0;v0=Z0;v1=zTop;}
   const m=Math.round(Math.min(W,H)*0.17), sc=Math.min((W-2*m)/((u1-u0)||1),(H-2*m)/((v1-v0)||1));
@@ -973,7 +1003,7 @@ function schem(cv,R,view,pal,W,H,k){ k=k||W/500;
   const w=Math.max(2.2,Math.min(5,R.da/4)); const cx=A.reduce((a,q)=>a+q.x,0)/A.length, cy=A.reduce((a,q)=>a+q.y,0)/A.length;
   const labs=[];
   A.forEach(p=>{
-    const top=[p.x-stick*p.tx,p.y-stick*p.ty,stick], ent=[p.x,p.y,0], tip=[p.bx,p.by,-p.hv];
+    const top=R.node?[p.x-p.tx*R.node.z,p.y-p.ty*R.node.z,R.node.z]:[p.x-stick*p.tx,p.y-stick*p.ty,stick], ent=[p.x,p.y,0], tip=[p.bx,p.by,-p.hv];
     if(view==='xy'){ line(P(ent),P(tip),pal.steel,w,[7,5]); ctx.fillStyle=pal.steel; ctx.beginPath(); ctx.arc(...P(ent),w*1.6,0,7); ctx.fill(); }
     else line(P(top),P(tip),pal.steel,w);
     if(R.T==='gancho'){ const eh=Math.min(v('eh'),4.5*R.da)||3*R.da; const [hx,hy]=hookVec(p,A);
@@ -1098,7 +1128,7 @@ async function buildDocx(){
   if(list[0].mode==='anclaje'){ b.push(Wp('Cargas indicadas para cada barra: N<sub>ua,i</sub> actúa según el eje de la barra y pasa por su baricentro (N positiva = tracción). V adicional: corte horizontal que además recibe la barra.'));
     b.push(Wtbl([['#','N<sub>ua,i</sub> según la barra ['+un+']','V<sub>ua,x,i</sub> adicional ['+un+']','V<sub>ua,y,i</sub> adicional ['+un+']']].concat(R0.A.map(p=>[p.i,f2(p.Na/U,2),f2(p.ex/U,2),f2(p.ey/U,2)])))); }
   else { b.push(Wp('Cargas aplicadas sobre la placa; actúan todas juntas y se suman. (x ; y ; z): punto de aplicación, con z la altura sobre la cara del hormigón. F<sub>z</sub> positiva = hacia arriba (tracción).'));
-    b.push(Wtbl([['Carga','F<sub>x</sub> ['+un+']','F<sub>y</sub> ['+un+']','F<sub>z</sub> ['+un+']','M<sub>x</sub> ['+un+'·m]','M<sub>y</sub> ['+un+'·m]','x [cm]','y [cm]','z [cm]']].concat((list[0].loads||[]).map(c=>[c.name||'',f2(+c.Vx||0,2),f2(+c.Vy||0,2),f2(+c.N||0,2),f2(+c.Mx||0,2),f2(+c.My||0,2),(c.x===''||c.x==null)?'centro':f2(+c.x,0),(c.y===''||c.y==null)?'centro':f2(+c.y,0),f2(+c.z||0,0)])))); }
+    b.push(Wtbl([['Carga','F<sub>x</sub> ['+un+']','F<sub>y</sub> ['+un+']','F<sub>z</sub> ['+un+']','M<sub>x</sub> ['+un+'·m]','M<sub>y</sub> ['+un+'·m]','x [cm]','y [cm]','z [cm]']].concat((list[0].loads||[]).map(c=>[c.name||'',f2(+c.Vx||0,2),f2(+c.Vy||0,2),f2(+c.N||0,2),f2(+c.Mx||0,2),f2(+c.My||0,2),(c.x===''||c.x==null)?'centro':f2(+c.x,0),(c.y===''||c.y==null)?'centro':f2(+c.y,0),(c.z===''||c.z==null)?'auto':f2(+c.z,1)])))); }
   b.push(Wp('1.4 Dibujos','Heading2'));
   try{ const root=document.documentElement, prev=root.getAttribute('data-theme'); root.setAttribute('data-theme','light'); draw(R0);
     const gd=$('p3d'), sc0=gd.layout.scene||{};
@@ -1218,7 +1248,7 @@ $('pFile').addEventListener('change',()=>{ const fl=$('pFile').files[0]; if(!fl)
   rd.onerror=()=>msg('No se pudo leer el archivo.'); rd.readAsText(fl); });
 $('pClear').onclick=()=>only('pClearPanel');
 $('pClearCancel').onclick=()=>only(null);
-$('pClearOk').onclick=()=>{ setState({units:'cm',Lx:100,Ly:100,ha:40,fc:30,lw:'1',crk:'0',supp:'0',edgeR:'1.0',cover:20,agg:19,tipo:'cabeza',duct:'1',vast:'rosca',da:16,nt:0.5,fya:250,futa:400,hef:200,angx:0,angy:0,angInd:false,hookDir:'in',angs:[],Abrg:300,eh:60,torq:'0',cat:'1',kc:10,Npt:0,tcr:1.4,tuncr:4.5,weld:'0',grout:'0',n1:1,s1:0,n2:1,s2:0,xg:50,yg:50,unit:'t',vcase:'12',loadMode:'placa',NusA:0,cases:[{name:'Caso 1',N:0,Ns:0,Vx:0,Vy:0,x:'',y:'',color:PAL[0]}],aLoads:[{N:0,Vx:0,Vy:0}],autoG:true,infAll:false,infX1:false,infX2:false,infY1:false,infY2:false,infH:false}); setName(''); only(null); msg('Datos limpiados: cargá el hormigón, el anclaje y las solicitaciones.'); };
+$('pClearOk').onclick=()=>{ setState({units:'cm',Lx:100,Ly:100,ha:40,fc:30,lw:'1',crk:'0',supp:'0',edgeR:'1.0',cover:20,agg:19,tipo:'cabeza',duct:'1',vast:'rosca',da:16,nt:0.5,fya:250,futa:400,hef:200,angx:0,angy:0,angInd:false,hookDir:'in',angs:[],Abrg:300,eh:60,torq:'0',cat:'1',kc:10,Npt:0,tcr:1.4,tuncr:4.5,weld:'0',grout:'0',n1:1,s1:0,n2:1,s2:0,xg:50,yg:50,unit:'t',vcase:'12',loadMode:'placa',NusA:0,cases:[{name:'Caso 1',N:0,Ns:0,Vx:0,Vy:0,x:'',y:'',color:PAL[0]}],aLoads:[{N:0,Vx:0,Vy:0}],autoG:true,nodo:false,infAll:false,infX1:false,infX2:false,infY1:false,infY2:false,infH:false}); setName(''); only(null); msg('Datos limpiados: cargá el hormigón, el anclaje y las solicitaciones.'); };
 new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render()); }catch(e){}
 renderCaseRows(); renderALoadRows(); render();

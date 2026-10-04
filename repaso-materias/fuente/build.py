@@ -8,6 +8,20 @@ VIEW = os.path.join(os.path.dirname(HERE), "Repaso de materias.html")
 
 src = open(os.path.join(HERE, "index.html"), encoding="utf-8").read()
 
+
+def nbsp_miles(txt):
+    """Separador de miles sin corte de línea: "4 700" pasa a "4\u00a0700".
+    Solo toca el texto: no entra en etiquetas, MathML, script ni style."""
+    prot = re.compile(r"(<math\b.*?</math>|<script\b.*?</script>|<style\b.*?</style>|<[^>]+>)", re.S)
+    num = re.compile(r"(?<![\d,.])\d{1,3}(?:[ \u202f]\d{3})+(?!\d)")
+    parts = prot.split(txt)
+    for k in range(0, len(parts), 2):
+        parts[k] = num.sub(lambda m: re.sub(r"[ \u202f]", "\u00a0", m.group(0)), parts[k])
+    return "".join(parts)
+
+
+src = nbsp_miles(src)
+
 def embed(m):
     p = os.path.join(HERE, m.group(1))
     mime = "image/jpeg" if p.lower().endswith((".jpg", ".jpeg")) else "image/png"

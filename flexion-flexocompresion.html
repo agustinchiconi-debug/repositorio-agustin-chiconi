@@ -658,25 +658,27 @@ function render(){
     if(!S.length) return null; const smin=Math.min(...S.map(q=>q.s)), tr=S.filter(q=>q.s>smin+1e-6); if(!tr.length) return null;
     const d=Math.max(...tr.map(q=>q.s)), Ast=tr.reduce((a,q)=>a+q.A,0), Ase=tr.reduce((a,q)=>a+q.A*q.s/d,0);
     const rmin=Math.max(0.25*sfc/m.fyM,1.4/m.fyM), rmax=ic?Math.min((m.fcM+10)/(6*m.fyM),0.025):0.85*m.b1*(m.fcM/m.fyM)*0.003/(0.006+ety);
-    return {d,Ast,Ase,rt:Ast/(bw*d),re:Ase/(bw*d),rmin,rmax}; };
+    const db=tr.reduce((a,q)=>a+q.A*q.s,0)/Ast; const rt=Ast/(bw*db), re=Ase/(bw*d);
+    return {d,db,Ast,Ase,rt,re,rr:ic?re:rt,rmin,rmax}; };
   const qp=rq(1), qn=rq(-1), f=(q,g)=>q?g(q):'—';
-  const vr=q=>{ if(!esViga) return '<span class="hint">no rige (columna)</span>'; const ok=q.re>=q.rmin&&q.re<=q.rmax; return `<span class="pill ${ok?'ok':'bad'}">${q.re<q.rmin?'No: ρe < ρmín':q.re>q.rmax?'No: ρe > ρmáx':'Cumple'}</span>`; };
+  const vr=q=>{ if(!esViga) return '<span class="hint">no rige (columna)</span>'; const ok=q.rr>=q.rmin&&q.rr<=q.rmax; return `<span class="pill ${ok?'ok':'bad'}">${q.rr<q.rmin?'No: ρ < ρmín':q.rr>q.rmax?'No: ρ > ρmáx':'Cumple'}</span>`; };
   $('rhoFc').tBodies[0].innerHTML=[
     ['ρ total = As/Ag (toda la armadura)',()=>fmt(rho*100,3)+' %'],
-    ['d [cm]',q=>fmt(q.d,1)],
+    ['d capa más traccionada [cm]',q=>fmt(q.d,1)],
+    ['d̄ baricentro de As,t [cm]',q=>fmt(q.db,1)],
     ['As traccionada [cm²]',q=>fmt(q.Ast,2)],
-    ['ρ traccionada = As,t/(bw·d)',q=>fmt(q.rt*100,3)+' %'],
+    [(ic?'':'<b>')+'ρ traccionada = As,t/(bw·d̄)'+(ic?'':' ← C201</b>'),q=>(ic?'':'<b>')+fmt(q.rt*100,3)+' %'+(ic?'':'</b>')],
     ['As,e efectiva = Σ As,i·di/d [cm²]',q=>fmt(q.Ase,2)],
-    ['<b>ρ efectiva = As,e/(bw·d)</b>',q=>'<b>'+fmt(q.re*100,3)+' %</b>'],
+    [(ic?'<b>':'')+'ρ efectiva = As,e/(bw·d)'+(ic?' ← IC103</b>':''),q=>(ic?'<b>':'')+fmt(q.re*100,3)+' %'+(ic?'</b>':'')],
     ['ρmín viga',q=>fmt(q.rmin*100,3)+' %'],
     ['ρmáx viga',q=>fmt(q.rmax*100,3)+' %'],
     ['¿Cuantía de viga?',vr]
-  ].map(([t,g],k)=>`<tr${k===8?' class="sep"':''}><td>${t}</td><td class="num">${k===0?g():f(qp,g)}</td><td class="num">${k===0?g():f(qn,g)}</td></tr>`).join('');
-  $('rhoFcRef').innerHTML=`ρ total: As/Ag, la que usan los requisitos de columna. ρ traccionada: barras traccionadas (todas menos la capa más cercana a la cara comprimida) sobre bw·d. ρ efectiva: cada barra traccionada pesada por su brazo di/d, la que se compara con ρmín y ρmáx de viga. bw = ${fmt(bw,1)} cm. ρmín = máx(0,25√f’c/fy ; 1,4/fy) ${ic?'[2.2-14]':'[9.6.1.2]'}; ρmáx = ${ic?'mín((f’c+10)/(6fy) ; 0,025) [2.2-11]':'0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1]'}.`;
+  ].map(([t,g],k)=>`<tr${k===9?' class="sep"':''}><td>${t}</td><td class="num">${k===0?g():f(qp,g)}</td><td class="num">${k===0?g():f(qn,g)}</td></tr>`).join('');
+  $('rhoFcRef').innerHTML=`ρ total: As/Ag, la que usan los requisitos de columna. Armadura traccionada As,t: todas las barras menos la capa más cercana a la cara comprimida. ${ic?'IC103 art. 2.2.5(a): se usa ρ efectiva = As,e/(bw·d), con cada barra pesada por su brazo di/d.':'C201-25 art. 9.6.1.2: se usa ρ = As,t/(bw·d̄), con d̄ medido hasta el baricentro de la armadura traccionada (definición de d).'} Es la que se compara con ρmín y ρmáx de viga. bw = ${fmt(bw,1)} cm. ρmín = máx(0,25√f’c/fy ; 1,4/fy) ${ic?'[2.2-14]':'[9.6.1.2]'}; ρmáx = ${ic?'mín((f’c+10)/(6fy) ; 0,025) [2.2-11]':'0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1]'}.`;
   if(esViga){
-    const qs=[qp,qn].filter(Boolean), okv=qs.every(q=>q.re>=q.rmin), okx=qs.every(q=>q.re<=q.rmax);
-    ck.push([okv?'ok':'bad',`ρ efectiva ≥ ρmín de viga en ambas caras (${ic?'IC103 [2.2-14]':'C201 art. 9.6.1.2'})`]);
-    ck.push([okx?'ok':'warn',`ρ efectiva ≤ ρmáx de viga (${ic?'IC103 [2.2-11]':'C201 art. 9.3.3.1'})`]);
+    const qs=[qp,qn].filter(Boolean), okv=qs.every(q=>q.rr>=q.rmin), okx=qs.every(q=>q.rr<=q.rmax);
+    ck.push([okv?'ok':'bad',`${ic?'ρ efectiva As,e/(bw·d)':'ρ = As,t/(bw·d̄)'} ≥ ρmín de viga en ambas caras (${ic?'IC103 [2.2-14]':'C201 art. 9.6.1.2'})`]);
+    ck.push([okx?'ok':'warn',`${ic?'ρ efectiva':'ρ = As,t/(bw·d̄)'} ≤ ρmáx de viga (${ic?'IC103 [2.2-11]':'C201 art. 9.3.3.1'})`]);
   } else {
   ck.push([rho>=rmin?'ok':'warn',`Cuantía de columna As/Ag ≥ ${fmt(rmin*100,1)} % (${ic?'IC103 art. 2.3.6':'C201 art. 10.6.1.1'})`]);
   ck.push([rho<=rmax?'ok':'bad',`Cuantía de columna As/Ag ≤ ${fmt(rmax*100,2)} %`]);
@@ -925,7 +927,7 @@ function drawMphi(m){
     // como el Excel: la capa más cercana a la cara comprimida es A's; el resto es armadura traccionada
     const smin=Math.min(...S.bars.map(q=>q.s)); const cp=S.bars.filter(q=>q.s<=smin+1e-6), tr=S.bars.filter(q=>q.s>smin+1e-6); if(!tr.length) return null;
     const d=Math.max(...tr.map(q=>q.s)), Ase=tr.reduce((a,q)=>a+q.A*q.s/d,0), Ast=tr.reduce((a,q)=>a+q.A,0), Asc=cp.reduce((a,q)=>a+q.A,0);
-    const rho=Ase/(bw*d), et=0.003*(d/c-1);
+    const db=tr.reduce((a,q)=>a+q.A*q.s,0)/Ast; const rho=reg==='IC103'?Ase/(bw*d):Ast/(bw*db), et=0.003*(d/c-1);
     // ¿el ala queda del lado traccionado? (T/L flexionando en x)
     const alaTracc = m.tipo!=='R' && mfAx==='x' && ((m.ala==='sup')===(sgn<0));
     let rmin, rmax, fmin, fmax, McrIC=null, rsimp=null, fsimp='';
@@ -942,20 +944,20 @@ function drawMphi(m){
       rmin=Math.max(0.25*sfc/fyM,1.4/fyM); fmin='máx(0,25√f\'c/fy ; 1,4/fy) [9.6.1.2]';
       rmax=0.85*m.b1*(m.fcM/fyM)*0.003/(0.003+ety+0.003); fmax='0,85·β1·(f\'c/fy)·εcu/(εcu+εty+0,003) [9.3.3.1]';
     }
-    return {d,Ase,Ast,Asc,rho,rmin,rmax,fmin,fmax,et,McrIC,rsimp,fsimp,mcr:McrIC!=null&&Math.abs(B.u.M)*100>=1.5*McrIC}; };
+    return {d,db,Ase,Ast,Asc,rho,rmin,rmax,fmin,fmax,et,McrIC,rsimp,fsimp,mcr:McrIC!=null&&Math.abs(B.u.M)*100>=1.5*McrIC}; };
   const qp=rq(Bp,1), qn=rq(Bn,-1);
   const pill=(ok,t)=>`<span class="pill ${ok?'ok':'bad'}">${t??(ok?'Cumple':'No cumple')}</span>`;
   const rr=(t,f,cls='')=>`<tr class="${cls}"><td>${t}</td><td class="num">${qp?f(qp,Bp):'—'}</td><td class="num">${qn?f(qn,Bn):'—'}</td></tr>`;
   const rows=[
-    rr('As,e [cm²]',q=>fmt(q.Ase,2)),
-    rr('ρ = As,e/(bw·d)',q=>'<b>'+fmt(q.rho*100,3)+' %</b>'),
+    ...(reg==='IC103'?[rr('As,e = Σ As,i·di/d [cm²]',q=>fmt(q.Ase,2)),rr('d capa más traccionada [cm]',q=>fmt(q.d,1)),rr('<b>ρ = As,e/(bw·d)</b>',q=>'<b>'+fmt(q.rho*100,3)+' %</b>')]
+      :[rr('As,t traccionada [cm²]',q=>fmt(q.Ast,2)),rr('d̄ baricentro de As,t [cm]',q=>fmt(q.db,1)),rr('<b>ρ = As,t/(bw·d̄)</b>',q=>'<b>'+fmt(q.rho*100,3)+' %</b>')]),
     rr('ρmín',q=>fmt(q.rmin*100,3)+' %'),
     rr('ρmáx',q=>fmt(q.rmax*100,3)+' %'),
     rr('¿Verifica?',q=>pill(q.rho>=q.rmin&&q.rho<=q.rmax, q.rho<q.rmin?'No: ρ < ρmín':q.rho>q.rmax?'No: ρ > ρmáx':'Verifica'),'sep'),
   ];
   $('rhoc').tBodies[0].innerHTML=rows.join('');
   const q0=qp||qn;
-  $('rhoRef').innerHTML = q0 ? (reg==='IC103' ? `ρmín: As,e tal que Mn = 1,5·Mcr [2.2-12], con Mcr = 0,6√f’c·Ig/yt de la sección bruta [2.2-13] (M+: ${qp?fmt(qp.McrIC/100,2):'—'} tm; M−: ${qn?fmt(qn.McrIC/100,2):'—'} tm); Mn por análisis seccional. ρmáx = mín((f’c+10)/(6fy) ; 0,025) [2.2-11].` : `ρmín = máx(0,25√f’c/fy ; 1,4/fy) [9.6.1.2]. ρmáx = 0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1].`) + ` bw = ${fmt(bw,1)} cm.` + (reg==='C201'?' El CIRSOC 201-25 no fija ρmáx explícita: se exige εt ≥ εty+0,003; la ρmáx mostrada es la equivalente para una capa.':' ρ con área efectiva según art. 2.2.5(a). A’s = capa más cercana a la cara comprimida; el resto se toma como traccionado (igual que el Excel de flexión).') : '';
+  $('rhoRef').innerHTML = q0 ? (reg==='IC103' ? `ρmín: As,e tal que Mn = 1,5·Mcr [2.2-12], con Mcr = 0,6√f’c·Ig/yt de la sección bruta [2.2-13] (M+: ${qp?fmt(qp.McrIC/100,2):'—'} tm; M−: ${qn?fmt(qn.McrIC/100,2):'—'} tm); Mn por análisis seccional. ρmáx = mín((f’c+10)/(6fy) ; 0,025) [2.2-11].` : `ρmín = máx(0,25√f’c/fy ; 1,4/fy) [9.6.1.2]. ρmáx = 0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1].`) + ` bw = ${fmt(bw,1)} cm.` + (reg==='C201'?' ρ = As,t/(bw·d̄) con As,t = armadura traccionada y d̄ hasta su baricentro (art. 9.6.1.2 y definición de d). El CIRSOC 201-25 no fija ρmáx explícita: se exige εt ≥ εty+0,003; la ρmáx mostrada es la equivalente para una capa.':' ρ con área efectiva según art. 2.2.5(a). A’s = capa más cercana a la cara comprimida; el resto se toma como traccionado (igual que el Excel de flexión).') : '';
   $('mft').tBodies[0].innerHTML=[
     row('ELU1 · Fisuración (Mcr, φcr)',fmt(Math.abs(P1.cr.M),3),e(P1.cr.phi),fmt(Math.abs(N1.cr.M),3),e(N1.cr.phi)),
     row('ELU2 · Primera fluencia (My, φy)',P1.y?fmt(Math.abs(P1.y.M),3):'no fluye',P1.y?e(P1.y.phi):'—',N1.y?fmt(Math.abs(N1.y.M),3):'no fluye',N1.y?e(N1.y.phi):'—'),

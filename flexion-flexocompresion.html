@@ -862,7 +862,8 @@ function mphiBranch(m,th,opt){
   const yt=tb-S.tmin, Mp=(S.fr+P/At)*It/yt;
   out.cr={M:(Mp+P*tb)/100, phi:Mp/(S.Ec*It)};
   // ELU2: primera fluencia de la capa más traccionada, parábola, sin tracción del H°
-  { let lo=1e-6, hi=dt*(1-1e-9), ok=true;
+  { // c hasta el valor en que la fibra comprimida llega a εcu: más allá el hormigón (parábola) se anula y el equilibrio deja de ser monótono
+    let lo=1e-6, hi=Math.min(dt*(1-1e-9), opt.ecu*dt/(opt.ecu+m.fy/m.Es)), ok=true;
     const g=c=>{const phi=m.fy/m.Es/(dt-c); return fibFM(m,o,phi*c,phi,false,true).F-P;};
     if(g(lo)>0||g(hi)<0) ok=false;
     if(ok){ for(let k=0;k<80;k++){const mid=(lo+hi)/2; if(g(mid)<0) lo=mid; else hi=mid;} }
@@ -890,7 +891,7 @@ function mphiBranch(m,th,opt){
     const r=fibFM(m,o,ec,ec/c,true,cracked); pts.push([ec/c, r.M/100]);
   }
   out.fib=pts;
-  if(out.y&&out.u){ const phiY2=out.y.phi*out.u.M/out.y.M; out.id={phiY2, mu:out.u.phi/phiY2, EIe:out.u.M*100/phiY2}; out.id.Ie=out.id.EIe/S.Ec; out.id.ratio=out.id.Ie/S.Ig; }
+  if(out.y&&out.u){ const phiY2=Math.abs(out.y.phi*out.u.M/out.y.M); out.id={phiY2, mu:Math.abs(out.u.phi)/phiY2, EIe:Math.abs(out.u.M)*100/phiY2}; out.id.Ie=out.id.EIe/S.Ec; out.id.ratio=out.id.Ie/S.Ig; }
   out.Ig=S.Ig; out.Ec=S.Ec; out.fr=S.fr;
   return out;
 }

@@ -312,6 +312,18 @@ td.num,th.num{text-align:right}
             <li><a href="#u3-16">Apéndices A–H</a></li>
           </ul>
         </li>
+        <li class="unit"><a href="#u4"><span class="n">U4</span> · Losas</a>
+          <ul>
+            <li><a href="#u4-1">4.1 Tipos de losas</a></li>
+            <li><a href="#u4-2">4.2 Métodos de análisis</a></li>
+            <li><a href="#u4-3">4.3 Teoría de placas</a></li>
+            <li><a href="#u4-4">4.4 Aplicación reglamentaria</a></li>
+            <li><a href="#u4-4-5">Rigidez y flechas</a></li>
+            <li><a href="#u4-4-6">Losas cruzadas</a></li>
+            <li><a href="#u4-5">4.5 Cuantías mínimas</a></li>
+            <li><a href="#u4-6">Apéndices A–E</a></li>
+          </ul>
+        </li>
       </ul>
     </nav>
   </aside>
@@ -2408,6 +2420,596 @@ td.num,th.num{text-align:right}
         </ul>
       </div>
     </section>
+
+    <section>
+      <h2 id="u4"><span class="n">Unidad 4</span>Diseño y análisis de losas de hormigón armado</h2>
+      <p class="unit-meta">Llopiz T4 · 78 págs. (47 de teoría y apéndices A–E) · base ACI 318-2005, CIRSOC 201-2005, NZS 3101 e INPRES-CIRSOC 103 Parte II 2005 · Equivale a Torrisi cap. 4 (págs. 101–121)</p>
+      <div class="box torrisi">
+        <span class="lbl">Aporte de Torrisi · cap. 4</span>
+        <p>El capítulo 4 de Torrisi es una versión resumida de esta unidad, en buena parte con el mismo texto de Llopiz: tipos de losas, métodos de análisis, ecuación de Lagrange, losas en una y dos direcciones, esquinas, coeficientes del CIRSOC 201-2005, rigidez y coeficientes de losas cruzadas del NZS 3101. Deja afuera la deducción de la teoría de placas, la modelación con ETABS, el cálculo de flechas diferidas, la discusión de cuantías mínimas y los apéndices. Sus agregados son dos figuras de elementos finitos que comparan la deformada de una losa en una y en dos direcciones, la mención de tablas alternativas (Löser, Pozzi Azzaro, Marcus) y un <strong>ejemplo de dimensionamiento</strong> de una losa cruzada.</p>
+      </div>
+      
+      <!-- ===== 4.1 ===== -->
+      <h3 id="u4-1"><span class="n">4.1</span>Introducción. Tipos de losas</h3>
+      <p>Las losas son elementos estructurales planos cuyo espesor es pequeño comparado con sus otras dimensiones y que, formando parte de los entrepisos, soportan directamente las cargas que actúan sobre ellos y las transmiten a otros elementos (vigas, columnas y tabiques). La carga más común es la vertical: permanente D (peso propio y elementos del entrepiso) y sobrecarga de uso L (muebles, personas). En zonas de alta sismicidad como Cuyo, además, las losas tienen una misión importante: transmitir las fuerzas inerciales, horizontales y verticales, que el sismo genera en el edificio hacia los elementos con suficiente rigidez y resistencia lateral. <span class="pg">pág. 3</span></p>
+      <p>Según el tipo de apoyo se clasifican en <strong>(i) losas apoyadas en vigas</strong> y <strong>(ii) losas sin vigas</strong> (entrepisos sin vigas), que transmiten la carga a columnas o tabiques, con o sin capitel. En las losas apoyadas en vigas la carga va a las vigas perimetrales del panel, y según la relación L<sub>y</sub>/L<sub>x</sub> se arman en dos o en una dirección: si la relación de luces es mayor que 2, en general puede considerarse la losa como un haz de fajas de ancho unitario paralelas a la luz menor. Aun así, siempre se coloca una armadura de repartición perpendicular a la principal, y en las fajas adyacentes a las vigas de borde esa hipótesis ya no vale, por lo que debería agregarse armadura paralela a la de repartición. De ahí la otra clasificación: <strong>losas en dos direcciones</strong> y <strong>losas en una dirección</strong>. <span class="pg">pág. 3</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-1.png" alt="Cuatro esquemas de entrepisos: losa sobre vigas, placa plana, losa con capiteles y losa nervurada." loading="lazy"></div>
+        <figcaption><b>Fig. 4.1.</b> Distintos tipos de losas: (a) en dos direcciones apoyada en vigas; (b) placa plana; (c) losa plana (con capiteles y ábacos); (d) losa nervurada en dos direcciones. <span class="pg">Llopiz T4, pág. 4</span></figcaption>
+      </figure>
+      <p>Por materiales y procedimiento constructivo se clasifican en: <span class="pg">pág. 4</span></p>
+      <ol class="roman">
+        <li><strong>Macizas o sólidas:</strong> hormigón en todo su espesor, generalmente constante, con armadura en dos direcciones perpendiculares que toma la tracción de flexión, torsión y corte.</li>
+        <li><strong>Nervuradas:</strong> variante de la maciza formada por nervios en T separados según requisitos de resistencia y rigidez. Reemplazan por vacío el hormigón traccionado que no colabora, lo que reduce el peso propio (y las fuerzas inerciales en un sismo), y permiten nervios altos, más resistentes y rígidos, atractivos para grandes luces. En nuestro medio se usan con ladrillos cerámicos o con poliestireno expandido como encofrado perdido (más livianas y mejor aislación térmica).</li>
+        <li><strong>Alivianadas con elementos premoldeados:</strong> las más usadas en construcciones bajas. Las viguetas prefabricadas (generalmente pretensadas) corren en una sola dirección; entre ellas van cerámicos huecos (12,5 cm o 16,5 cm de altura), estáticamente inactivos, que dan una cara inferior plana para el cielorraso y aíslan. La capa de compresión, de 3 a 5 cm, lleva una malla de repartición. Se arman rápido, con apuntalamiento simple.</li>
+      </ol>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-2.png" alt="Cortes de losa nervurada con ladrillos cerámicos entre nervios." loading="lazy"></div>
+        <figcaption><b>Fig. 4.2.</b> Losa nervurada con ladrillos cerámicos como separadores de nervios: (a) corte con placa superior comprimida, nervios con estribo y armadura de repartición; (b) bloque cerámico; (c) variante con separación de nervios e ≤ 70 cm. <span class="pg">Llopiz T4, pág. 5</span></figcaption>
+      </figure>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-3ab.png" alt="Esquema de losa con viguetas y foto del apuntalamiento." loading="lazy"></div>
+        <figcaption><b>Fig. 4.3(a) y (b).</b> Componentes de la losa alivianada prefabricada (1: vigueta; 2: cerámico; 3: capa de compresión) y su apuntalamiento. <span class="pg">Llopiz T4, pág. 5</span></figcaption>
+      </figure>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-4.png" alt="Dos detalles de apoyo de viguetas sobre vigas." loading="lazy"></div>
+        <figcaption><b>Fig. 4.4.</b> Detalles típicos de apoyo de losas prefabricadas sobre vigas invertidas y sobre vigas de hormigón armado. <span class="pg">Llopiz T4, pág. 6</span></figcaption>
+      </figure>
+      <p>Otro sistema es el <strong>entrepiso compuesto de acero y hormigón</strong> (Fig. 4.5): una chapa de acero que hace de encofrado y de armadura de tracción, sobre la que se hormigona; generalmente se apoya en vigas metálicas secundarias, que a su vez descansan en vigas principales de acero u hormigón. Se verá en Hormigón II. <span class="pg">pág. 6</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-5.jpg" alt="Fotos de chapa colaborante sobre vigas metálicas." loading="lazy"></div>
+        <figcaption><b>Fig. 4.5.</b> Entrepisos de acero y hormigón: (a) viga de acero que soporta la chapa; (b) vigas secundarias metálicas sobre vigas principales de hormigón armado (obra en San Rafael, Mendoza). <span class="pg">Llopiz T4, pág. 6</span></figcaption>
+      </figure>
+      
+      <!-- ===== 4.2 ===== -->
+      <h3 id="u4-2"><span class="n">4.2</span>Métodos para el análisis y diseño de losas</h3>
+      <p>El análisis completo desde carga cero hasta la rotura puede hacerse con equilibrio, compatibilidad y relaciones constitutivas, pero modelar la no linealidad momento–deformación (flexión y torsión) exige un análisis paso a paso, de gran esfuerzo computacional, cuya validez depende de una modelación siempre compleja en hormigón armado. Los procedimientos completos existentes solo valen para dos comportamientos: <strong>completamente elástico</strong> y <strong>estado último</strong>. Los códigos se basan en momentos elásticos, a veces con algún porcentaje de redistribución (que, si es moderada, ha probado en ensayos no llevar a fisuración ni deformaciones excesivas), o en métodos plásticos. <span class="pg">pág. 7</span></p>
+      <p>Pueden usarse entonces: (1) métodos basados en la teoría elástica, sin redistribución; (2) métodos elásticos con redistribución por fisuración; (3) métodos basados en la teoría plástica o análisis límite. Cualquiera sea el método, la losa debe cumplir: (i) bajo cargas de servicio, deformaciones y fisuras dentro de límites aceptables; (ii) bajo cargas excepcionales, ductilidad adecuada y coeficiente de seguridad elevado contra el colapso, es decir, <strong>resistencia y ductilidad</strong>.</p>
+      
+      <!-- ===== 4.3 ===== -->
+      <h3 id="u4-3"><span class="n">4.3</span>Análisis por la teoría de la placa elástica</h3>
+      <h4 id="u4-3-1">4.3.1 Hipótesis</h4>
+      <ol class="roman">
+        <li>La losa se comporta como material isótropo, homogéneo y elástico para cargas de servicio (vale la ley de Hooke).</li>
+        <li>El espesor es lo bastante pequeño para ignorar las deformaciones por corte, pero suficiente para resistir flexión (no se comporta como membrana), y las deformaciones en su plano son despreciables.</li>
+        <li>La flecha en cualquier punto es pequeña respecto del espesor.</li>
+      </ol>
+      <p>La distribución de momentos y cortes resultante satisface el equilibrio en cada punto, las condiciones de contorno y la proporcionalidad entre momentos y curvaturas (relación constitutiva seccional lineal). <span class="pg">págs. 7–8</span></p>
+      <h4 id="u4-3-2">4.3.2 Equilibrio. Diferencia entre elemento viga y elemento losa</h4>
+      <p>La ecuación de Lagrange (anterior a 1820) se obtiene en tres pasos: estática (equilibrio), compatibilidad (deformaciones) y relaciones constitutivas que las conectan. Para entender la diferencia de mecanismos se comparan un elemento de viga (plano) y uno de losa (tridimensional) bajo carga uniforme q. <span class="pg">pág. 8</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-6a.png" alt="Elemento diferencial de viga con carga, cortes y momentos." loading="lazy"></div>
+        <figcaption><b>Fig. 4.6(a).</b> Equilibrio del elemento de viga de longitud dx: carga q, cortes V y V + (dV/dx)dx, momentos M y M + (dM/dx)dx, con momentos tomados respecto del punto A. <span class="pg">Llopiz T4, pág. 9</span></figcaption>
+      </figure>
+      <div class="deriv">
+      <div class="dt">Equilibrio del elemento viga</div>
+      <div class="st"><div class="why">Equilibrio de fuerzas verticales en el elemento de viga</div><div class="ex"><math display="block"><mrow><mi>V</mi><mo>−</mo><mi>q</mi><mspace width="0.17em"/><mi>d</mi><mi>x</mi><mo>−</mo><mi>V</mi><mo>−</mo><mfrac><mrow><mi>d</mi><mi>V</mi></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mi>d</mi><mi>x</mi><mo>=</mo><mn>0</mn></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">Corte y carga</div><div class="ex"><math display="block"><mrow><mfrac><mrow><mi>d</mi><mi>V</mi></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mo>=</mo><mo>−</mo><mi>q</mi></mrow></math></div><div class="tag">(4.1)</div></div>
+      <div class="st"><div class="why">Equilibrio de momentos respecto de A</div><div class="ex"><math display="block"><mrow><mi>M</mi><mo>+</mo><mi>q</mi><mspace width="0.17em"/><mi>d</mi><mi>x</mi><mspace width="0.17em"/><mfrac><mrow><mi>d</mi><mi>x</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo>+</mo><mo stretchy="true">(</mo><mi>V</mi><mo>+</mo><mfrac><mrow><mi>d</mi><mi>V</mi></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mi>d</mi><mi>x</mi><mo stretchy="true">)</mo><mi>d</mi><mi>x</mi><mo>−</mo><mo stretchy="true">(</mo><mi>M</mi><mo>+</mo><mfrac><mrow><mi>d</mi><mi>M</mi></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mi>d</mi><mi>x</mi><mo stretchy="true">)</mo><mo>=</mo><mn>0</mn></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Despreciando los diferenciales de orden superior</div><div class="ex"><math display="block"><mrow><mfrac><mrow><mi>d</mi><mi>M</mi></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mo>=</mo><mi>V</mi></mrow></math></div><div class="tag">(4.2)</div></div>
+      <div class="st res"><div class="why">Combinando (4.1) y (4.2): momento y carga</div><div class="ex"><math display="block"><mrow><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>M</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>=</mo><mo>−</mo><mi>q</mi></mrow></math></div><div class="tag">(4.3)</div></div>
+      </div>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-6b.png" alt="Elemento de placa con cortes y momentos flectores y torsores en sus caras." loading="lazy"></div>
+        <figcaption><b>Fig. 4.6(b).</b> Equilibrio del elemento losa (todos los cortes y momentos por unidad de ancho): (a) elemento dx·dy cargado; (b) cortes V<sub>x</sub> y V<sub>y</sub>; (c) momentos flectores m<sub>x</sub>, m<sub>y</sub> y torsores m<sub>xy</sub>, m<sub>yx</sub>. <span class="pg">Llopiz T4, pág. 9</span></figcaption>
+      </figure>
+      <div class="eq"><math display="block"><mrow><mfrac><mrow><mi>d</mi><msub><mi>V</mi><mi>x</mi></msub></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mo>+</mo><mfrac><mrow><mi>d</mi><msub><mi>V</mi><mi>y</mi></msub></mrow><mrow><mi>d</mi><mi>y</mi></mrow></mfrac><mo>=</mo><mo>−</mo><mi>q</mi></mrow></math><span class="tag">(4.4)</span></div>
+      <div class="eq"><math display="block"><mrow><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><msub><mi>M</mi><mi>x</mi></msub></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mn>2</mn><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><msub><mi>M</mi><mrow><mi mathvariant="normal">xy</mi></mrow></msub></mrow><mrow><mi>d</mi><mi>x</mi><mspace width="0.17em"/><mi>d</mi><mi>y</mi></mrow></mfrac><mo>+</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><msub><mi>M</mi><mi>y</mi></msub></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo>=</mo><mo>−</mo><mi>q</mi></mrow></math><span class="tag">(4.5)</span></div>
+      <p>Comparando (4.1) con (4.4) y (4.3) con (4.5) se ven los distintos mecanismos: la viga tiene un único momento M, en el plano de las cargas; la placa tiene <strong>tres momentos resistentes, dos de flexión y uno de torsión</strong>. <span class="pg">pág. 10</span></p>
+      <p><strong>Compatibilidad.</strong> Las ecuaciones de equilibrio no resuelven el problema: falta la compatibilidad de deformaciones y la relación constitutiva.</p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-7.png" alt="Elástica con dos tangentes de ángulos θ1 y θ2 en un tramo dx." loading="lazy"></div>
+        <figcaption><b>Fig. 4.7.</b> Deformaciones y rotación: en un tramo dx de la elástica la tangente gira de θ<sub>1</sub> a θ<sub>2</sub>; ω es el desplazamiento vertical. <span class="pg">Llopiz T4, pág. 10</span></figcaption>
+      </figure>
+      <div class="deriv">
+      <div class="dt">Compatibilidad y ecuación de la viga</div>
+      <div class="st"><div class="why">Por compatibilidad, la curvatura es la rotación por unidad de longitud</div><div class="ex"><math display="block"><mrow><mi>φ</mi><mo>=</mo><mfrac><mrow><mtext>rotación</mtext></mrow><mrow><mtext>unidad de longitud</mtext></mrow></mfrac><mo>=</mo><mfrac><mrow><mi>d</mi><mi>θ</mi></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">La rotación es la derivada del desplazamiento w según el eje Z</div><div class="ex"><math display="block"><mrow><mi>θ</mi><mo>=</mo><mfrac><mrow><mi>d</mi><mi>w</mi></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Ecuación de compatibilidad</div><div class="ex"><math display="block"><mrow><mi>φ</mi><mo>=</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Con la relación constitutiva φ = M/EI y la (4.3) se vincula estática con cinemática</div><div class="ex"><math display="block"><mrow><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>=</mo><mfrac><mrow><mi>M</mi></mrow><mrow><mi>E</mi><mi>I</mi></mrow></mfrac><mspace width="1em"/><mo>⇒</mo><mspace width="1em"/><mfrac><mrow><msup><mi>d</mi><mn>4</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>4</mn></msup></mrow></mfrac><mo>=</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>M</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mspace width="0.17em"/><mfrac><mrow><mn>1</mn></mrow><mrow><mi>E</mi><mi>I</mi></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">Relación entre flecha y carga para la viga</div><div class="ex"><math display="block"><mrow><mfrac><mrow><msup><mi>d</mi><mn>4</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>4</mn></msup></mrow></mfrac><mo>=</mo><mfrac><mrow><mi>q</mi></mrow><mrow><mi>E</mi><mi>I</mi></mrow></mfrac></mrow></math></div><div class="tag">(4.6)</div></div>
+      </div>
+      <p>Para el elemento losa, en forma análoga, se obtiene la <strong>ecuación de Lagrange</strong>, ecuación diferencial parcial de cuarto orden con dos variables independientes: <span class="pg">pág. 11</span></p>
+      <div class="eq"><math display="block"><mrow><mfrac><mrow><msup><mi>d</mi><mn>4</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>4</mn></msup></mrow></mfrac><mo>+</mo><mn>2</mn><mfrac><mrow><msup><mi>d</mi><mn>4</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mfrac><mrow><msup><mi>d</mi><mn>4</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>4</mn></msup></mrow></mfrac><mo>=</mo><mfrac><mrow><mi>q</mi></mrow><mrow><mi>D</mi></mrow></mfrac></mrow></math><span class="tag">(4.7)</span></div>
+      <p>con w = w(x, y) la flecha en la dirección de q, h el espesor, ν el módulo de Poisson y D la rigidez a flexión de la placa:</p>
+      <div class="eq"><math display="block"><mrow><mi>D</mi><mo>=</mo><mfrac><mrow><mi>E</mi><mspace width="0.17em"/><msup><mi>h</mi><mn>3</mn></msup></mrow><mrow><mn>12</mn><mspace width="0.17em"/><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msup><mi>ν</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow></mfrac></mrow></math></div>
+      <div class="box err">
+        <span class="lbl">Error en el apunte · págs. 11 y 13</span>
+        <p>La rigidez de placa aparece escrita como D = E·h³/12(1 − ν), sin el cuadrado. Lo correcto es <strong>D = E·h³/[12(1 − ν²)]</strong>, como resulta de la propia integración de la pág. 13, donde el denominador es 12(1 − ν²). Además, en la pág. 13 la expresión "para los momentos unitarios según Y" vuelve a titularse m<sub>x</sub> y repite la de m<sub>x</sub>; corresponde m<sub>y</sub> = −D(∂²w/∂y² + ν∂²w/∂x²), que es la (4.8.b).</p>
+      </div>
+      <h4 id="u4-3-3">4.3.3 Solución por el método elástico</h4>
+      <p>El procedimiento es idéntico para viga y losa: hallar la ecuación de la deformada (elástica) que satisfaga (4.6) o (4.7) y las condiciones de contorno, y derivarla para obtener los esfuerzos. La curvatura puede escribirse en función de la deformación ε<sub>x</sub> de la fibra a distancia z del eje neutro, y lo mismo en Y: <span class="pg">pág. 11</span></p>
+      <div class="eq"><math display="block"><mrow><msub><mi>φ</mi><mi>x</mi></msub><mo>=</mo><mo>−</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>=</mo><mfrac><mrow><msub><mi>ε</mi><mi>x</mi></msub></mrow><mrow><mi>z</mi></mrow></mfrac><mspace width="0.28em"/><mo>⇒</mo><mspace width="0.28em"/><msub><mi>ε</mi><mi>x</mi></msub><mo>=</mo><mo>−</mo><mi>z</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>,</mo><mspace width="2em"/><msub><mi>ε</mi><mi>y</mi></msub><mo>=</mo><mo>−</mo><mi>z</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac></mrow></math></div>
+      <p>Las relaciones tensión–deformación en rango elástico, en tres dimensiones, son: <span class="pg">pág. 12</span></p>
+      <div class="eq"><math display="block"><mrow><msub><mi>f</mi><mi>x</mi></msub><mo>=</mo><mfrac><mrow><mi>E</mi></mrow><mrow><mn>1</mn><mo>−</mo><msup><mi>ν</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="false">(</mo><msub><mi>ε</mi><mi>x</mi></msub><mo>+</mo><mi>ν</mi><msub><mi>ε</mi><mi>y</mi></msub><mo stretchy="false">)</mo><mo>,</mo><mspace width="1em"/><msub><mi>f</mi><mi>y</mi></msub><mo>=</mo><mfrac><mrow><mi>E</mi></mrow><mrow><mn>1</mn><mo>−</mo><msup><mi>ν</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="false">(</mo><msub><mi>ε</mi><mi>y</mi></msub><mo>+</mo><mi>ν</mi><msub><mi>ε</mi><mi>x</mi></msub><mo stretchy="false">)</mo><mo>,</mo><mspace width="1em"/><msub><mi>f</mi><mrow><mi mathvariant="normal">xy</mi></mrow></msub><mo>=</mo><mi>G</mi><msub><mi>γ</mi><mrow><mi mathvariant="normal">xy</mi></mrow></msub><mo>=</mo><mfrac><mrow><mi>E</mi></mrow><mrow><mn>2</mn><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mi>ν</mi><mo stretchy="false">)</mo></mrow></mfrac><msub><mi>γ</mi><mrow><mi mathvariant="normal">xy</mi></mrow></msub></mrow></math></div>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-8.png" alt="Comparación entre fajas libres y losa con deformación transversal impedida." loading="lazy"></div>
+        <figcaption><b>Fig. 4.8.</b> Efecto de Poisson. Arriba, fajas delgadas que se deforman libremente en sentido transversal; abajo, en la losa esa deformación está impedida y aparecen momentos m<sub>y</sub> = ν·m<sub>x</sub>. <span class="pg">Llopiz T4, pág. 12</span></figcaption>
+      </figure>
+      <p>La losa ya no es una serie de vigas de ancho unitario independientes: la deformación transversal está impedida y, además de m<sub>x</sub>, aparecen m<sub>y</sub> = ν·m<sub>x</sub> con sus tensiones normales perpendiculares. Por Poisson, m<sub>x</sub> no solo curva en x sino que disminuye la curvatura en y, y viceversa. Integrando f<sub>x</sub>·z en el espesor se obtiene el momento por unidad de ancho: <span class="pg">págs. 12–13</span></p>
+      <div class="deriv">
+      <div class="dt">Momento unitario de placa</div>
+      <div class="st"><div class="why">Tensión en una fibra a distancia z de la superficie neutra</div><div class="ex"><math display="block"><mrow><msub><mi>f</mi><mi>x</mi></msub><mo>=</mo><mo>−</mo><mi>z</mi><mspace width="0.17em"/><mfrac><mrow><mi>E</mi></mrow><mrow><mn>1</mn><mo>−</mo><msup><mi>ν</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">(</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mi>ν</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">)</mo></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Momento por unidad de ancho: integral de f<sub>x</sub>·z en el espesor</div><div class="ex"><math display="block"><mrow><msub><mi>m</mi><mi>x</mi></msub><mo>=</mo><msubsup><mo largeop="true">∫</mo><mrow><mo>−</mo><mi>h</mi><mo>/</mo><mn>2</mn></mrow><mrow><mi>h</mi><mo>/</mo><mn>2</mn></mrow></msubsup><msub><mi>f</mi><mi>x</mi></msub><mspace width="0.17em"/><mi>z</mi><mspace width="0.17em"/><mi>d</mi><mi>z</mi><mo>=</mo><mo>−</mo><mfrac><mrow><mi>E</mi></mrow><mrow><mn>1</mn><mo>−</mo><msup><mi>ν</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">(</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mi>ν</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">)</mo><msubsup><mo largeop="true">∫</mo><mrow><mo>−</mo><mi>h</mi><mo>/</mo><mn>2</mn></mrow><mrow><mi>h</mi><mo>/</mo><mn>2</mn></mrow></msubsup><msup><mi>z</mi><mn>2</mn></msup><mspace width="0.17em"/><mi>d</mi><mi>z</mi></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">La integral vale h³/12</div><div class="ex"><math display="block"><mrow><msub><mi>m</mi><mi>x</mi></msub><mo>=</mo><mo>−</mo><mfrac><mrow><mi>E</mi><mspace width="0.17em"/><msup><mi>h</mi><mn>3</mn></msup></mrow><mrow><mn>12</mn><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msup><mi>ν</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow></mfrac><mo stretchy="true">(</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mi>ν</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">)</mo><mo>=</mo><mo>−</mo><mi>D</mi><mo stretchy="true">(</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mi>ν</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">)</mo></mrow></math></div><div class="tag"></div></div>
+      </div>
+      <p>Los esfuerzos internos quedan entonces: <span class="pg">págs. 13–14</span></p>
+      <div class="eq"><math display="block"><mrow><msub><mi>M</mi><mi>x</mi></msub><mo>=</mo><mo>−</mo><mi>D</mi><mo stretchy="true">(</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mi>ν</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">)</mo><mo>,</mo><mspace width="2em"/><msub><mi>M</mi><mi>y</mi></msub><mo>=</mo><mo>−</mo><mi>D</mi><mo stretchy="true">(</mo><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mi>ν</mi><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">)</mo></mrow></math><span class="tag">(4.8)</span></div>
+      <div class="eq"><math display="block"><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">xy</mi></mrow></msub><mo>=</mo><mo>−</mo><mi>D</mi><mspace width="0.17em"/><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><mi>x</mi><mspace width="0.17em"/><mi>d</mi><mi>y</mi></mrow></mfrac><mspace width="0.17em"/><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>ν</mi><mo stretchy="false">)</mo></mrow></math><span class="tag">(4.9)</span></div>
+      <div class="eq"><math display="block"><mrow><msub><mi>V</mi><mi>x</mi></msub><mo>=</mo><mfrac><mrow><mi>d</mi><msub><mi>M</mi><mi>x</mi></msub></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac><mo>+</mo><mfrac><mrow><mi>d</mi><msub><mi>M</mi><mrow><mi mathvariant="normal">xy</mi></mrow></msub></mrow><mrow><mi>d</mi><mi>y</mi></mrow></mfrac><mo>,</mo><mspace width="2em"/><msub><mi>V</mi><mi>y</mi></msub><mo>=</mo><mfrac><mrow><mi>d</mi><msub><mi>M</mi><mi>y</mi></msub></mrow><mrow><mi>d</mi><mi>y</mi></mrow></mfrac><mo>+</mo><mfrac><mrow><mi>d</mi><msub><mi>M</mi><mrow><mi mathvariant="normal">xy</mi></mrow></msub></mrow><mrow><mi>d</mi><mi>x</mi></mrow></mfrac></mrow></math><span class="tag">(4.10)</span></div>
+      <div class="eq"><math display="block"><mrow><msub><mi>R</mi><mi>x</mi></msub><mo>=</mo><mi>D</mi><mo stretchy="true">[</mo><mfrac><mrow><msup><mi>d</mi><mn>3</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>x</mi><mn>3</mn></msup></mrow></mfrac><mo>+</mo><mo stretchy="false">(</mo><mn>2</mn><mo>−</mo><mi>ν</mi><mo stretchy="false">)</mo><mfrac><mrow><msup><mi>d</mi><mn>3</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><mi>x</mi><mspace width="0.17em"/><mi>d</mi><msup><mi>y</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">]</mo><mo>,</mo><mspace width="2em"/><msub><mi>R</mi><mi>y</mi></msub><mo>=</mo><mi>D</mi><mo stretchy="true">[</mo><mfrac><mrow><msup><mi>d</mi><mn>3</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><msup><mi>y</mi><mn>3</mn></msup></mrow></mfrac><mo>+</mo><mo stretchy="false">(</mo><mn>2</mn><mo>−</mo><mi>ν</mi><mo stretchy="false">)</mo><mfrac><mrow><msup><mi>d</mi><mn>3</mn></msup><mi>w</mi></mrow><mrow><mi>d</mi><mi>y</mi><mspace width="0.17em"/><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow></mfrac><mo stretchy="true">]</mo></mrow></math><span class="tag">(4.11)</span></div>
+      <div class="box nota">
+        <span class="lbl">Aclaración</span>
+        <p>Con la convención de signos de (4.8) y (4.9), en la teoría clásica de placas (Timoshenko) la reacción de borde lleva signo negativo: R<sub>x</sub> = −D[∂³w/∂x³ + (2 − ν)∂³w/∂x∂y²]. El apunte la escribe sin el signo; el valor absoluto es el mismo. El término (2 − ν) aparece porque al borde llegan el corte V<sub>x</sub> y la variación del momento torsor ∂M<sub>xy</sub>/∂y (reacción de Kirchhoff).</p>
+      </div>
+      <p>La ecuación de Lagrange no es sencilla de resolver y solo tiene solución para pocos casos: losa rectangular simplemente apoyada o empotrada, circular, algunas elípticas y triangulares, con carga uniforme o concentrada simétrica. <strong>Navier</strong> (1820) usó series dobles de Fourier para placas rectangulares simplemente apoyadas; <strong>Levy</strong> propuso un método exacto con series simples para dos lados opuestos apoyados y los otros con borde arbitrario. Al hablar de método "exacto" hay que reconocer sus limitaciones en hormigón armado, salvo que se trate del estado sin fisuración. Ritz desarrolló los métodos energéticos (mínima energía total en equilibrio), base de los de Rayleigh, Galerkin y Kantorovich; otros métodos elásticos aproximados son las diferencias finitas y los <strong>elementos finitos</strong>. Por último, métodos aproximados como el de <strong>Marcus</strong> y el de <strong>Siess–Newmark</strong> (comparable al método de Cross en vigas) consideran parcialmente las deformaciones plásticas. <span class="pg">pág. 14</span></p>
+      <h4 id="u4-3-4">4.3.4 Losa apoyada en una dirección</h4>
+      <p>Una losa rectangular apoyada solo en dos lados opuestos funciona como una viga de luz igual a la distancia entre apoyos y ancho igual al lado apoyado. Respecto de la viga solo disminuye la deformación, porque corresponde el estado de la Fig. 4.8(b): la rigidez pasa de EI a EI/(1 − ν²). Con la Fig. 2.23 del apunte 2, para una relación tensión/resistencia cercana a 0,75 el módulo de Poisson resulta del orden de 1,5/8 = 0,1875. <span class="pg">pág. 15</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-9.png" alt="Curvas tensión/resistencia contra deformaciones longitudinal, transversal y volumétrica." loading="lazy"></div>
+        <figcaption><b>Fig. 4.9</b> (Fig. 2.23 de la Unidad 2). Deformaciones longitudinal, transversal y volumétrica medidas en una probeta de hormigón a compresión uniaxial. <span class="pg">Llopiz T4, pág. 15</span></figcaption>
+      </figure>
+      <div class="eq"><math display="block"><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>1</mn><mo>−</mo><msup><mi>ν</mi><mn>2</mn></msup></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>1</mn><mo>−</mo><mn>0</mn><mrow><mo>,</mo></mrow><msup><mn>1875</mn><mn>2</mn></msup></mrow></mfrac><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>036</mn></mrow></math></div>
+      <p>La rigidez como placa apoyada en una dirección aumentaría casi un 4 %: un valor teórico, sin trascendencia para el diseño en hormigón armado; interesa solo el concepto. Cada "franja" soporta su carga y funciona "casi" como viga independiente, porque las adyacentes le impiden deformarse transversalmente y por eso longitudinalmente se deforma un poco menos (relación 1/(1 − ν²)). Como las deformaciones transversales están impedidas, en la dirección perpendicular aparecen tensiones: la losa debería tener una <strong>armadura mínima de tracción cerca de la cara inferior</strong>, que puede cumplir también el rol de armadura de repartición, colocada <strong>por encima</strong> de la principal según X. <span class="pg">pág. 15</span></p>
+      <p>La Fig. 4.10 lo muestra con ETABS: losa de 6,0 m de luz y 15 cm de espesor, simplemente apoyada, solo con peso propio; a la izquierda una placa de 3,0 m de ancho y a la derecha una de 1,0 m (elementos <em>shell</em>), y en el centro una franja de 1,0 m modelada como viga (<em>beam</em>). <span class="pg">págs. 15–16</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-10a.jpg" alt="Deformada de dos placas y una viga en ETABS." loading="lazy"></div>
+        <figcaption><b>Fig. 4.10(a).</b> Modelación de viga y placas en ETABS: deformada bajo peso propio. <span class="pg">Llopiz T4, pág. 16</span></figcaption>
+      </figure>
+      <div class="deriv">
+      <div class="dt">Viga de 1 m de ancho (verificación a mano)</div>
+      <div class="st"><div class="why">Módulo de elasticidad para H25</div><div class="ex"><math display="block"><mrow><msub><mi>E</mi><mi>c</mi></msub><mo>=</mo><mn>4700</mn><msqrt><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></msqrt><mo>=</mo><mn>4700</mn><msqrt><mn>25</mn></msqrt><mo>=</mo><mn>23</mn><mspace width="0.17em"/><mn>500</mn><mspace width="0.25em"/><mtext>MPa</mtext></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Peso propio</div><div class="ex"><math display="block"><mrow><mi>q</mi><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>15</mn><mspace width="0.25em"/><mtext>m</mtext><mo>×</mo><mn>2</mn><mrow><mo>,</mo></mrow><mn>4</mn><mspace width="0.25em"/><msup><mtext>t/m</mtext><mn>3</mn></msup><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>36</mn><mspace width="0.25em"/><msup><mtext>t/m</mtext><mn>2</mn></msup></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Momento máximo en la viga de 1 m de ancho</div><div class="ex"><math display="block"><mrow><msub><mi>M</mi><mn>3</mn></msub><mo>=</mo><mfrac><mrow><mi>q</mi><mspace width="0.17em"/><msup><mi>l</mi><mn>2</mn></msup></mrow><mrow><mn>8</mn></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>0</mn><mrow><mo>,</mo></mrow><mn>36</mn><mo>×</mo><msup><mn>6</mn><mn>2</mn></msup></mrow><mrow><mn>8</mn></mrow></mfrac><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>62</mn><mspace width="0.25em"/><mtext>tm</mtext></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Reacción, igual al corte máximo</div><div class="ex"><math display="block"><mrow><msub><mi>V</mi><mrow><mi mathvariant="normal">máx</mi></mrow></msub><mo>=</mo><mfrac><mrow><mi>q</mi><mspace width="0.17em"/><mi>l</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>36</mn><mo>×</mo><mn>3</mn><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>08</mn><mspace width="0.25em"/><mtext>t</mtext></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">Flecha por flexión, con I = 1,0 × 0,15³/12 = 2,81·10⁻⁴ m⁴</div><div class="ex"><math display="block"><mrow><mi>δ</mi><mo>=</mo><mfrac><mrow><mn>5</mn><mspace width="0.17em"/><mi>q</mi><mspace width="0.17em"/><msup><mi>l</mi><mn>4</mn></msup></mrow><mrow><mn>384</mn><mspace width="0.17em"/><mi>E</mi><mspace width="0.17em"/><mi>I</mi></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>5</mn><mo>×</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>36</mn><mo>×</mo><msup><mn>6</mn><mn>4</mn></msup></mrow><mrow><mn>384</mn><mo>×</mo><mn>2</mn><mspace width="0.17em"/><mn>350</mn><mspace width="0.17em"/><mn>000</mn><mo>×</mo><mn>2</mn><mrow><mo>,</mo></mrow><mn>81</mn><mo>·</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>4</mn></mrow></msup></mrow></mfrac><mo>=</mo><mn>9</mn><mrow><mo>,</mo></mrow><mn>2</mn><mspace width="0.25em"/><mtext>mm</mtext></mrow></math></div><div class="tag"></div></div>
+      </div>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-10b.jpg" alt="Diagramas de carga, corte, momento y flecha de ETABS." loading="lazy"></div>
+        <figcaption><b>Fig. 4.10(b).</b> Carga, corte, momento y deformación de la viga según ETABS: 1,08 t, 1,622 tm y 9 mm. <span class="pg">Llopiz T4, pág. 16</span></figcaption>
+      </figure>
+      <p>ETABS da 9 mm para la viga. Para la placa de 1,0 m la flecha máxima es 9,15 mm; para la de 3,0 m (shells de 33 cm) es 8,96 mm en la franja central y 9,35 mm en la línea paralela al apoyo. <span class="pg">pág. 16</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-10c.jpg" alt="Mapas de color de M22 y M11 en las placas." loading="lazy"></div>
+        <figcaption><b>Fig. 4.10(c).</b> Momentos M22 (perpendiculares, por efecto Poisson) y M11 (en la dirección de la luz, comparables a los de la viga) en los elementos de losa. <span class="pg">Llopiz T4, pág. 17</span></figcaption>
+      </figure>
+      <p>M11 en la placa de 1,0 m se mantiene prácticamente constante en 1,62 tm/m; en la de 3,0 m ya no es constante y varía de 1,605 tm/m en el centro a 1,65 tm/m en los bordes. Los M22 aparecen por el efecto Poisson, es decir, porque las franjas paralelas impiden la deformación independiente por fajas. Modelando la placa con 6,0 m de ancho, el M22 máximo es 1,59 tm/m en el centro y 1,68 tm/m en los bordes. <span class="pg">pág. 17</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-10d.jpg" alt="Deformada y mapas de momentos de una placa de 6 m." loading="lazy"></div>
+        <figcaption><b>Fig. 4.10(d).</b> Placa de 6,0 m de ancho apoyada en una dirección: deformada y momentos. <span class="pg">Llopiz T4, pág. 17</span></figcaption>
+      </figure>
+      <div class="box torrisi">
+        <span class="lbl">Aporte de Torrisi · §4.2.1–4.2.2, págs. 105–107</span>
+        <p>Agrega dos deformadas de elementos finitos que resumen la idea con una imagen: la losa apoyada solo en dos vigas paralelas se deforma igual que una viga ancha (superficie cilíndrica), mientras que la losa cuadrada apoyada en sus cuatro bordes adopta una superficie de doble curvatura, "ya no como la de una viga ancha". No incluye los valores numéricos de ETABS de Llopiz.</p>
+      </div>
+      <h4 id="u4-3-5">4.3.5 Losa apoyada en dos direcciones</h4>
+      <p><strong>a) Interacción entre franjas perpendiculares.</strong> Con los cuatro lados apoyados, los dos lados antes libres "se elevan y vuelven a quedar rectos": el plano medio pasa de una superficie cilíndrica a una de doble curvatura, con descensos y curvaturas notablemente menores. La losa puede verse como dos series de franjas ortogonales: si la carga la tomaran solo las franjas en X, las franjas en Y, apoyadas en sus extremos, reaccionarían con fuerzas hacia arriba; es decir, "le sacan un poco de carga" a las franjas X, o la carga se reparte entre ambas. Para una carga dada cada serie trabaja con menores tensiones o, a igual tensión límite, la carga puede aumentar respecto de la placa apoyada en dos bordes. <span class="pg">pág. 18</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-11.png" alt="Esquemas de franjas ortogonales y paralelas con momentos torsores." loading="lazy"></div>
+        <figcaption><b>Figs. 4.11 y 4.12.</b> Arriba, influencia entre franjas ortogonales: la flexión de ab obliga a cd a torcerse. Abajo, influencia entre franjas paralelas: las elásticas 1 y 2 de franjas vecinas tienen distinta inclinación en puntos de una misma línea, y los momentos torsores m<sub>yx</sub> las vinculan. <span class="pg">Llopiz T4, pág. 18</span></figcaption>
+      </figure>
+      <p><strong>b) Interacción entre franjas paralelas.</strong> La flexión de franjas como ab obliga a las perpendiculares como cd a torcerse, porque sus extremos c y d no pueden girar; cd reacciona sobre ab con momentos de sustentación de sentido opuesto en cada mitad, y viceversa ("alivio"). Lo mismo se ve con franjas paralelas vecinas abcd y cdef (Fig. 4.12): la más cercana al apoyo AB se flexiona menos, y en puntos u<sub>1</sub> y u<sub>2</sub> de una misma línea paralela a BD los ángulos φ<sub>1</sub> y φ<sub>2</sub> difieren. Si fueran independientes, sus caras comunes cd se deslizarían; como están enlazadas, aparecen tensiones tangenciales τ<sub>yx</sub> cuya resultante son los <strong>momentos torsores m<sub>yx</sub></strong>. Como los m<sub>yx</sub> crecen desde el centro (donde son nulos) hacia los apoyos, predominan los que sostienen la franja: <strong>cada franja resulta sostenida por la porción de losa entre ella y el apoyo más próximo</strong>, a través de momentos torsores que se transmiten sucesivamente hasta el apoyo y aumentan la reacción. <span class="pg">págs. 18–19</span></p>
+      <p>Los beneficios de ambas interacciones son máximos en las losas cuadradas y disminuyen rápidamente al crecer la relación de lados; se vuelven despreciables cuando se acerca a 2,0. <span class="pg">pág. 19</span></p>
+      <p><strong>c) Esquinas de losas simplemente apoyadas.</strong> Una losa rectangular simplemente apoyada (sin restricción al giro) en sus cuatro lados se apoya principalmente en la zona central de los bordes. El fenómeno más saliente es que, por fuera de la elipse inscripta, la losa tiende a <strong>levantarse en las esquinas</strong>, salvo que haya sobrecarga allí o se la ancle con un correcto detalle de armaduras. El anclaje induce momentos principales locales negativos m<sub>1</sub> (tracción en la cara superior) y, normales a ellos, positivos m<sub>2</sub> (tracción en la cara inferior). <span class="pg">págs. 19–20</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-13.png" alt="Losa apoyada con la esquina levantada fuera de la elipse de apoyo." loading="lazy"></div>
+        <figcaption><b>Fig. 4.13.</b> Losa rectangular apoyada en sus cuatro lados con y sin anclaje en las esquinas: sin anclaje ni sobrecarga la esquina se levanta. <span class="pg">Llopiz T4, pág. 19</span></figcaption>
+      </figure>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-14.png" alt="Fotos de cara superior e inferior de una losa ensayada con fisuras." loading="lazy"></div>
+        <figcaption><b>Fig. 4.14.</b> Fisuras en la rotura de una losa rectangular simplemente apoyada con carga uniforme: en la cara superior, fisuras a 45° en las esquinas; en la inferior, el patrón en diagonales hacia las esquinas. <span class="pg">Llopiz T4, pág. 20</span></figcaption>
+      </figure>
+      <p>En el centro, los momentos principales son normales a los bordes de apoyo; en las esquinas, están inclinados a 45°. La Fig. 4.15 muestra sus direcciones para distintas relaciones de luces. <span class="pg">pág. 20</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-15.png" alt="Redes de líneas de momentos principales para tres relaciones de lados." loading="lazy"></div>
+        <figcaption><b>Fig. 4.15.</b> Direcciones de los momentos principales para losas simplemente apoyadas (izquierda) y empotradas (derecha) con carga uniforme, para l<sub>y</sub>/l<sub>x</sub> = 1; 1,5 y 2. Trazo lleno: principales positivos (cara inferior); trazos: principales negativos (cara superior); trazo y punto: cambio de signo. <span class="pg">Llopiz T4, pág. 20</span></figcaption>
+      </figure>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-16.png" alt="Esquema de esquina con momentos principales a 45 y 135 grados y tabla de valores." loading="lazy"></div>
+        <figcaption><b>Fig. 4.16.</b> Momentos principales en las esquinas y reacción de anclaje A de una losa simplemente apoyada en todo el contorno: en la esquina m<sub>1</sub> = −m<sub>2</sub> = m<sub>xy</sub>, con A = 2m<sub>xy</sub>. La tabla da m<sub>xy</sub> y A para l<sub>y</sub>/l<sub>x</sub> = 1 y 2. <span class="pg">Llopiz T4, pág. 21</span></figcaption>
+      </figure>
+      <p>Para tomar estos momentos, lo más eficiente es colocar la armadura según las direcciones principales; en la práctica conviene <strong>disponerla en malla</strong>, en ambas direcciones, arriba y abajo: las barras paralelas tienen igual longitud y no hay riesgo de confundir la dirección de colocación. Las cantidades que piden el ACI 318 y el NZS 3101 se dan en 4.4.6.2. <span class="pg">pág. 21</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-17.png" alt="Planta y cortes de armado de esquina a 45 grados y en malla." loading="lazy"></div>
+        <figcaption><b>Fig. 4.17.</b> Formas de armar las esquinas de losas simplemente apoyadas para evitar el levantamiento: barras a 45° y 135° (técnicamente correcta) o en malla (favorable en la práctica), con las variantes de anclaje con o sin sobrecarga. <span class="pg">Llopiz T4, pág. 21</span></figcaption>
+      </figure>
+      <p><strong>4.3.5.2 Modelación por elementos finitos.</strong> La misma placa de 6,0 m modelada en ETABS como simplemente apoyada en ambas direcciones, solo con peso propio, da una flecha máxima de <strong>2,75 mm</strong> (contra unos 9,0 mm apoyada en una dirección: más de tres veces menor) y momentos M11 y M22 máximos de <strong>0,57 tm/m</strong> (contra 1,62 tm/m: casi un factor 3). Los momentos torsores M12 máximos, en las esquinas, valen 0,047 tm/m. <span class="pg">pág. 22</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-18.jpg" alt="Modelo ETABS de placa cuadrada y mapas de momentos flectores y torsores." loading="lazy"></div>
+        <figcaption><b>Fig. 4.18.</b> Placa de 6,0 m simplemente apoyada en ambas direcciones: (a) modelo; (b) momentos M11 y M22; (c) momentos torsores M12, máximos en las esquinas. <span class="pg">Llopiz T4, pág. 22</span></figcaption>
+      </figure>
+      <div class="box nota">
+        <span class="lbl">Aclaración</span>
+        <p>Con la teoría de placas la comparación se puede anticipar: para una placa cuadrada simplemente apoyada, Timoshenko da w<sub>máx</sub> = 0,00406·q·l⁴/D (con D = EI/(1 − ν²) por unidad de ancho) y, con ν = 0,2, m<sub>máx</sub> ≈ 0,044·q·l². Respecto de la franja aislada (5/384 = 0,0130 y 1/8 = 0,125) la flecha baja unas 3,3 veces y el momento unas 2,8 veces, que es lo que obtiene ETABS (9,2/2,75 = 3,3 y 1,62/0,57 = 2,8).</p>
+      </div>
+      
+      <!-- ===== 4.4 ===== -->
+      <h3 id="u4-4"><span class="n">4.4</span>Aplicaciones prácticas. Regulación de código</h3>
+      <h4 id="u4-4-1">4.4.1 Definición de acciones sobre las losas</h4>
+      <p>Para el edificio en estudio (CIRSOC 101-2005 y Cap. 1 del curso): carga permanente D = 0,29 (estructura de hormigón armado) + 0,11 (piso y contrapiso) + 0,10 (incidencia de tabiquería de yeso) = <strong>0,50 t/m²</strong>; sobrecarga de uso L = <strong>0,25 t/m²</strong>. Las acciones para verificar resistencia son: <span class="pg">pág. 23</span></p>
+      <div class="eq"><math display="block"><mrow><mi>U</mi><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>4</mn><mspace width="0.17em"/><mi>D</mi><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>4</mn><mo>×</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>50</mn><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>70</mn><mspace width="0.25em"/><msup><mtext>t/m</mtext><mn>2</mn></msup><mspace width="2em"/><mi>U</mi><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>2</mn><mspace width="0.17em"/><mi>D</mi><mo>+</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>6</mn><mspace width="0.17em"/><mi>L</mi><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>2</mn><mo>×</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>50</mn><mo>+</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>6</mn><mo>×</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>25</mn><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>0</mn><mspace width="0.25em"/><msup><mtext>t/m</mtext><mn>2</mn></msup></mrow></math></div>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, Tabla 5.3.1</span>
+        <p>Las dos combinaciones siguen iguales en el 201-25: U = 1,4D (5.3.1a) y U = 1,2D + 1,6L + 0,5(L<sub>r</sub> o S o R) (5.3.1b). Las sobrecargas y pesos se toman hoy del <strong>CIRSOC 101-25</strong>.</p>
+      </div>
+      <h4 id="u4-4-2">4.4.2 Métodos de análisis</h4>
+      <p>Para cargas verticales la norma divide el problema, según la relación de luces, en losas en <strong>una</strong> y en <strong>dos</strong> direcciones, y en todos los casos acepta cualquier método que cumpla equilibrio y compatibilidad. Para una dirección admite un método aproximado (Cap. 8); para dos direcciones remite al Cap. 13. Para el rol de <strong>diafragma</strong> ante sismo se debe tener en cuenta el Cap. 5 del IC 103-II-05, con condiciones de rigidez y resistencia; y si se redistribuyen momentos, deben cumplirse requisitos de ductilidad. <span class="pg">pág. 23</span></p>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · IC 103 P-II 2021, Cap. 5 (Diafragmas)</span>
+        <p>El capítulo de diafragmas se mantiene en la edición 2021. Lo central:</p>
+        <ul>
+          <li>Los diafragmas deben <strong>permanecer elásticos</strong> y diseñarse para las fuerzas que desarrollan los planos sismorresistentes verticales con su <strong>sobrerresistencia</strong> (5.2.1 y 5.2.2): es diseño por capacidad.</li>
+          <li>Puede usarse un modelo de <strong>bielas y tirantes</strong>: campo de compresión diagonal en losas coladas in situ (5.3.1) y de tracción diagonal en losas con premoldeados (5.4.1).</li>
+          <li>Las losas coladas in situ que funcionan como diafragma deben armarse <strong>en dos direcciones ortogonales</strong> con al menos la armadura mínima de contracción y temperatura (hoy 0,0018A<sub>g</sub>) en cada dirección, anclada en las vigas de borde o tabiques del panel y con <strong>separación ≤ 250 mm</strong> (5.3.2).</li>
+          <li>Con elementos premoldeados, la capa de compresión debe tener <strong>espesor mínimo de 50 mm</strong> y la misma armadura mínima en las dos direcciones, con separación ≤ 250 mm (5.4.2); si la tensión de corte en esa capa supera 0,30√f'<sub>c</sub> no pueden usarse (5.4.3).</li>
+          <li>Para diafragmas se aceptan mallas soldadas de f<sub>y</sub> = 500 MPa cuando no colaboran con la resistencia de las vigas (1.2.2 iii).</li>
+        </ul>
+        <p>Las referencias internas del IC 103 P-II siguen apuntando al CIRSOC 201-2005 (Cap. 13 y art. 7.12); en el 201-25 esos temas están en los Caps. 7–8 y en el art. 24.4.3.</p>
+      </div>
+      <h4 id="u4-4-3">4.4.3 Losas en una sola dirección. Métodos aproximados</h4>
+      <p>El CIRSOC 201 (sección 8.3.3) permite usar para vigas continuas y losas en una dirección los <strong>coeficientes de momento</strong> de su tabla 8.3.3 (Fig. 4.19), siempre que: (i) tengan más de 2 tramos; (ii) siendo L<sub>M</sub> la luz mayor y L<sub>m</sub> la menor, 1,0L<sub>m</sub> ≤ L<sub>M</sub> ≤ 1,2L<sub>m</sub>; (iii) D y L estén uniformemente distribuidas; (iv) L ≤ 3D; (v) los elementos sean prismáticos. <span class="pg">págs. 23–24</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-19.png" alt="Esquemas de vigas continuas con los coeficientes 1/11, 1/14, 1/16, 1/24, 1/10, 1/12." loading="lazy"></div>
+        <figcaption><b>Fig. 4.19.</b> Coeficientes para el cálculo de momentos en vigas y losas en una dirección (tabla 8.3.3 del CIRSOC 201-2005): (a) más de dos tramos; (b) dos tramos únicamente; (c) losas con luces ≤ 3 m; (d) vigas donde la suma de rigideces de columnas supera 8 veces la de las vigas en cada extremo. <span class="pg">Llopiz T4, pág. 24</span></figcaption>
+      </figure>
+      <div class="box err">
+        <span class="lbl">Error en el apunte · pág. 23</span>
+        <p>La condición (i) dice "más de 2 tramos", pero el CIRSOC 201-2005 (8.3.3) pedía <strong>dos o más</strong> tramos, y así lo muestra la propia Fig. 4.19(b), "vigas con dos tramos únicamente". El 201-25 lo mantiene: "hay dos o más vanos" (6.5.1 d). La condición (ii) se refiere a dos vanos <strong>adyacentes</strong>: la luz mayor no debe superar en más del 20 % a la menor.</p>
+      </div>
+      <p>Los coeficientes suponen la sobrecarga L en <strong>tramos alternados</strong> para los momentos positivos máximos (Fig. 4.20) y en <strong>dos tramos adyacentes</strong> para los negativos. El CIRSOC 201 (8.9.2) establece: (i) momentos positivos con la carga viva en tramos alternados; (ii) momentos negativos con la sobrecarga total en dos tramos adyacentes. El NZS 3101 (4.3.2.2) lo ordena, a criterio del autor, mejor: <span class="pg">pág. 25</span></p>
+      <ol class="roman">
+        <li>si se conoce la disposición de D y L y es fija, diseñar para ella;</li>
+        <li>si L es variable y L ≤ (3/4)D, tomar L uniforme en todos los tramos;</li>
+        <li>si L es variable y L &gt; (3/4)D, considerar cargas vivas alternadas y sobre dos tramos adyacentes.</li>
+      </ol>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-20.png" alt="Dos pórticos con sobrecarga en tramos alternados y sus diagramas de momento." loading="lazy"></div>
+        <figcaption><b>Fig. 4.20.</b> Distribución de las sobrecargas para la verificación de resistencia y de flechas en momentos positivos: casos a) y b), con sobrecarga mayorada en tramos alternados. <span class="pg">Llopiz T4, pág. 25</span></figcaption>
+      </figure>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, 6.4.2, 6.4.3 y 6.5</span>
+        <p>Para losas en una dirección y vigas, el 201-25 (6.4.2) mantiene la sobrecarga en el vano y vanos alternos para M<sub>u</sub><sup>+</sup>, y solo en los vanos adyacentes para M<sub>u</sub><sup>−</sup>. Para <strong>losas en dos direcciones</strong> (6.4.3) incorpora justamente el criterio del NZS que Llopiz prefería: si se conoce la disposición de L, analizar esa; si L es variable sin exceder 0,75D, o todos los paneles se cargan a la vez, se permite L mayorada en todos los paneles; si no, M<sub>u</sub><sup>+</sup> con el <strong>75 %</strong> de L mayorada en el panel y paneles alternos, y M<sub>u</sub><sup>−</sup> con el 75 % solo en los paneles adyacentes. Las condiciones y la tabla de coeficientes pasaron a 6.5.1 y Tabla 6.5.2.</p>
+      </div>
+      <p>Los momentos se calculan como <span class="f">M = w<sub>u</sub>·l<sub>n</sub>²/coef.</span>, con l<sub>n</sub> la luz libre para el momento positivo y el corte, y el promedio de las luces adyacentes para el negativo. La sección 8.7 del CIRSOC 201 distingue la luz de cálculo según el elemento sea o no monolítico con sus apoyos. <span class="pg">pág. 26</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-21.png" alt="Corte de losa continua de tres tramos con luces libres y a ejes." loading="lazy"></div>
+        <figcaption><b>Fig. 4.21.</b> Luces a ejes (3,00; 3,00 y 2,50 m) y luces libres (2,725; 2,725 y 2,225 m) del edificio en estudio. <span class="pg">Llopiz T4, pág. 26</span></figcaption>
+      </figure>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-22.png" alt="Esquema de losa entre dos apoyos con luz libre, luz de cálculo y luz entre ejes." loading="lazy"></div>
+        <figcaption><b>Fig. 4.22.</b> Luz libre l<sub>n</sub> y luz de cálculo l<sub>e</sub> = l<sub>n</sub> + h &lt; l<sub>c</sub> (distancia entre ejes de apoyo). <span class="pg">Llopiz T4, pág. 26</span></figcaption>
+      </figure>
+      <h4 id="u4-4-4">4.4.4 Redistribución de esfuerzos</h4>
+      <p>Condiciones: (i) los momentos no deben provenir de métodos aproximados; (ii) solo si ε<sub>t</sub> ≥ 0,0075 en la sección donde se disminuye el momento; (iii) recalcular los momentos de tramo para mantener el equilibrio; (iv) <span class="f">M<sub>R</sub> = χ·M<sub>E</sub></span> con <span class="f">χ = 1000ε<sub>t</sub> ≤ 20 %</span>. En sus comentarios la norma aclara que la fisuración y las flechas en servicio con momentos redistribuidos no son significativamente mayores que con los momentos elásticos directos. <span class="pg">págs. 26–27</span></p>
+      <div class="box nota">
+        <span class="lbl">Aclaración</span>
+        <p>χ = 1000ε<sub>t</sub> es el <strong>porcentaje de reducción</strong> del momento elástico, no el factor que lo multiplica: el momento redistribuido es M<sub>R</sub> = (1 − χ/100)·M<sub>E</sub>. Con ε<sub>t</sub> = 0,0075 se puede reducir un 7,5 %; el tope del 20 % se alcanza con ε<sub>t</sub> = 0,020. Es la misma regla de la Unidad 3 (§3.11), que el 201-25 mantiene en 6.6.5, ahora también aplicable a losas en dos direcciones analizadas con la disposición de cargas de 6.4.3.3.</p>
+      </div>
+      <h4 id="u4-4-5">4.4.5 Requerimientos de rigidez</h4>
+      <p>Para vigas y losas en una dirección y para losas cruzadas la norma acepta dos caminos: (i) adoptar <strong>alturas mínimas</strong> (limitar la esbeltez con tablas o fórmulas empíricas), o (ii) <strong>calcular las flechas</strong> y verificar que no excedan los límites admisibles. Como módulo de elasticidad puede tomarse <span class="f">E<sub>c</sub> = 4700√f'<sub>c</sub> = 21 500 MPa</span> (para H-21); el CIRSOC 201-1982 le asignaba a este hormigón 30 000 MPa, casi un 40 % más. <span class="pg">pág. 27</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-23.png" alt="Curva tensión deformación del hormigón con las rectas tangente y secante." loading="lazy"></div>
+        <figcaption><b>Fig. 4.23.</b> Interpretación gráfica del módulo de elasticidad: E<sub>c</sub> es la pendiente de la secante hasta 0,45f'<sub>c</sub>; E<sub>ci</sub>, la tangente en el origen. <span class="pg">Llopiz T4, pág. 27</span></figcaption>
+      </figure>
+      <p>Salvo un estudio más detallado, la rigidez a flexión se calcula con E = E<sub>c</sub> y la <strong>inercia efectiva</strong>: <span class="pg">pág. 27</span></p>
+      <div class="eq"><math display="block"><mrow><msub><mi>I</mi><mi>e</mi></msub><mo>=</mo><mo stretchy="true">(</mo><mfrac><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">cr</mi></mrow></msub></mrow><mrow><msub><mi>M</mi><mi>a</mi></msub></mrow></mfrac><msup><mo stretchy="true">)</mo><mn>3</mn></msup><msub><mi>I</mi><mi>g</mi></msub><mo>+</mo><mo stretchy="true">[</mo><mn>1</mn><mo>−</mo><mo stretchy="true">(</mo><mfrac><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">cr</mi></mrow></msub></mrow><mrow><msub><mi>M</mi><mi>a</mi></msub></mrow></mfrac><msup><mo stretchy="true">)</mo><mn>3</mn></msup><mo stretchy="true">]</mo><msub><mi>I</mi><mrow><mi mathvariant="normal">cr</mi></mrow></msub><mo>≤</mo><msub><mi>I</mi><mi>g</mi></msub><mo>,</mo><mspace width="2em"/><msub><mi>M</mi><mrow><mi mathvariant="normal">cr</mi></mrow></msub><mo>=</mo><mfrac><mrow><msub><mi>f</mi><mi>r</mi></msub><mspace width="0.17em"/><msub><mi>I</mi><mi>g</mi></msub></mrow><mrow><msub><mi>y</mi><mi>t</mi></msub></mrow></mfrac></mrow></math></div>
+      <p>M<sub>a</sub>: momento máximo de servicio en el instante en que se evalúa la flecha (en elementos continuos puede promediarse I<sub>e</sub> de las secciones de M<sup>+</sup> y M<sup>−</sup>, sección 9.5.2.4); f<sub>r</sub>: módulo de rotura (Unidad 2); I<sub>g</sub> = b<sub>w</sub>h³/12; y<sub>t</sub>: distancia del baricentro de la sección bruta a la fibra traccionada extrema; I<sub>cr</sub>: inercia de la sección fisurada transformada (tabla 10.2 del Apéndice A). <span class="pg">págs. 27–28</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-24.png" alt="Sección con armaduras y curva momento flecha con pendientes Ig, Icr e Ie." loading="lazy"></div>
+        <figcaption><b>Figs. 4.24 y 4.25.</b> Nomenclatura de la sección en flexión e interpretación de las inercias en el diagrama momento–flecha: I<sub>g</sub> hasta M<sub>cr</sub>, I<sub>cr</sub> después de fisurar, e I<sub>e</sub> como secante equivalente hasta M<sub>a</sub>. <span class="pg">Llopiz T4, pág. 28</span></figcaption>
+      </figure>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-26.png" alt="Sección rectangular fisurada con diagrama lineal de deformaciones y área transformada nAs." loading="lazy"></div>
+        <figcaption><b>Fig. 4.26.</b> Sección de hormigón armado fisurada transformada: el acero se reemplaza por n·A<sub>s</sub> de hormigón, con n = E<sub>s</sub>/E<sub>c</sub>; el eje neutro queda a kd. <span class="pg">Llopiz T4, pág. 28</span></figcaption>
+      </figure>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, 24.2.3.5</span>
+        <p>La fórmula de Branson fue reemplazada por la de <strong>Bischoff</strong> (Tabla 24.2.3.5):</p>
+        <ul>
+          <li>Si M<sub>a</sub> ≤ (2/3)M<sub>cr</sub>: I<sub>e</sub> = I<sub>g</sub>.</li>
+          <li>Si M<sub>a</sub> &gt; (2/3)M<sub>cr</sub>: <span class="f">I<sub>e</sub> = I<sub>cr</sub> / {1 − [(2/3)M<sub>cr</sub>/M<sub>a</sub>]²·(1 − I<sub>cr</sub>/I<sub>g</sub>)}</span>.</li>
+        </ul>
+        <p>El comentario explica que la fórmula anterior <strong>subestimaba las flechas de elementos con cuantías bajas, "lo cual es usual en losas"</strong>, y no consideraba la restricción; el factor 2/3 sobre M<sub>cr</sub> cubre la restricción y la menor resistencia a tracción durante la construcción. Para cuantías mayores al 1 % y M<sub>a</sub> ≥ 2M<sub>cr</sub> las dos dan casi lo mismo. Se mantiene el promedio de I<sub>e</sub> entre secciones de M<sup>+</sup> y M<sup>−</sup> en elementos continuos (24.2.3.6), y M<sub>cr</sub> = f<sub>r</sub>I<sub>g</sub>/y<sub>t</sub> con f<sub>r</sub> = 0,62λ√f'<sub>c</sub>. E<sub>c</sub> = 4700√f'<sub>c</sub> sigue vigente para hormigón de peso normal (19.2.2.1 b).</p>
+      </div>
+      <div class="box nota">
+        <span class="lbl">Aclaración</span>
+        <p>Lo que dice el comentario se ve con números. En una losa con, por ejemplo, I<sub>cr</sub> = 0,15I<sub>g</sub> (cuantía baja) y M<sub>a</sub> = 1,5M<sub>cr</sub>, Branson da I<sub>e</sub> ≈ 0,40I<sub>g</sub>, mientras que Bischoff da I<sub>e</sub> ≈ 0,18I<sub>g</sub>: la flecha calculada hoy es más del doble.</p>
+      </div>
+      <h4 id="u4-4-5-1">4.4.5.1 Cálculo de las deformaciones</h4>
+      <p>Predecir deformaciones es difícil. La armadura no simétrica produce deformaciones por <strong>contracción</strong> que se suman a las de carga; la <strong>fluencia lenta</strong> las aumenta bajo cargas permanentes; ambas dependen de temperatura, humedad, curado y edad, y la fisuración reduce la rigidez. Con el método que sigue se estima un error del ±20 %, aceptable en la práctica. Solo la carga permanente y la porción de sobrecarga que actúa en forma permanente generan deformación diferida: en departamentos tal vez el 20 a 25 % de L; en un depósito, el 80 a 100 %. La deformación diferida puede llegar a 2 o 3 veces la instantánea. <span class="pg">pág. 29</span></p>
+      <p>Con armadura simple la contracción no está impedida en la zona comprimida y genera una curvatura del mismo signo que la de las cargas gravitatorias, y sus tracciones incrementan la fisuración; la fluencia lenta acorta la zona comprimida y agrega curvatura. La <strong>armadura de compresión</strong> reduce ambas: con igual armadura arriba y abajo la curvatura por contracción sería nula, y parte de la compresión se transfiere gradualmente al acero. <span class="pg">págs. 29–30</span></p>
+      <p>El NZS 3101:2006 obtiene la deformación adicional de larga duración multiplicando la instantánea por cargas sostenidas por K<sub>s</sub> y K<sub>cp</sub>: <span class="pg">pág. 30</span></p>
+      <div class="eq"><math display="block"><mrow><msub><mi>K</mi><mrow><mi mathvariant="normal">cp</mi></mrow></msub><mo>=</mo><mfrac><mrow><mn>2</mn></mrow><mrow><mn>1</mn><mo>+</mo><mn>50</mn><mspace width="0.17em"/><msup><mi>ρ</mi><mrow><mo>′</mo></mrow></msup></mrow></mfrac><mo>,</mo><mspace width="2em"/><msub><mi>K</mi><mi>s</mi></msub><mo>=</mo><mfrac><mrow><mi>D</mi><mo>+</mo><msub><mi>L</mi><mi>l</mi></msub></mrow><mrow><mi>D</mi><mo>+</mo><msub><mi>L</mi><mi>s</mi></msub></mrow></mfrac></mrow></math><span class="tag">(4.43)</span></div>
+      <div class="eq"><math display="block"><mrow><msub><mi>δ</mi><mi>t</mi></msub><mo>=</mo><msub><mi>δ</mi><mi>i</mi></msub><mo>+</mo><msub><mi>K</mi><mrow><mi mathvariant="normal">cp</mi></mrow></msub><mspace width="0.17em"/><msub><mi>δ</mi><mi>i</mi></msub></mrow></math><span class="tag">(4.44)</span></div>
+      <p>ρ' es la cuantía de armadura comprimida, a mitad de luz en tramos simples y continuos y en el apoyo en voladizos; K<sub>s</sub> es la relación entre los momentos máximos con D más la sobrecarga de larga duración L<sub>l</sub> y con D más la de corta duración L<sub>s</sub>. Se usa con la AS/NZS 1170.0: combinar D + ψ<sub>l</sub>L (ψ<sub>l</sub> = 0,70 para pisos; ψ<sub>s</sub> = 0,40 de corta duración) y verificar a mitad de luz una flecha menor que luz/300. El ACI 318-2005 y el CIRSOC 201-2005 dan una expresión similar: <span class="pg">pág. 30</span></p>
+      <div class="eq"><math display="block"><mrow><mi>λ</mi><mo>=</mo><mfrac><mrow><mi>ξ</mi></mrow><mrow><mn>1</mn><mo>+</mo><mn>50</mn><mspace width="0.17em"/><msup><mi>ρ</mi><mrow><mo>′</mo></mrow></msup></mrow></mfrac></mrow></math></div>
+      <p>con ξ = 2 para 5 años o más. Para A'<sub>s</sub> = 0 ambas expresiones coinciden en K<sub>cp</sub> = 2. <span class="pg">pág. 30</span></p>
+      <div class="box err">
+        <span class="lbl">Error en el apunte · pág. 29</span>
+        <p>"Las deformaciones adicionales a la instantánea son causadas por la contracción y <strong>flexión</strong> del hormigón": corresponde contracción y <strong>fluencia lenta</strong>, como el propio apunte explica en los párrafos siguientes y como dice el comentario C 24.2.4.1 del 201-25.</p>
+      </div>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, 24.2.4.1</span>
+        <p>Sin cambios: λ<sub>Δ</sub> = ξ/(1 + 50ρ'), con ρ' a mitad de luz en tramos simples y continuos y en el apoyo en voladizos, y ξ de la Tabla 24.2.4.1.3 (2,0 para 5 años o más).</p>
+      </div>
+      <h4 id="u4-4-5-2">4.4.5.2 Vigas y losas en una dirección</h4>
+      <p>La Fig. 4.27 da las relaciones h/l (altura total sobre luz de cálculo) para losas macizas en una dirección que <strong>no</strong> soporten elementos susceptibles de dañarse por grandes flechas (tabla 9.5(a) del CIRSOC, Apéndice A). Para otro acero, la altura básica h<sub>b</sub> se corrige: <span class="pg">pág. 31</span></p>
+      <div class="eq"><math display="block"><mrow><mi>h</mi><mo>=</mo><msub><mi>h</mi><mi>b</mi></msub><mo stretchy="true">(</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>40</mn><mo>+</mo><mfrac><mrow><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><mn>700</mn></mrow></mfrac><mo stretchy="true">)</mo></mrow></math></div>
+      <p>para hormigón de densidad normal; con ADN 420 el factor vale 1,0.</p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-27.png" alt="Cuatro esquemas de losa con las relaciones L/20, L/24, L/28 y L/10." loading="lazy"></div>
+        <figcaption><b>Fig. 4.27.</b> Esbelteces de losas macizas en una dirección que no soportan elementos frágiles: h<sub>b</sub> = L/20 simplemente apoyada, L/24 con un extremo continuo, L/28 con ambos extremos continuos y L/10 en voladizo (L: luz de cálculo). <span class="pg">Llopiz T4, pág. 31</span></figcaption>
+      </figure>
+      <p>Si se quiere una altura menor, o si el elemento soporta directamente elementos susceptibles de dañarse, hay que calcular la flecha: (i) elásticamente pero con sección fisurada (I<sub>e</sub>); (ii) para la diferida, con la parte de la sobrecarga que actúa como permanente; (iii) según el CIRSOC 101-2005 (4.5), con la distribución de sobrecarga más desfavorable para el efecto estudiado; (iv) agregando cargas concentradas si las hay. Con elementos susceptibles de dañarse, <strong>f ≤ L/480</strong>; sin ellos, <strong>f ≤ L/240</strong> (tabla 9.5(b), Apéndice A), con L la luz de cálculo. <span class="pg">pág. 31</span></p>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, 7.3.1 y Tabla 24.2.2</span>
+        <p>La Tabla 7.3.1.1 mantiene los mismos espesores mínimos (ℓ/20, ℓ/24, ℓ/28 y ℓ/10 para f<sub>y</sub> = 420 MPa) y la corrección (0,4 + f<sub>y</sub>/700) para otro acero (7.3.1.1.1); para hormigón liviano de 1400 a 2000 kg/m³ se multiplica por el mayor entre 1,65 − 0,0003w<sub>c</sub> y 1,09. Los límites de flecha de la Tabla 24.2.2 siguen siendo ℓ/180 (cubiertas planas, inmediata por L<sub>r</sub>, S y R), ℓ/360 (entrepisos, inmediata por L), ℓ/480 y ℓ/240 (la parte de la flecha que ocurre después de colocar elementos no estructurales, según puedan o no dañarse).</p>
+      </div>
+      <h4 id="u4-4-5-3">4.4.5.3 Losas en dos direcciones</h4>
+      <p>El CIRSOC 201-2005 (9.5.3), para losas rectangulares con relación de luces (a ejes) ≤ 2,0, distingue los casos de la Fig. 4.28 y vuelve a permitir tablas o fórmulas, o bien el cálculo de flechas. Para losas <strong>sin vigas interiores</strong> los espesores mínimos con ADN 420 se resumen en la Fig. 4.28; en todo caso, <strong>120 mm</strong> sin ábacos y <strong>100 mm</strong> con ábacos. <span class="pg">pág. 32</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-28.png" alt="Plantas de entrepisos sin vigas con los espesores ln/30, ln/33 y ln/36." loading="lazy"></div>
+        <figcaption><b>Fig. 4.28.</b> Espesores mínimos de losas sin vigas interiores (ℓ<sub>n</sub>: luz libre mayor): (a) sin ábacos, ℓ<sub>n</sub>/30 en paneles exteriores sin viga de borde y ℓ<sub>n</sub>/33 en los demás; (b) con ábacos, ℓ<sub>n</sub>/33 y ℓ<sub>n</sub>/36. <span class="pg">Llopiz T4, pág. 32</span></figcaption>
+      </figure>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-29a.png" alt="Corte de losa con ábaco y capitel sobre columna." loading="lazy"></div>
+        <figcaption><b>Fig. 4.29(a).</b> Definición de ábaco y capitel en losas sin vigas. <span class="pg">Llopiz T4, pág. 32</span></figcaption>
+      </figure>
+      <p>El ábaco (13.3.7.1) debe prolongarse en cada dirección, desde el eje del apoyo, más de l/6 (l: luz entre centros de apoyos en esa dirección), y sobresalir por debajo de la losa al menos 1/4 del espesor de la losa. El C201 (9.5.3.4) y el NZS (3.3.2.2) permiten reducir los espesores de tabla si se calculan las flechas y se comparan con la tabla 9.5(b). <span class="pg">pág. 33</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-29b.png" alt="Corte de ábaco con cotas l/6 y h/4." loading="lazy"></div>
+        <figcaption><b>Fig. 4.29(b).</b> Requisitos del ábaco: extensión ≥ l/6 a cada lado del eje y espesor bajo la losa ≥ h/4 (altura total 1,25h). <span class="pg">Llopiz T4, pág. 33</span></figcaption>
+      </figure>
+      <p>Para losas <strong>con vigas en todos sus lados</strong> el espesor mínimo depende de α<sub>m</sub>: <span class="pg">págs. 33–34</span></p>
+      <ol class="roman">
+        <li>α<sub>m</sub> ≤ 0,2: se trata como losa sin vigas.</li>
+        <li>0,2 &lt; α<sub>m</sub> ≤ 2,0, sin bajar de 120 mm:</li>
+      </ol>
+      <div class="eq"><math display="block"><mrow><mi>h</mi><mo>≥</mo><mfrac><mrow><msub><mi>l</mi><mi>n</mi></msub><mo stretchy="true">(</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>8</mn><mo>+</mo><mstyle displaystyle="true"><mfrac><mrow><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><mn>1400</mn></mrow></mfrac></mstyle><mo stretchy="true">)</mo></mrow><mrow><mn>36</mn><mo>+</mo><mn>5</mn><mi>β</mi><mspace width="0.17em"/><mo stretchy="false">(</mo><msub><mi>α</mi><mi>m</mi></msub><mo>−</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>2</mn><mo stretchy="false">)</mo></mrow></mfrac></mrow></math></div>
+      <ol class="roman" start="3"><li>α<sub>m</sub> &gt; 2,0, sin bajar de 90 mm:</li></ol>
+      <div class="eq"><math display="block"><mrow><mi>h</mi><mo>≥</mo><mfrac><mrow><msub><mi>l</mi><mi>n</mi></msub><mo stretchy="true">(</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>8</mn><mo>+</mo><mstyle displaystyle="true"><mfrac><mrow><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><mn>1400</mn></mrow></mfrac></mstyle><mo stretchy="true">)</mo></mrow><mrow><mn>36</mn><mo>+</mo><mn>9</mn><mi>β</mi></mrow></mfrac></mrow></math></div>
+      <p>l<sub>n</sub>: luz libre mayor; β: relación entre luz libre mayor y menor; α<sub>m</sub>: promedio de los α de cada viga del borde del panel: <span class="pg">pág. 34</span></p>
+      <div class="eq"><math display="block"><mrow><mi>α</mi><mo>=</mo><mfrac><mrow><msub><mi>E</mi><mrow><mi mathvariant="normal">cb</mi></mrow></msub><mspace width="0.17em"/><msub><mi>I</mi><mi>b</mi></msub></mrow><mrow><msub><mi>E</mi><mrow><mi mathvariant="normal">cs</mi></mrow></msub><mspace width="0.17em"/><msub><mi>I</mi><mi>s</mi></msub></mrow></mfrac></mrow></math></div>
+      <p>b por <em>beam</em> (viga) y s por <em>slab</em> (losa). I<sub>b</sub> se calcula con la sección de la Fig. 4.30 (viga más un ala de losa limitada por h<sub>w</sub> ≤ 4h<sub>f</sub>), respecto de su baricentro; I<sub>s</sub> es la inercia de la franja de losa limitada por los ejes de los paneles adyacentes a cada lado de la viga (Fig. 4.31). <strong>No deben confundirse</strong> estas secciones con los anchos efectivos para la resistencia de vigas L y T. <span class="pg">pág. 34</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-30.png" alt="Secciones L y T con los límites de ala para calcular la inercia de la viga." loading="lazy"></div>
+        <figcaption><b>Fig. 4.30.</b> Sección efectiva de viga para evaluar I<sub>b</sub>: viga de borde con ala h<sub>w</sub> ≤ 4h<sub>f</sub>, y viga interior con b<sub>w</sub> + 2h<sub>w</sub> ≤ b<sub>w</sub> + 8h<sub>f</sub>. <span class="pg">Llopiz T4, pág. 34</span></figcaption>
+      </figure>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-31.png" alt="Sección T dentro de una franja de losa entre ejes de panel." loading="lazy"></div>
+        <figcaption><b>Fig. 4.31.</b> Secciones de viga (ancho b con alas 4h<sub>f</sub> ≤ h − h<sub>f</sub>) y de losa (ancho ℓ<sub>2</sub> entre ejes de paneles) para evaluar I<sub>b</sub> e I<sub>s</sub>. <span class="pg">Llopiz T4, pág. 34</span></figcaption>
+      </figure>
+      <p>En el ejercicio del Apéndice C, para el edificio en estudio sin vigas secundarias, el espesor adoptado de 120 mm no cumpliría: necesitaría 140 mm. Para no aumentarlo habría que verificar la flecha con sección fisurada contra la tabla 9.5(b) (tomada de la traducción chilena del ACI 318, por su mayor claridad). La Fig. 4.32 permite calcular rápido las inercias de secciones L y T, y el Apéndice A da otra tabla para inercias brutas y fisuradas. <span class="pg">pág. 35</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-32.png" alt="Ábaco de curvas del coeficiente f según b/bw para distintos t/h." loading="lazy"></div>
+        <figcaption><b>Fig. 4.32.</b> Coeficiente f para la inercia bruta de secciones L y T no fisuradas, I<sub>g</sub> = f·b<sub>w</sub>h³/12, en función de b/b<sub>w</sub> y de t/h (t: espesor del ala). <span class="pg">Llopiz T4, pág. 35</span></figcaption>
+      </figure>
+      <div class="box err">
+        <span class="lbl">Referencias cruzadas en el apunte · págs. 8, 31–35, 41–44</span>
+        <ul>
+          <li>Pág. 8: "La Fig. 4.5 muestra el caso de un elemento de viga" y "De la Fig. 4.5(a)": es la Fig. 4.6(a).</li>
+          <li>El título "4.4.6 Vigas y losas en una dirección" (pág. 31) corresponde a 4.4.5.2 del índice; 4.4.6 es "Procedimientos de diseño para losas en dos direcciones".</li>
+          <li>Pág. 32: los espesores de losas sin vigas "se resumen en la Fig. 4.17": es la Fig. 4.28.</li>
+          <li>Pág. 35: "En la Fig. 4.21 se muestra un gráfico" de inercias L y T: es la Fig. 4.32.</li>
+          <li>Pág. 37: los coeficientes β<sub>sx</sub> y β<sub>sy</sub> están en la "tabla 4.3"; en la pág. 40 la tabla se titula "Tabla 3" (es la tabla 14.1 del NZS 3101).</li>
+          <li>Pág. 41: la A<sub>min</sub> "se dispone según indica la Fig. 4.25": es la Fig. 4.36.</li>
+          <li>Pág. 44: el ancho efectivo "se muestra en la Fig. 4.62" (es la Fig. 4.37) y el anclaje de la armadura negativa en la "Fig. 21" (es la Fig. 4.38).</li>
+        </ul>
+      </div>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, 8.3.1 y 8.2.4</span>
+        <p>La Tabla 8.3.1.1 (losas sin vigas interiores, relación de lados ≤ 2) mantiene para f<sub>y</sub> = 420 MPa: sin ábacos, ℓ<sub>n</sub>/30 en paneles exteriores sin vigas de borde y ℓ<sub>n</sub>/33 con vigas de borde o interiores; con ábacos, ℓ<sub>n</sub>/33 y ℓ<sub>n</sub>/36; y los mínimos absolutos de 120 mm y 100 mm. Los paneles exteriores se consideran sin viga de borde si α<sub>f</sub> &lt; 0,8. La Tabla 8.3.1.2 (losas con vigas en todos los lados) conserva las mismas dos fórmulas y los mínimos de 120 mm y 90 mm. En bordes discontinuos debe haber una viga de borde con α<sub>f</sub> ≥ 0,80 o aumentarse el espesor al menos un 10 % (8.3.1.2.1). Para paneles con relación de luces mayor que 2, el comentario aclara que deben usarse las reglas de una dirección (7.3.1). Los requisitos del ábaco están hoy en 8.2.4.</p>
+      </div>
+      <h4 id="u4-4-6">4.4.6 Procedimientos de diseño para losas en dos direcciones</h4>
+      <p><strong>4.4.6.1 Introducción.</strong> El ACI 318 (13.5.1) permite cualquier procedimiento que cumpla equilibrio y compatibilidad, con resistencia para cargas mayoradas y rigidez para cargas de servicio. El C 13.5.1 del CIRSOC 201-2005, y más claramente el NZS 3101:1995 (14.3.2), admiten: <span class="pg">pág. 36</span></p>
+      <ol class="roman">
+        <li>métodos de la teoría elástica: soluciones del continuo o elementos finitos (SAP2000, SAFE);</li>
+        <li>métodos de la teoría plástica: <strong>líneas de fluencia de Johansen</strong> o <strong>método de las franjas de Hillerborg</strong>, exigiendo por redistribución una cuantía máxima de 0,40ρ<sub>b</sub> (se verán en Hormigón II);</li>
+        <li>método de los coeficientes de momentos;</li>
+        <li>método de diseño directo;</li>
+        <li>método del pórtico equivalente.</li>
+      </ol>
+      <p>El método directo y el del pórtico equivalente se consultan en la norma; el directo, cumplidos sus requisitos, consiste en (i) determinar el momento isostático mayorado en cada dirección (w<sub>u</sub>l²/8), (ii) distribuirlo en momentos positivos y negativos según las condiciones de contorno y (iii) repartir éstos entre franjas de columna e intermedias. Uno de los métodos más usados es el de <strong>tablas</strong>, aceptadas por los códigos de Nueva Zelanda y el CP 110 inglés. <span class="pg">pág. 36</span></p>
+      <p><strong>4.4.6.2 Coeficientes de momentos de losas cruzadas y armado.</strong> Para losas rectangulares con carga uniforme, apoyadas en dos direcciones, con las esquinas impedidas de levantarse y previsiones para torsión, monolíticas con vigas o tabiques en todos sus lados: <span class="pg">pág. 37</span></p>
+      <div class="eq"><math display="block"><mrow><msub><mi>M</mi><mrow><mi mathvariant="normal">sx</mi></mrow></msub><mo>=</mo><msub><mi>β</mi><mrow><mi mathvariant="normal">sx</mi></mrow></msub><mspace width="0.17em"/><msub><mi>w</mi><mi>u</mi></msub><mspace width="0.17em"/><msubsup><mi>l</mi><mi>x</mi><mn>2</mn></msubsup><mo>,</mo><mspace width="2em"/><msub><mi>M</mi><mrow><mi mathvariant="normal">sy</mi></mrow></msub><mo>=</mo><msub><mi>β</mi><mrow><mi mathvariant="normal">sy</mi></mrow></msub><mspace width="0.17em"/><msub><mi>w</mi><mi>u</mi></msub><mspace width="0.17em"/><msubsup><mi>l</mi><mi>x</mi><mn>2</mn></msubsup></mrow></math></div>
+      <p>Los coeficientes β<sub>sx</sub> y β<sub>sy</sub> (tabla 14.1 del NZS 3101, iguales a los del CP 110:1972) se derivaron con la teoría de líneas de fluencia para armadura uniforme (Taylor et al.) y se multiplicaron por <strong>1,33</strong> para permitir concentrar la armadura en la faja central. En ambas ecuaciones interviene la <strong>luz menor</strong> l<sub>x</sub> (luz libre). w<sub>u</sub> = 1,2D + 1,6L o 1,4D, la mayor. M<sub>sx</sub> y M<sub>sy</sub> son de tramo o de apoyo según el coeficiente. <span class="pg">pág. 37</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-t3.png" alt="Tabla de coeficientes de momento para nueve tipos de paneles." loading="lazy"></div>
+        <figcaption><b>Tabla 3</b> (tabla 14.1 del NZS 3101:1995). Coeficientes de momento β<sub>sx</sub> (luz corta, según L<sub>y</sub>/L<sub>x</sub> de 1,0 a 2,0) y β<sub>sy</sub> (luz larga, constante) para paneles rectangulares con carga uniforme apoyados en sus 4 lados, para los 9 casos de bordes continuos y discontinuos. <span class="pg">Llopiz T4, pág. 40</span></figcaption>
+      </figure>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-33.png" alt="Dos plantas de losa con franja central y franjas de borde." loading="lazy"></div>
+        <figcaption><b>Fig. 4.33.</b> División de la losa en franjas: franja central de 3/4 del ancho y franjas de borde de 1/8, para cada dirección. <span class="pg">Llopiz T4, pág. 38</span></figcaption>
+      </figure>
+      <ol class="roman" style="list-style-type:lower-alpha" start="2">
+        <li>La losa se divide en cada dirección en una franja central de 3/4 del ancho y dos de borde de 1/8 (Fig. 4.33).</li>
+        <li>Los momentos calculados corresponden solo a las fajas centrales y <strong>no se permite redistribución</strong>.</li>
+        <li>La armadura inferior de tramo: al llegar a un apoyo continuo se extiende 0,15L<sub>x</sub> o 0,15L<sub>y</sub> más allá del apoyo; al llegar a un apoyo discontinuo se prolonga hasta el borde con un anclaje, recto o con gancho, de al menos 150 mm dentro de la viga perpendicular.</li>
+        <li>Sobre un apoyo continuo, la armadura superior se extiende al menos 0,15L<sub>x</sub> o 0,15L<sub>y</sub> desde el apoyo, y al menos el 50 % hasta 0,30L<sub>x</sub> o 0,30L<sub>y</sub>.</li>
+        <li>En un borde discontinuo pueden aparecer momentos negativos, según el grado de empotramiento: arriba se coloca al menos el 50 % de la armadura de tramo, extendida al menos 0,1L<sub>x</sub> o 0,1L<sub>y</sub> desde el apoyo.</li>
+        <li>En las fajas de borde basta el mínimo de contracción y temperatura (no menor que 0,756/f<sub>y</sub>, separación ≤ 5h, ≤ 450 mm en edificios y 300 mm en puentes), cumpliendo en las esquinas la armadura de torsión.</li>
+        <li>En cada esquina donde se cortan dos bordes <strong>simplemente apoyados</strong> va armadura de torsión, superior e inferior, en capas paralelas a cada lado, extendida al menos 1/5 de la luz menor; en cada una de las cuatro capas, al menos <strong>3/4</strong> del área requerida para el máximo momento positivo de tramo.</li>
+        <li>Donde se encuentran un borde continuo y uno discontinuo, la mitad de la anterior.</li>
+        <li>En esquinas con dos bordes continuos no se requiere.</li>
+        <li>Si L<sub>y</sub>/L<sub>x</sub> &gt; 2,0, la losa se diseña como apoyada en una dirección.</li>
+        <li>La armadura principal cubre los momentos máximos, pero en ambas direcciones la cuantía no debe ser menor que 0,756/f<sub>y</sub> (0,0018 para f<sub>y</sub> = 420 MPa) ni que 0,0014.</li>
+        <li>La separación de la armadura principal no debe superar 2 veces la altura de la losa (coincide con el CIRSOC 201, 13.3.2).</li>
+        <li>Armadura mínima de contracción y temperatura en cualquier parte de la losa: ρ ≥ 0,0018, con separación menor que 5h y que 45 cm.</li>
+        <li>Las áreas tributarias de descarga sobre las vigas se indican en la Fig. 4.34.</li>
+      </ol>
+      <p class="pg" style="margin-top:-6px">págs. 38–39</p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-34.png" alt="Planta rectangular dividida en triángulos y trapecios por líneas a 45 grados." loading="lazy"></div>
+        <figcaption><b>Fig. 4.34.</b> Descarga de losas cruzadas sobre las vigas de apoyo: líneas a 45° desde las esquinas; la viga corta A recibe el triángulo y la larga B el trapecio. <span class="pg">Llopiz T4, pág. 39</span></figcaption>
+      </figure>
+      <p>Los momentos elásticos se pueden redistribuir hasta un 20 %, en función de 1000ε<sub>t</sub>. La Fig. 4.35 muestra los momentos en la dirección XX obtenidos con SAP2000 para el edificio. <span class="pg">pág. 41</span></p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-35.jpg" alt="Captura de SAP2000 con mapa de color de momentos de un panel." loading="lazy"></div>
+        <figcaption><b>Fig. 4.35.</b> Momentos M11 según la dirección XX con SAP2000 para un panel de losa del edificio. <span class="pg">Llopiz T4, pág. 41</span></figcaption>
+      </figure>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, 8.7.3 (esquinas)</span>
+        <p>El 201-25 pide armadura de esquina en las esquinas exteriores apoyadas sobre tabiques o donde alguna viga de borde tenga α<sub>f</sub> &gt; 1,0: arriba y abajo, para un M<sub>u</sub> por unidad de ancho <strong>igual al momento positivo máximo</strong> del panel (no 3/4 del área, como el NZS), extendida desde la esquina <strong>1/5 de la luz mayor</strong> (el NZS dice de la menor). Se coloca paralela a la diagonal arriba y perpendicular abajo o, alternativamente, en dos capas paralelas a los bordes arriba y abajo (8.7.3.1).</p>
+      </div>
+      <h4 id="u4-4-6-3">4.4.6.3 Requisitos de armaduras</h4>
+      <ul>
+        <li>Sección 13.3.1: A<sub>s</sub> ≥ A<sub>req</sub> según los momentos de las secciones críticas, pero nunca menor que A<sub>min</sub> (Fig. 4.36).</li>
+        <li>Sección 7.12: la A<sub>min</sub> por contracción, fluencia lenta y temperatura debe cumplir <span class="f">ρ ≥ 0,0018 × 420/f<sub>y</sub></span> y <span class="f">ρ ≥ 0,0014</span>, con separación <span class="f">s ≤ 3h</span> y <span class="f">s ≤ 300 mm</span>.</li>
+      </ul>
+      <p class="pg">pág. 41</p>
+      <figure class="w-sm">
+        <div class="frame"><img src="img/l4-36.png" alt="Bloque de losa con barras y las expresiones de cuantía mínima." loading="lazy"></div>
+        <figcaption><b>Fig. 4.36.</b> Cantidad y ubicación de la cuantía mínima en losas: 0,0018 para f<sub>y</sub> ≤ 420 MPa y 0,0018·420/f<sub>y</sub> para f<sub>y</sub> &gt; 420 MPa, con s ≤ 3h y s ≤ 300 mm. <span class="pg">Llopiz T4, pág. 42</span></figcaption>
+      </figure>
+      <p>Para el edificio (f<sub>y</sub> = 420 MPa, h = 12 cm, d = 10 cm): <span class="pg">pág. 42</span></p>
+      <div class="eq"><math display="block"><mrow><msub><mi>A</mi><mrow><mi>s</mi><mo>,</mo><mi mathvariant="normal">min</mi></mrow></msub><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>0018</mn><mo>×</mo><mn>10</mn><mspace width="0.25em"/><mtext>cm</mtext><mo>×</mo><mn>100</mn><mspace width="0.25em"/><mtext>cm</mtext><mo>=</mo><mn>1</mn><mrow><mo>,</mo></mrow><mn>80</mn><mspace width="0.25em"/><msup><mtext>cm</mtext><mn>2</mn></msup></mrow></math></div>
+      <p>que equivale a Ø8 c/27 cm; en la práctica se puede adoptar Ø8 c/20 cm y evaluar su resistencia, M<sub>d</sub> = φM<sub>n</sub> con φ = 0,9 (seguro se cumple ε<sub>t</sub> ≥ 0,0075 con cuantía mínima). Por equilibrio, para armadura simple: <span class="pg">pág. 42</span></p>
+      <div class="deriv">
+      <div class="dt">Resistencia de la armadura mínima (Ø8 c/20 cm)</div>
+      <div class="st"><div class="why">Momento nominal con armadura simple</div><div class="ex"><math display="block"><mrow><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub><mo stretchy="true">(</mo><mi>d</mi><mo>−</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>59</mn><mspace width="0.17em"/><mfrac><mrow><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub></mrow><mrow><mi>b</mi><mspace width="0.17em"/><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></mrow></mfrac><mo stretchy="true">)</mo></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Losa: b = 100 cm, f<sub>y</sub> = 420 MPa, H25 (0,59 × 4,2/(100 × 0,25) ≈ 0,1)</div><div class="ex"><math display="block"><mrow><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><msub><mi>A</mi><mi>s</mi></msub><msub><mi>f</mi><mi>y</mi></msub><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>d</mi><mo>−</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>1</mn><mspace width="0.17em"/><msub><mi>A</mi><mi>s</mi></msub><mo stretchy="false">)</mo></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Ø8 c/20 cm: A<sub>s</sub> = 2,50 cm²/m; recubrimiento 1,50 cm y repartición encima de la principal</div><div class="ex"><math display="block"><mrow><msub><mi>M</mi><mi>n</mi></msub><mo>=</mo><mn>2</mn><mrow><mo>,</mo></mrow><mn>5</mn><mo>×</mo><mn>4</mn><mrow><mo>,</mo></mrow><mn>2</mn><mo>×</mo><mo stretchy="false">(</mo><mn>10</mn><mo>−</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>1</mn><mo>×</mo><mn>2</mn><mrow><mo>,</mo></mrow><mn>5</mn><mo stretchy="false">)</mo><mo>=</mo><mn>100</mn><mspace width="0.25em"/><mtext>tcm/m</mtext></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">Resistencia de diseño</div><div class="ex"><math display="block"><mrow><msub><mi>M</mi><mi>d</mi></msub><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>9</mn><mo>×</mo><mn>102</mn><mo>≈</mo><mn>92</mn><mspace width="0.25em"/><mtext>tcm/m</mtext></mrow></math></div><div class="tag"></div></div>
+      </div>
+      <p>Un análisis con SECAN (barras a 2 cm de los bordes y materiales según norma) da: <span class="pg">pág. 43</span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>Estado</th><th class="num">Momento [tcm]</th><th class="num">Eje neutro [cm]</th><th class="num">ε<sub>t</sub> [%]</th></tr></thead>
+        <tbody>
+          <tr><td>M<sub>cr</sub></td><td class="num">79</td><td class="num">6,06</td><td class="num">0,009</td></tr>
+          <tr><td>M<sub>y</sub></td><td class="num">92</td><td class="num">1,82</td><td class="num">0,21</td></tr>
+          <tr><td>M<sub>n</sub></td><td class="num">97</td><td class="num">0,70</td><td class="num">4</td></tr>
+        </tbody>
+      </table></div>
+      <p>La fórmula aproximada de Priestley para vigas no es aplicable a losas: daría resultados muy conservadores, porque con alturas pequeñas un error en el brazo de palanca es un gran error en el momento. Del Apéndice C, sin vigas secundarias, los momentos de diseño de la losa esquina son 91 tcm en tramo y 120 tcm en apoyos: la mínima cubre el tramo pero no el negativo, que necesita aproximadamente: <span class="pg">pág. 43</span></p>
+      <div class="eq"><math display="block"><mrow><msubsup><mi>A</mi><mi>s</mi><mo>−</mo></msubsup><mo>=</mo><mfrac><mrow><mn>120</mn><mo>/</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>9</mn></mrow><mrow><mn>4</mn><mrow><mo>,</mo></mrow><mn>2</mn><mo>×</mo><mn>8</mn></mrow></mfrac><mspace width="0.25em"/><msup><mtext>cm</mtext><mn>2</mn></msup><mo>≈</mo><mn>4</mn><mspace width="0.25em"/><msup><mtext>cm</mtext><mn>2</mn></msup></mrow></math></div>
+      <p>Se pueden agregar sobre la básica de 5Ø8 (2,5 cm²) por metro, como refuerzo en la franja central, 5Ø6. Con SECAN (A'<sub>s</sub> = 2,5 cm², A<sub>s</sub> = 3,9 cm², d' = 2,5 cm, d = 10 cm, f<sub>r</sub> = 0,032 t/cm², f'<sub>c</sub> = 0,21 t/cm², E<sub>c</sub> = 215 t/cm², E<sub>s</sub> = 2000 t/cm², ε<sub>cmáx</sub> = 0,003, f<sub>y</sub> = 4,2 t/cm²): <span class="pg">pág. 43</span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>Estado</th><th class="num">Momento [tcm]</th><th class="num">Eje neutro [cm]</th><th class="num">ε<sub>t</sub> [%]</th></tr></thead>
+        <tbody>
+          <tr><td>M<sub>cr</sub></td><td class="num">81</td><td class="num">–</td><td class="num">–</td></tr>
+          <tr><td>M<sub>y</sub></td><td class="num">142</td><td class="num">2,20</td><td class="num">0,21</td></tr>
+          <tr><td>M<sub>n</sub></td><td class="num">160</td><td class="num">1,62</td><td class="num">1,46</td></tr>
+        </tbody>
+      </table></div>
+      <p>La resistencia de diseño, M<sub>d</sub> = 0,90 × 160 = 144 tcm, supera la requerida de 120 tcm en el apoyo. <span class="pg">pág. 43</span></p>
+      <ul>
+        <li>En vigas L y T con ancho efectivo en compresión, el ala necesita armadura perpendicular a la principal para la carga mayorada, suponiendo el ala en voladizo. En el edificio, con l = 6,0 m y ancho efectivo l/4 = 1,50 m (Fig. 4.37), con h = 12 cm, d = 10 cm, d' = 2 cm: <span class="pg">pág. 44</span></li>
+      </ul>
+      <div class="eq"><math display="block"><mrow><msub><mi>M</mi><mi>r</mi></msub><mo>=</mo><mfrac><mrow><mn>1</mn><mspace width="0.25em"/><mtext>t/m</mtext><mo>×</mo><mn>0</mn><mrow><mo>,</mo></mrow><msup><mn>75</mn><mn>2</mn></msup></mrow><mrow><mn>2</mn></mrow></mfrac><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>28</mn><mspace width="0.25em"/><mtext>tm</mtext><mo>=</mo><mn>28</mn><mspace width="0.25em"/><mtext>tcm</mtext><mo>,</mo><mspace width="2em"/><msub><mi>A</mi><mrow><mi mathvariant="normal">nec</mi></mrow></msub><mo>=</mo><mfrac><mrow><mn>28</mn><mo>/</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>90</mn></mrow><mrow><mn>4</mn><mrow><mo>,</mo></mrow><mn>2</mn><mo>×</mo><mo stretchy="false">(</mo><mn>10</mn><mo>−</mo><mn>2</mn><mo stretchy="false">)</mo></mrow></mfrac><mo>=</mo><mn>0</mn><mrow><mo>,</mo></mrow><mn>93</mn><mspace width="0.25em"/><msup><mtext>cm</mtext><mn>2</mn></msup><mo>/</mo><mtext>m</mtext></mrow></math></div>
+      <p>Son 3,30 barras de Ø6 por metro: Ø6 c/30 cm, con s<sub>t</sub> ≤ 3h y s<sub>t</sub> ≤ 300 mm. <span class="pg">pág. 44</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-37.png" alt="Corte de viga T con el ancho efectivo rayado." loading="lazy"></div>
+        <figcaption><b>Fig. 4.37.</b> Viga T con ancho efectivo en compresión de 1,50 m (luz 6,00 m, losa de 0,12 m, viga de 0,30 × 0,50 m): el ala requiere armadura perpendicular a la principal. <span class="pg">Llopiz T4, pág. 44</span></figcaption>
+      </figure>
+      <ul>
+        <li>Sección 13.3: separación de la armadura principal menor que 2h; para h = 12 cm, s ≤ 24 cm.</li>
+        <li>La armadura positiva perpendicular a un borde discontinuo se ancla en el apoyo al menos 15 cm (Fig. 4.38).</li>
+        <li>La negativa se ancla en la viga de apoyo con su longitud de desarrollo o, si la losa continúa, en esa continuidad.</li>
+      </ul>
+      <p class="pg">pág. 44</p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-38.png" alt="Corte de losa sobre viga de borde con barras superior e inferior ancladas." loading="lazy"></div>
+        <figcaption><b>Fig. 4.38.</b> Anclaje de las armaduras inferior (al menos 0,15 m dentro del apoyo) y superior de la losa en una viga de borde. <span class="pg">Llopiz T4, pág. 44</span></figcaption>
+      </figure>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-39.png" alt="Dibujos de fundación, tabique, losa, columna, viga y losa nervurada con sus recubrimientos." loading="lazy"></div>
+        <figcaption><b>Fig. 4.39.</b> Recubrimientos mínimos de la sección 7.7.1 del CIRSOC 201-2005: fundaciones 50 mm, tabiques 40 o 20 mm, losas y nervuradas 20 mm (d<sub>b</sub> ≤ 32 mm), columnas 40 mm por fuera del zuncho, vigas 20 mm. <span class="pg">Llopiz T4, pág. 45</span></figcaption>
+      </figure>
+      <div class="box err">
+        <span class="lbl">Error en el apunte · pág. 42 (y Torrisi, pág. 121)</span>
+        <p>La cuantía mínima de contracción y temperatura se refiere al <strong>área bruta</strong> de hormigón (b·h), no a b·d: el CIRSOC 201-2005 (7.12.2.1) ya lo decía y hoy el 201-25 lo dice explícitamente (24.4.3.2 y 0,0018A<sub>g</sub> en 7.6.1 y 8.6.1.1). Con h = 12 cm corresponde A<sub>s,min</sub> = 0,0018 × 12 × 100 = <strong>2,16 cm²/m</strong>, no 1,80 cm²/m (con Ø8 c/20 cm, 2,50 cm²/m, igual se cumple). El mismo criterio aparece en la Sec. 4.5 (losa de h = 16 cm con 0,0018 × 14 × 100 = 2,50 cm²: corresponde 2,88 cm²) y en el ejemplo de Torrisi (0,0018 × 100 × 14 = 2,52 cm²), aunque Torrisi aclara en la pág. 118 que "la cuantía se refiere a la sección total de altura h".</p>
+      </div>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25: armadura mínima, separaciones y recubrimientos</span>
+        <ul>
+          <li><strong>Armadura mínima a flexión:</strong> <span class="f">A<sub>s,min</sub> = 0,0018A<sub>g</sub></span> en losas en una dirección (7.6.1) y en dos direcciones, colocada <strong>cerca de la cara traccionada</strong> en la dirección de la luz considerada (8.6.1.1). Desaparecen la reducción 0,0018·420/f<sub>y</sub> y el piso de 0,0014: el comentario C 24.4.3.2 explica que aceros de mayor f<sub>y</sub> no mejoran el control de fisuras.</li>
+          <li><strong>Contracción y temperatura:</strong> ρ ≥ 0,0018 sobre el área bruta (24.4.3.2), que puede repartirse entre las dos caras o ubicarse entre ellas; separación ≤ <strong>5h y 450 mm</strong> (24.4.3.3), y debe poder desarrollar f<sub>y</sub> (24.4.3.4).</li>
+          <li><strong>Separación de la armadura de flexión:</strong> una dirección, ≤ 3h y 300 mm (7.7.2.3); dos direcciones, ≤ <strong>2h y 300 mm en las secciones críticas</strong> y ≤ 3h y 300 mm en las demás (8.7.2.2).</li>
+          <li><strong>Recubrimientos</strong> (Tabla 20.5.1.3.1), hormigón no expuesto ni en contacto con el suelo, losas, tabiques y nervaduras con d<sub>b</sub> ≤ 32 mm: <strong>25 mm</strong> con control de ejecución (≥ d<sub>b</sub> + 5 mm) y <strong>30 mm</strong> en el resto (≥ d<sub>b</sub> + 10 mm), contra 20 mm de la Fig. 4.39. En contacto con el suelo o a la intemperie, 35/40 mm (d<sub>b</sub> ≤ 16 mm) y 40/45 mm (d<sub>b</sub> &gt; 16 mm); fundaciones sobre hormigón de limpieza, 55/60 mm.</li>
+          <li>En diafragmas sísmicos, separación ≤ 250 mm en cada dirección (IC 103 P-II, 5.3.2).</li>
+        </ul>
+      </div>
+      
+      <!-- ===== 4.5 ===== -->
+      <h3 id="u4-5"><span class="n">4.5</span>Cuantías mínimas</h3>
+      <p>Llopiz vuelve sobre las cuantías mínimas por las confusiones que aparecen en la bibliografía; considera que el CIRSOC 201-2005 no es totalmente claro y consulta también el NZS 3101. <span class="pg">pág. 46</span></p>
+      <p>La primera confusión: el C201-05 (10.5) habla de "armadura mínima en elementos sometidos a flexión", lo que parecería aplicable a vigas y losas, con el criterio de resistencia mayor que la de fisuración:</p>
+      <div class="eq"><math display="block"><mrow><msub><mi>ρ</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub><mo>=</mo><mfrac><mrow><msqrt><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></msqrt></mrow><mrow><mn>4</mn><mspace width="0.17em"/><msub><mi>f</mi><mi>y</mi></msub></mrow></mfrac><mspace width="0.25em"/><mspace width="0.25em"/><mtext>o</mtext><mspace width="0.25em"/><mspace width="0.25em"/><mfrac><mrow><mn>1</mn><mrow><mo>,</mo></mrow><mn>4</mn></mrow><mrow><msub><mi>f</mi><mi>y</mi></msub></mrow></mfrac><mspace width="0.28em"/><mo>≈</mo><mspace width="0.28em"/><mn>0</mn><mrow><mo>,</mo></mrow><mn>33</mn><mspace width="0.25em"/><mo>%</mo></mrow></math></div>
+      <p>Pero el mismo C201-05 (10.5.4) aclara que para "losas estructurales y fundaciones de espesor constante" la mínima es la de contracción y temperatura, es decir <strong>ρ = 0,18 %</strong> para nuestros aceros. Aun así, los autores lo interpretan distinto: McCormac (Ref. [29]) y Nawy (Ref. [30]), en losas en una dirección, usan 0,33 % en la dirección de apoyo y 0,18 % en la perpendicular (Nawy, en losas cruzadas, 0,18 % en ambas); la PCA (Ref. [26]) pide 0,18 % en ambas direcciones de losas cruzadas; y Nilson (Ref. [27]) interpreta 0,18 % para losas en una y dos direcciones, en ambas direcciones. La tendencia a seguir a McCormac y Nawy viene de pensar la losa en una dirección como una viga de ancho unitario. <span class="pg">pág. 46</span></p>
+      <p>El NZS 3101:2006 es más claro: su sección 8.4.3 se titula "armadura longitudinal mínima en <strong>vigas y losas</strong>" y separa vigas (8.4.3.1, 0,33 %) de losas (8.4.3.4, <strong>0,18 %</strong>). El comentario C8.4.3.4 explica que la mínima de losas es menor porque las cargas se distribuyen lateralmente, en ambas direcciones, y en losas una falla repentina y frágil es menos probable; la armadura de cálculo debe ser al menos la de contracción y temperatura. La 14.4.1 (losas en dos direcciones) repite que nunca debe ser menor que 0,18 %. <span class="pg">pág. 47</span></p>
+      <p>En definitiva, la cuantía mínima en losas es <strong>0,18 %</strong> para ADN 420, y debe existir en cualquier parte de la losa; las normas permiten ubicarla en cualquier parte del espesor (toda arriba, toda abajo, al centro o repartida). Pero en las zonas de momento crítico, positivo y negativo, la armadura colocada debe ser mayor que la de cálculo. Para una losa de h = 16 cm, d = 14 cm, A<sub>s,mín</sub> = 0,0018 × 14 × 100 = 2,50 cm² (Ø8 c/20 cm, 5 barras por metro): <span class="pg">pág. 47</span></p>
+      <ol class="roman" style="list-style-type:lower-alpha">
+        <li>Si el cálculo pide 1,20 cm² para M<sup>+</sup>: toda la mínima abajo (5Ø8 c/20), o mitad arriba y mitad abajo (1,25 cm² cada una), o 3Ø8 abajo y completar arriba, por ejemplo con 4Ø6.</li>
+        <li>Si pide 2,0 cm²: toda la mínima abajo, o 4Ø8 c/25 abajo (2,0 cm²) y el resto hasta 2,50 cm² arriba.</li>
+        <li>Si pide 3,0 cm²: toda esa armadura abajo, con al menos 6Ø8 por metro.</li>
+      </ol>
+      <p>El ACI 318-2014 (8.6.1.1) aclara explícitamente lo que antes no: "se debe colocar un área mínima de refuerzo a flexión, A<sub>s,min</sub>, cerca de la cara de tracción, en la dirección de la luz bajo consideración", de 0,0018 para f<sub>y</sub> = 420 MPa. Esto llevaría a adoptar el mínimo en ambas caras. <span class="pg">pág. 47</span></p>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · CIRSOC 201-25, 7.6.1, 8.6.1.1 y 9.6.1</span>
+        <p>El 201-25 adopta el texto del ACI 318-14/19 que Llopiz cita al final y cierra la discusión:</p>
+        <ul>
+          <li><strong>Losas</strong> (una y dos direcciones): A<sub>s,min</sub> = <strong>0,0018A<sub>g</sub></strong> (7.6.1 y 8.6.1.1), igual a la de contracción y temperatura pero con una diferencia de ubicación que el comentario C 7.6.1 remarca: la de contracción y temperatura puede repartirse entre las dos caras, mientras que <strong>la mínima a flexión debe ir lo más cerca posible de la cara traccionada</strong> por las cargas. Las alternativas (a)(ii) y (b)(ii) del apunte, con parte de la mínima en la cara comprimida, dejarían de cumplir en la cara traccionada.</li>
+          <li><strong>Vigas</strong>: sigue el criterio de resistencia mayor que la de fisuración, A<sub>s,min</sub> = máx(0,25√f'<sub>c</sub>/f<sub>y</sub>; 1,4/f<sub>y</sub>)·b<sub>w</sub>·d (9.6.1.2), como se vio en la Unidad 3.</li>
+          <li>Como la base es A<sub>g</sub> (b·h) y no b·d, para la losa de h = 16 cm del ejemplo la mínima es 0,0018 × 16 × 100 = 2,88 cm²/m.</li>
+        </ul>
+      </div>
+      
+      <!-- ===== A–E ===== -->
+      <h3 id="u4-6"><span class="n">A–E</span>Apéndices</h3>
+      <p><strong>Apéndice A: tablas del ACI 318.</strong> Reúne la tabla 9.5(a) de alturas mínimas de vigas y losas en una dirección sin cálculo de flechas, la tabla 9.5(b) de flechas máximas admisibles, la tabla 10.2 de inercias brutas y fisuradas de secciones rectangulares y con alas, y la tabla 9.4.3.2 de momentos flectores en placas sustentadas en su contorno. <span class="pg">págs. 50–51</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-apA1.png" alt="Dos tablas reglamentarias de espesores mínimos y flechas admisibles." loading="lazy"></div>
+        <figcaption><b>Apéndice A (1).</b> Tabla 9.5(a): espesores mínimos (losas macizas ℓ/20, ℓ/24, ℓ/28, ℓ/10; nervuradas ℓ/16, ℓ/18,5, ℓ/21, ℓ/8) y tabla 9.5(b): flechas admisibles ℓ/180, ℓ/360, ℓ/480 y ℓ/240. <span class="pg">Llopiz T4, pág. 50</span></figcaption>
+      </figure>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-apA2.png" alt="Tabla de fórmulas de inercias y tabla de coeficientes de momentos de placas." loading="lazy"></div>
+        <figcaption><b>Apéndice A (2).</b> Tabla 10.2: inercia bruta y fisurada transformada de secciones rectangulares y T, con y sin armadura comprimida (kd, I<sub>g</sub>, I<sub>cr</sub>); y tabla 9.4.3.2: momentos por unidad de ancho en placas rectangulares para distintas condiciones de borde y relaciones de lados de 1,0 a 2,5. <span class="pg">Llopiz T4, pág. 51</span></figcaption>
+      </figure>
+      <p><strong>Apéndice B: losas prefabricadas.</strong> Información de catálogos de proveedores locales (en condiciones cercanas al simple apoyo): (a) losas con <strong>viguetas pretensadas</strong> PREAR 90, con pesos propios y momentos admisibles según la serie y la altura del ladrillo (12,5 cm normal) y de la capa de compresión (3 y 5 cm), viguetas dobles para mayor resistencia, sección y alambres de cada serie (a verificar en obra) y largos estándar; (b) losas con <strong>placas huecas pretensadas</strong> PREAR, series 90 a 240 (altura en mm), anchos de 600 y 1200 mm, pesos, momentos admisibles, sobrecargas según la luz y detalles de apoyo. En la capa de compresión, mínimo 5 cm (3 cm si la construcción es del grupo B y de menos de 7 m de altura) en zonas sísmicas, se coloca una malla de repartición con la cuantía mínima: con 0,18 % y 5 cm de espesor, Ø4,2 c/15 cm o Ø6 c/30 cm. <span class="pg">pág. 52</span></p>
+      <div class="box old">
+        <span class="lbl">Actualización reglamentaria · IC 103 P-II 2021, 5.4.2</span>
+        <p>Si la losa prefabricada funciona como diafragma, la capa de compresión debe tener <strong>al menos 50 mm</strong> (la excepción de 3 cm no figura) y su malla, separación ≤ <strong>250 mm</strong>: la opción Ø6 c/30 cm del apunte no cumple; Ø4,2 c/15 cm sí (con malla soldada de f<sub>y</sub> = 500 MPa admitida para diafragmas). Además, la tensión de corte en la capa no debe superar 0,30√f'<sub>c</sub>.</p>
+      </div>
+      <p><strong>Apéndice C: tablas de diseño elástico.</strong> Incluye la tabla del Código Boliviano CBH 87 (Ref. [35]), de uso muy sencillo y similar a la vista en clase, pero basada en teoría elástica: <strong>mayores momentos negativos y menores positivos</strong> que la de líneas de fluencia. Sigue un extracto del texto de Nilson (Ref. [27], sección 12.5), que advierte que la determinación precisa de momentos en losas en dos direcciones con distintas condiciones de borde es matemáticamente muy compleja y no adecuada para la práctica, y presenta su método de coeficientes. <span class="pg">págs. 59–72</span></p>
+      <figure class="w-md">
+        <div class="frame"><img src="img/l4-apC.png" alt="Tabla de coeficientes de momentos de losas del código boliviano." loading="lazy"></div>
+        <figcaption><b>Apéndice C.</b> Tabla de coeficientes de momentos para losas rectangulares según la teoría elástica (CBH 87), para distintas condiciones de apoyo y relaciones de lados. <span class="pg">Llopiz T4, pág. 59</span></figcaption>
+      </figure>
+      <p><strong>Apéndice D</strong> (págs. 73–75): diseño de una losa de hormigón armado apoyada en vigas en las dos direcciones con las tablas basadas en líneas de fluencia.</p>
+      <p><strong>Apéndice E: losa apoyada en vigas en dos direcciones por varios métodos.</strong> Cubierta inaccesible de H = 45 cm con aislación y pendiente: D = 1,66 t/m² (estructura 1,13; hormigón alivianado de pendiente 0,32; carpeta 0,05; protección de membrana 0,16), L = 0,10 t/m², lluvia R = 0,07 t/m². Controla <span class="f">U = 1,4D = 2,32 t/m²</span> (1,2D + 1,6L + 0,5R da 2,20 t/m²). Luces 13,25 × 18,05 m (relación 1,40); con la fórmula de α<sub>m</sub> &gt; 2,0 la altura mínima resulta ≈ 41 cm y se adopta 45 cm; recubrimiento 4,5 cm por resistencia al fuego de 4 h. Momentos positivos con el caso más desfavorable de cuatro bordes simplemente apoyados: <span class="pg">págs. 76–78</span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>Método</th><th class="num">M<sub>x</sub><sup>+</sup> [tm/m]</th><th class="num">M<sub>y</sub><sup>+</sup> [tm/m]</th></tr></thead>
+        <tbody>
+          <tr><td>Tablas de líneas de fluencia</td><td class="num">22</td><td class="num">34</td></tr>
+          <tr><td>Tablas elásticas (Apéndice C)</td><td class="num">13</td><td class="num">27</td></tr>
+          <tr><td>ETABS (elementos finitos)</td><td class="num">13</td><td class="num">22</td></tr>
+        </tbody>
+      </table></div>
+      <p>Conclusiones: (1) los momentos elásticos, por tablas o ETABS, son similares, en particular en la dirección de luz larga, con una diferencia del 23 % en la más corta; (2) las líneas de fluencia dan casi un 70 % más en la dirección más larga y casi un 26 % más en la más corta: son <strong>más conservadoras</strong> para momentos positivos con bordes simplemente apoyados. <span class="pg">pág. 78</span></p>
+      <div class="box nota">
+        <span class="lbl">Aclaración</span>
+        <p>En este ejemplo las direcciones están nombradas al revés de lo habitual: L<sub>Y</sub> = 13,25 m es la luz corta y L<sub>X</sub> = 18,05 m la larga, por eso M<sub>y</sub><sup>+</sup> es el mayor. Con líneas de fluencia ambos momentos usan la luz corta (13,05 m); con la tabla elástica, M<sub>x</sub> usa la larga (18,05 m). La altura mínima usa con ℓ<sub>n</sub> = 18,05 m: 1805 × 1,1/(36 + 9 × 1,40) = 40,9 cm.</p>
+      </div>
+      <div class="box torrisi">
+        <span class="lbl">Aporte de Torrisi · §4.3, págs. 120–121: ejemplo de dimensionamiento</span>
+        <p>Losa cruzada de 7,50 × 5,50 m (β = 1,36 &lt; 2: dos direcciones), L = 0,65 t/m², D adicional 0,07 t/m², f'<sub>c</sub> = 27 MPa, ADN 420.</p>
+        <ul>
+          <li>Altura mínima suponiendo α<sub>m</sub> &gt; 2: h = 1,1 × 700/48 ≈ 16 cm. Verificación: I<sub>b</sub> = 531 250 cm⁴ (viga con losa); I<sub>s</sub> = 730 × 16³/12 = 249 173 cm⁴ (N–S) y 550 × 16³/12 = 187 733 cm⁴ (E–O); α = 2,13 y 2,83; α<sub>m</sub> = 2,48 &gt; 2,0, se confirma.</li>
+          <li>U = 1,2(0,38 + 0,07) + 1,6 × 0,65 = 1,58 t/m²; con la tabla de coeficientes: M<sub>x</sub><sup>+</sup> = 1,03, M<sub>x</sub><sup>−</sup> = 1,37, M<sub>y</sub><sup>+</sup> = 1,56 y M<sub>y</sub><sup>−</sup> = 2,12 tm/m.</li>
+          <li>Mínima Ø8 c/20 (M<sub>d</sub> = 1,30 tm/m) cubre M<sub>x</sub><sup>+</sup>; para M<sup>−</sup>, 4,00 cm²/m (Ø8 c/10, M<sub>d</sub> = 255 tcm/m &gt; 212); para M<sub>y</sub><sup>+</sup>, 2,95 cm²/m (Ø8 c/15, M<sub>d</sub> = 172 tcm/m &gt; 156).</li>
+        </ul>
+        <p>Sus agregados son el cálculo explícito de α<sub>m</sub> y la verificación de cada armadura con M<sub>n</sub> = A<sub>s</sub>f<sub>y</sub>(d − 0,59A<sub>s</sub>f<sub>y</sub>/bf'<sub>c</sub>).</p>
+      </div>
+      <div class="box err">
+        <span class="lbl">Errores en Torrisi · cap. 4</span>
+        <ul>
+          <li><strong>Pág. 121:</strong> escribe "peso propio = 0,15 × 2,4 = 0,38 t/m²": 0,15 × 2,4 da 0,36; el 0,38 corresponde a la losa adoptada de 16 cm (0,16 × 2,4 = 0,384).</li>
+          <li><strong>Págs. 120–121:</strong> la relación de luces es 7,50/5,50 = 1,36 en un paso y 700/520 = 1,35 en otro, y l<sub>n</sub> = 700 cm en la altura mínima pero 5,2 m en los momentos, sin aclarar que son luces libres.</li>
+          <li><strong>Pág. 121:</strong> llama M<sub>u</sub> = 42,72 tm/m al producto w<sub>u</sub>·l<sub>x</sub>² (1,58 × 5,2²), que no es un momento sino la base a la que se aplican los coeficientes.</li>
+          <li><strong>Pág. 121:</strong> A<sub>s,min</sub> = 0,0018 × 100 × 14 usa d en lugar de h, contra lo que él mismo aclara en la pág. 118.</li>
+        </ul>
+      </div>
+          </section>
 
   </main>
 </div>

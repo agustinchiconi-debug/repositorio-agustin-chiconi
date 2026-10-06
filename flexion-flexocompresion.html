@@ -645,9 +645,15 @@ function render(){
     const smin=Math.min(...S.map(q=>q.s)), tr=S.filter(q=>q.s>smin+1e-6); if(!tr.length) return null;
     const d=Math.max(...tr.map(q=>q.s)); return tr.reduce((a,q)=>a+q.A*q.s/d,0); };
   const aeP=AsE(1), aeN=AsE(-1);
+  // Mn y Mo (sobrerresistencia: fy × 1,4) por análisis seccional con P = 0, en la dirección elegida para M-φ
+  const MnSec=(mm,th)=>{ if(!mm.bars.length) return null; const ecu=+$('mfEcu').value||0.003, D=depthRange(mm,th); let lo=1e-5*D, hi=60*D; const v=c=>secU(mm,th,c,ecu).P;
+    if(v(lo)>0||v(hi)<0) return null; for(let it=0;it<80;it++){const mid=Math.sqrt(lo*hi); if(v(mid)<0) lo=mid; else hi=mid;} return Math.abs(secU(mm,th,Math.sqrt(lo*hi),ecu).Mt); };
+  const thF=mfAx==='x'?Math.PI/2:0, mO={...m,fy:1.4*m.fy,fyM:1.4*m.fyM};
+  const MnP=tab==='fc'?null:MnSec(m,thF), MnN=tab==='fc'?null:MnSec(m,thF+Math.PI), MoP=tab==='fc'?null:MnSec(mO,thF), MoN=tab==='fc'?null:MnSec(mO,thF+Math.PI);
+  const pm=(a,b,u)=>(a!=null&&b!=null&&Math.abs(a-b)<0.005)?fmt(a,2)+' '+u:fmt(a,2)+' / '+fmt(b,2)+' '+u;
   $('kv').innerHTML=(tab==='fc'
     ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['As,e (M+ / M−)',(aeP!=null&&aeN!=null&&Math.abs(aeP-aeN)<0.005)?fmt(aeP,2)+' cm²':fmt(aeP,2)+' / '+fmt(aeN,2)+' cm²'],['ρ total = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
-    : [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm']]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
+    : [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Mn (M+ / M−)',pm(MnP,MnN,'tm')],['Mo = Mn con 1,4·fy (M+ / M−)',pm(MoP,MoN,'tm')]]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
   // controles
   const ck=[];
   const bad=layers.some(L=>L.n>0&&(L.d<=0||L.d>=m.h)); ck.push(bad?['bad','Hay capas con di ≤ 0 o di ≥ h']:['ok','Barras dentro de la sección']);

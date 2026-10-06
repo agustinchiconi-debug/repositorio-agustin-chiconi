@@ -1139,7 +1139,7 @@ async function buildMemo(){
     }
     H1('Momento-curvatura, ductilidad e I<sub>e</sub>/I<sub>g</sub>');
     b.push(Wp(`Flexión en ${mfAx==='x'?'x (Mx)':'y (My)'} · ε<sub>cu</sub> = ${X($('mfEcu').value)} · ε<sub>0</sub> = ${X($('mfE0').value)} · f<sub>r</sub> = ${X($('mfFr').value)}·√f'c`,'Desc'));
-    const mt=domRows('mft'); if(mt.length) b.push(Wtbl(mt,[3800,1450,1450,1450,1450]));
+    const mt=domRows('mft'); if(mt.length) b.push(Wtbl(mt,[3000,1100,1250,950,1100,1250,950]));
     for(const [id,t] of [['pmfP','momento positivo (M+)'],['pmfN','momento negativo (M−)']]){ const u=await plotPNG(id,1300,800); if(u){ b.push(Wimg(u,14,800/1300,'')); cap('Diagrama momento-curvatura, '+t+'. Azul: real (3 ELU); ocre: idealizada bilineal; gris: fibras.'); } }
     b.push(Wp(bad?'Conclusión: la sección NO VERIFICA la cuantía de flexión.':'Conclusión: la sección VERIFICA la cuantía de flexión según el reglamento seleccionado.','Result',`<w:color w:val="${bad?'8E3B5A':'2F7A4E'}"/>`));
   } else {

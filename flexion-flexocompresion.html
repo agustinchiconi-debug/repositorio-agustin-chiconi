@@ -633,8 +633,13 @@ function render(){
   $('critTxt').textContent = m.capD ? `Diseño por capacidad: φ = 1,00 en toda la curva (IC-103 II Tabla 1.2 a) · φPn,máx = ${fmt(m.kMax,2)}·Po` : (m.crit==='IC103' ? 'Diseño por resistencia: φ = 0,90 constante · Pu ≤ 0,70·φ·Pn' : `Diseño por resistencia: φ = ${fmt(m.phiC,2)} (εt ≤ εty) a 0,90 (εt ≥ εty+0,003) · φPn,máx = ${fmt(m.kMax,2)}·φ·Po`);
   drawSection(m);
   const rho=m.As/m.Ag;
+  // As,e por cara traccionada (flexión en Mx): barras traccionadas pesadas por di/d
+  const AsE=sg=>{ const S=m.bars.map(q=>({A:q.A,s:sg>0?(m.yTop-q.y):(q.y-(m.yTop-m.h))})); if(!S.length) return null;
+    const smin=Math.min(...S.map(q=>q.s)), tr=S.filter(q=>q.s>smin+1e-6); if(!tr.length) return null;
+    const d=Math.max(...tr.map(q=>q.s)); return tr.reduce((a,q)=>a+q.A*q.s/d,0); };
+  const aeP=AsE(1), aeN=AsE(-1);
   $('kv').innerHTML=(tab==='fc'
-    ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['ρ total = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
+    ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['As,e (M+ / M−)',(aeP!=null&&aeN!=null&&Math.abs(aeP-aeN)<0.005)?fmt(aeP,2)+' cm²':fmt(aeP,2)+' / '+fmt(aeN,2)+' cm²'],['ρ total = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
     : [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm']]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
   // controles
   const ck=[];

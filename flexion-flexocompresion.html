@@ -928,7 +928,7 @@ function drawMphi(m){
     const ann = B.id ? [{xref:'paper',yref:'paper',x:0.98,y:0.06,xanchor:'right',showarrow:false,align:'right',text:`μ = ${fmt(B.id.mu,2)}  ·  Ie/Ig = ${fmt(Math.abs(B.id.ratio),3)}`,font:{color:ink,size:13,family:'IBM Plex Mono, monospace'},bgcolor:css('--surface'),bordercolor:ln,borderpad:5}] : [];
     Plotly.react(div,tr,{...plotTheme(),margin:{l:56,r:14,t:8,b:46},showlegend:false,annotations:ann,xaxis:axs('Curvatura φ [1/m]'),yaxis:{...axs('Momento [tm]'),range:[0,ymax]}},{responsive:true,displaylogo:false});
   }
-  const e=v=>(v==null||!isFinite(v))?'—':v.toExponential(3).replace('.',',');
+  const e=v=>{ if(v==null||!isFinite(v)) return '—'; const x=v*1e6, d=Math.max(0,3-Math.floor(Math.log10(Math.max(Math.abs(x),1e-12)))); return fmt(x,Math.min(d,4))+'e-6'; }; // misma potencia (e-6) en todas las curvaturas
   const row=(t,a,b,c,d,ca='',cb='')=>`<tr><td style="font-family:var(--sans)">${t}</td><td class="num">${a}</td><td class="num">${b}</td><td class="num">${ca}</td><td class="num">${c}</td><td class="num">${d}</td><td class="num">${cb}</td></tr>`;
   const P1=Bp, N1=Bn;
   // cuantía de flexión con área efectiva, según reglamento elegido

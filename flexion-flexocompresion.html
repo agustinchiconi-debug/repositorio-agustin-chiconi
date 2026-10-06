@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
   --bg:#EEF0EE; --surface:#FAFBFA; --ink:#1B2226; --muted:#5B656A; --line:#D3D8D6;
@@ -110,6 +111,7 @@ input.sw{width:34px;height:26px;padding:1px;border-radius:4px;cursor:pointer}
 .projbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .projname{font-family:var(--cond);font-weight:600;font-size:15px;margin-right:6px}
 .projbar button{background:var(--surface)}
+.membtn{border-color:var(--accent)!important;color:var(--accent)}
 #pSave{background:var(--accent);color:var(--surface);border-color:var(--accent)}
 .projpanel{max-width:760px}
 .capd{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:7px 9px;cursor:pointer}
@@ -133,6 +135,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
     <button type="button" id="pSave">Guardar proyecto</button>
     <button type="button" id="pOpen">Abrir proyecto</button><input type="file" id="pFile" accept=".json,application/json" hidden>
     <button type="button" id="pClear">Limpiar</button>
+    <button type="button" id="memBtn" class="membtn">Exportar memoria de cálculo</button>
     <span class="hint" id="pMsg" aria-live="polite"></span>
   </div>
   <div class="panel projpanel" id="pSavePanel" hidden>
@@ -352,7 +355,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
 <script id="app">
 (function(){
 // copia limpia del documento para descargar (se toma antes de que la página se dibuje)
-const SRC=(()=>{ const d=document.documentElement.cloneNode(true); d.querySelectorAll("script").forEach(sc=>{ if(sc.id!=="app" && !(sc.src||"").includes("plotly")) sc.remove(); }); d.querySelectorAll("#dlHtml").forEach(b=>b.remove()); return "<!doctype html>"+String.fromCharCode(10)+d.outerHTML; })();
+const SRC=(()=>{ const d=document.documentElement.cloneNode(true); d.querySelectorAll("script").forEach(sc=>{ if(sc.id!=="app" && !(sc.src||"").includes("plotly") && !(sc.src||"").includes("jszip")) sc.remove(); }); d.querySelectorAll("#dlHtml").forEach(b=>b.remove()); return "<!doctype html>"+String.fromCharCode(10)+d.outerHTML; })();
 const $ = id => document.getElementById(id);
 const fmt = (v,d=2) => (v==null||!isFinite(v)) ? '—' : v.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -1036,6 +1039,142 @@ $('pClear').onclick=()=>only('pClearPanel');
 $('pClearCancel').onclick=()=>only(null);
 $('pClearOk').onclick=()=>{ const blank={tipo:'R',ala:'sup',b:20,h:40,bf:60,hf:10,fc:30,fy:420,Es:200000,rx:4,crit:'C201E',cN:8,cF:16,cR:5,regFl:'C201',mfEcu:0.003,mfE0:0.002,mfFr:0.62,
   layers:[{d:4,n:0,f:12},{d:36,n:0,f:12}], loads:[{name:'Caso 1',P:0,Mx:0,My:0,color:PAL[0]}]}; setState(blank); setName(''); only(null); msg('Datos limpiados: cargá la sección, la armadura y las solicitaciones.'); };
+// ---------- memoria de cálculo en Word (.docx) ----------
+const X=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const plain=t=>String(t).replace(/<sup>([^<]*)<\/sup>/g,'^$1').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+// texto con <sub>/<sup> → runs de Word con subíndices
+function runs(html,rpr){ rpr=rpr||''; const out=[]; const re=/<(sub|sup)>([^<]*)<\/\1>|([^<]+)|<[^>]+>/g; let m;
+  while((m=re.exec(html))){ if(m[3]!=null) out.push(`<w:r><w:rPr>${rpr}</w:rPr><w:t xml:space="preserve">${X(m[3].replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'))}</w:t></w:r>`);
+    else if(m[1]) out.push(`<w:r><w:rPr>${rpr}<w:vertAlign w:val="${m[1]==='sub'?'subscript':'superscript'}"/></w:rPr><w:t xml:space="preserve">${X(m[2])}</w:t></w:r>`); }
+  return out.join(''); }
+const Wp=(html,style,rpr)=>`<w:p>${style?`<w:pPr><w:pStyle w:val="${style}"/></w:pPr>`:''}${runs(html,rpr)}</w:p>`;
+function Wcalc(txt){ const P=(h,ind)=>`<w:p><w:pPr><w:pStyle w:val="Calc"/>${ind?'<w:ind w:left="567"/>':''}</w:pPr>${runs(h)}</w:p>`; const out=[P('')];
+  parseCalc(txt).forEach(b=>{
+    if(b.k==='gap') out.push(P(''));
+    else if(b.k==='ul') b.items.forEach(i=>out.push(P('•  '+fmtMath(i),true)));
+    else if(b.k==='tbl'){ out.push(P('')); out.push(Wtbl(b.rows.map(r=>r.map(c=>fmtMath(c))))); }
+    else out.push(P(b.groups.map(g=>fmtMath(g)).join('     '),b.ind)); });
+  out.push(P('')); return out.join(''); }
+function Wtbl(rows,widths){ const n=rows[0].length, tot=9200; const w0=widths||rows[0].map(()=>1), sw=w0.reduce((a,x)=>a+x,0); const ws=w0.map(x=>Math.floor(x*tot/sw));
+  const bd=['top','left','bottom','right','insideH','insideV'].map(b=>`<w:${b} w:val="single" w:sz="4" w:space="0" w:color="9AA5AA"/>`).join('');
+  return `<w:tbl><w:tblPr><w:tblW w:w="${tot}" w:type="dxa"/><w:tblBorders>${bd}</w:tblBorders><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${ws.map(x=>`<w:gridCol w:w="${x}"/>`).join('')}</w:tblGrid>`+
+   rows.map((r,i)=>`<w:tr>${i===0?'<w:trPr><w:tblHeader/></w:trPr>':''}${r.map((c,j)=>`<w:tc><w:tcPr><w:tcW w:w="${ws[j]}" w:type="dxa"/>${i===0?'<w:shd w:val="clear" w:color="auto" w:fill="E8ECEA"/>':''}</w:tcPr><w:p><w:pPr><w:spacing w:before="30" w:after="30"/></w:pPr>${runs(String(c),(i===0?'<w:b/>':'')+'<w:sz w:val="18"/>')}</w:p></w:tc>`).join('')}</w:tr>`).join('')+`</w:tbl>`+Wp('');
+}
+let IMGS=[];
+function Wimg(dataURL,wcm,ratio,cap){ const id=IMGS.length+1, rid='rIdImg'+id; IMGS.push({name:'image'+id+'.png',rid,b64:dataURL.split(',')[1]});
+  const cx=Math.round(wcm*360000), cy=Math.round(wcm*ratio*360000);
+  return `<w:p><w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Imagen ${id}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${id}" name="image${id}.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`+(cap?Wp(cap,'Caption'):'');
+}
+
+const PRINTV={'--bg':'#FFFFFF','--surface':'#FFFFFF','--ink':'#1B2226','--muted':'#5B656A','--line':'#C9CECB','--concrete':'#D9DDDA','--steel':'#A8741F','--accent':'#2E5B87'};
+function secPNG(){ return new Promise((res,rej)=>{ const sv=$('secSvg'); let t=new XMLSerializer().serializeToString(sv).replace(/var\((--[a-z-]+)\)/g,(_,n)=>PRINTV[n]||'#1B2226');
+  if(!/xmlns=/.test(t)) t=t.replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"');
+  t=t.replace('<svg','<svg width="1020" height="1020"'); const img=new Image();
+  img.onload=()=>{ const cv=document.createElement('canvas'); cv.width=1020; cv.height=1020; const c=cv.getContext('2d'); c.fillStyle='#fff'; c.fillRect(0,0,1020,1020); c.drawImage(img,0,0,1020,1020); res(cv.toDataURL('image/png')); };
+  img.onerror=rej; img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(t); }); }
+async function plotPNG(id,w,h){ const gd=$(id); if(!gd||!gd.data) return null;
+  try{ const ax=a=>a?Object.assign({},a,{color:'#5B656A',gridcolor:'#DDE1DF'}):a;
+    const lay=Object.assign({},gd.layout,{width:w,height:h,paper_bgcolor:'#fff',plot_bgcolor:'#fff',font:Object.assign({},gd.layout.font||{},{color:'#1B2226'})});
+    if(lay.xaxis) lay.xaxis=ax(lay.xaxis); if(lay.yaxis) lay.yaxis=ax(lay.yaxis);
+    if(lay.scene) lay.scene=Object.assign({},lay.scene,{xaxis:ax(lay.scene.xaxis),yaxis:ax(lay.scene.yaxis),zaxis:ax(lay.scene.zaxis)});
+    return await Plotly.toImage({data:gd.data,layout:lay},{format:'png',width:w,height:h}); }catch(e){ return null; } }
+// tabla de la página → filas de texto (sin botones ni inputs)
+function domRows(id){ const t=$(id); if(!t) return []; const rows=[];
+  t.querySelectorAll('tr').forEach(tr=>{ const r=[...tr.children].map(c=>{ const k=c.cloneNode(true); k.querySelectorAll('input,select,button').forEach(e=>e.remove()); return X(k.textContent.replace(/\s+/g,' ').trim()); }); if(r.some(x=>x)) rows.push(r); });
+  return rows; }
+const optT=id=>{ const el=$(id); return el&&el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].text:''; };
+async function buildMemo(){
+  if(!window.JSZip) throw new Error('no se pudo cargar la librería JSZip');
+  IMGS=[]; const m=model(), b=[], fl=tab!=='fc'; let fig=1, n=1;
+  const H1=t=>b.push(Wp((n++)+'. '+t,'Heading1'));
+  const cap=t=>b.push(Wp(`Figura ${fig++}. ${t}`,'Caption'));
+  b.push(Wp('Memoria de cálculo · '+(fl?'Flexión':'Flexocompresión')+' de sección de H°A°','Title'));
+  b.push(Wtbl([['Proyecto',X(projName||'sin nombre')],['Autor','Ing. Agustín Chiconi'],['Fecha',new Date().toLocaleDateString('es-AR')],['Reglamento',X(fl?optT('regFl'):optT('crit'))],['Unidades','t, cm, tm (g = 10 m/s²; 1 t = 10 kN) · tensiones en MPa']],[2200,7400]));
+  // 1. sección y materiales
+  H1('Sección y materiales');
+  const tipoN={R:'Rectangular',T:'T',L:'L',X:'Cruz',C:'Circular'}[m.tipo];
+  const sec=[['Dato','Valor'],['Tipo de sección',tipoN]];
+  if(m.tipo==='C') sec.push(['Diámetro D',fmt(m.h,1)+' cm']); else sec.push([m.tipo==='R'?'Ancho b':'Ancho del alma b<sub>w</sub>',fmt(m.b,1)+' cm'],['Altura total h',fmt(m.h,1)+' cm']);
+  if(m.tipo==='T'||m.tipo==='L'||m.tipo==='X') sec.push(['Ancho del ala b<sub>f</sub>',fmt(m.bf,1)+' cm'],['Espesor del ala h<sub>f</sub>',fmt(m.hf,1)+' cm']);
+  if(m.tipo==='T'||m.tipo==='L') sec.push(['Posición del ala',optT('ala')]);
+  sec.push(["f'c",fmt(m.fcM,0)+' MPa'],['f<sub>y</sub>',fmt(m.fyM,0)+' MPa'],['E<sub>s</sub>',fmt(m.EsM,0)+' MPa'],['β<sub>1</sub>',fmt(m.b1,3)],['ε<sub>ty</sub>',fmt(m.ety,4)],['Área bruta A<sub>g</sub>',fmt(m.Ag,0)+' cm²'],['Baricentro desde la fibra superior',fmt(m.yTop,2)+' cm']);
+  if(m.tipo!=='C') sec.push(['Recubrimiento lateral al eje de barra',fmt(m.rx,1)+' cm']);
+  b.push(Wtbl(sec,[4600,5000]));
+  try{ b.push(Wimg(await secPNG(),8.5,1,'')); cap('Sección transversal con la armadura (cotas en cm).'); }catch(e){}
+  // 2. armaduras
+  H1('Armadura longitudinal');
+  if(m.tipo==='C') b.push(Wp(`${$('cN').value} barras ø${$('cF').value} repartidas en una circunferencia, con recubrimiento al eje de ${$('cR').value} cm.`));
+  else { const ar=[['Capa','d<sub>i</sub> desde arriba [cm]','N° de barras','ø [mm]','A<sub>s</sub> de la capa [cm²]']];
+    layers.forEach((L,i)=>{ if(L.n>0) ar.push([i+1,fmt(L.d,1),L.n,L.f,fmt(L.n*Math.PI*L.f*L.f/400,2)]); });
+    b.push(Wtbl(ar)); }
+  const kv=[...$('kv').querySelectorAll('div')].map(d=>[X(d.querySelector('span').textContent),X(d.querySelector('b').textContent)]);
+  b.push(Wtbl([['Magnitud','Valor']].concat(kv),[4600,5000]));
+  if(fl){
+    H1('Cuantía de flexión');
+    b.push(Wp(X($('regFlTxt').textContent),'Desc'));
+    const rc=domRows('rhoc'); if(rc.length){ rc[0][0]='Magnitud'; b.push(Wtbl(rc,[4200,2700,2700])); }
+    if($('rhoRef').textContent) b.push(Wp(X($('rhoRef').textContent),'Desc'));
+    const bad=$('rhoc').querySelectorAll('.pill.bad').length;
+    b.push(Wp(bad?'La cuantía de flexión NO VERIFICA.':'La cuantía de flexión VERIFICA en M+ y M−.','Result',`<w:color w:val="${bad?'8E3B5A':'2F7A4E'}"/>`));
+    H1('Momento-curvatura, ductilidad e I<sub>e</sub>/I<sub>g</sub>');
+    b.push(Wp(`Flexión en ${mfAx==='x'?'x (Mx)':'y (My)'} · ε<sub>cu</sub> = ${X($('mfEcu').value)} · ε<sub>0</sub> = ${X($('mfE0').value)} · f<sub>r</sub> = ${X($('mfFr').value)}·√f'c`,'Desc'));
+    const mt=domRows('mft'); if(mt.length) b.push(Wtbl(mt,[3800,1450,1450,1450,1450]));
+    for(const [id,t] of [['pmfP','momento positivo (M+)'],['pmfN','momento negativo (M−)']]){ const u=await plotPNG(id,1300,800); if(u){ b.push(Wimg(u,14,800/1300,'')); cap('Diagrama momento-curvatura, '+t+'. Azul: real (3 ELU); ocre: idealizada bilineal; gris: fibras.'); } }
+    b.push(Wp(bad?'Conclusión: la sección NO VERIFICA la cuantía de flexión.':'Conclusión: la sección VERIFICA la cuantía de flexión según el reglamento seleccionado.','Result',`<w:color w:val="${bad?'8E3B5A':'2F7A4E'}"/>`));
+  } else {
+    H1('Criterio y solicitaciones últimas');
+    b.push(Wp(X($('critTxt').textContent),'Desc'));
+    b.push(Wp('Convención: P<sub>u</sub> > 0 compresión, P<sub>u</sub> &lt; 0 tracción; M<sub>ux</sub> > 0 comprime la cara superior; M<sub>uy</sub> > 0 comprime la cara derecha. Momentos respecto del baricentro de la sección bruta.','Desc'));
+    b.push(Wtbl([['Caso','P<sub>u</sub> [t]','M<sub>ux</sub> [tm]','M<sub>uy</sub> [tm]']].concat(loads.map(L=>[X(L.name),fmt(L.P,2),fmt(L.Mx,2),fmt(L.My,2)]))));
+    H1('Clasificación viga o columna y cuantías');
+    b.push(Wp(X($('clsBox').textContent),'Desc'));
+    const rf=domRows('rhoFc'); if(rf.length) b.push(Wtbl(rf,[4200,2700,2700]));
+    if($('rhoFcRef').textContent) b.push(Wp(X($('rhoFcRef').textContent),'Desc'));
+    b.push(Wp('Controles de armadura','Heading3'));
+    [...$('checks').querySelectorAll('li')].forEach(li=>{ const st=li.querySelector('.pill').textContent, t=li.textContent.replace(st,'').trim();
+      b.push(Wp(`${st==='Cumple'?'✔':st==='Revisar'?'⚠':'✖'}  ${X(t)}: ${X(st)}`,null,`<w:color w:val="${st==='Cumple'?'2F7A4E':st==='Revisar'?'9A6A12':'8E3B5A'}"/>`)); });
+    H1('Verificación de los casos (flexión oblicua)');
+    b.push(Wp('Para cada caso se corta la superficie de interacción de diseño a la altura P<sub>u</sub> y se busca la capacidad φM<sub>n</sub> en la misma dirección del momento (contorno de carga exacto, sin aproximación de Bresler).','Desc'));
+    const rs=domRows('res'); if(rs.length) b.push(Wtbl(rs,[1500,1000,1300,1000,1700,1000,2100]));
+    const gov=res.filter(r=>isFinite(r.ratio)).sort((a,c)=>c.ratio-a.ratio)[0], allOk=res.every(r=>r.ratio<=1);
+    if(gov) b.push(Wp(`Caso que gobierna: ${X(gov.L.name)}, relación M<sub>u</sub>/φM<sub>n</sub> = ${fmt(gov.ratio,2)}.`,'Result'));
+    const u3=await plotPNG('p3d',1300,1000); if(u3){ b.push(Wimg(u3,14,1000/1300,'')); cap('Superficie de interacción y solicitaciones últimas.'); }
+    H1('Flexocompresión recta según '+(show.ax==='x'?'x (M<sub>ux</sub>)':'y (M<sub>uy</sub>)'));
+    const u2=await plotPNG('p2d',1300,850); if(u2){ b.push(Wimg(u2,14,850/1300,'')); cap('Diagrama de interacción nominal y de diseño, con las solicitaciones.'); }
+    const pt=domRows('pts'); if(pt.length) b.push(Wtbl(pt,[5200,1400,1500,1500]));
+    const cm=domRows('cmp2d'); if(cm.length){ b.push(Wp('Solicitaciones últimas vs. resistencia de diseño','Heading3')); b.push(Wtbl(cm,[1500,1000,1100,1500,1300,1100,2100])); }
+    const ckBad=$('checks').querySelectorAll('.pill.bad').length, ok=allOk&&!ckBad;
+    b.push(Wp(ok?'Conclusión: la sección VERIFICA para todos los casos analizados.':'Conclusión: la sección NO VERIFICA'+(allOk?' (no cumple algún control de armadura).':' en al menos un caso.'),'Result',`<w:color w:val="${ok?'2F7A4E':'8E3B5A'}"/>`));
+  }
+  H1('Hipótesis');
+  [...document.querySelectorAll('.notes p')].slice(0,2).forEach(p=>b.push(Wp(X(p.textContent),'Desc')));
+  const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${NS}><w:body>${b.join('')}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1247" w:bottom="1417" w:left="1418" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="es-AR"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="288" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>`+
+   `<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="6" w:color="2E5B87"/></w:pBdr><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/><w:color w:val="1F3B57"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="4" w:color="2E5B87"/></w:pBdr><w:spacing w:before="360" w:after="200"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="30"/><w:color w:val="1F3B57"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="320" w:after="120"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="25"/><w:color w:val="2E5B87"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="300" w:after="80"/><w:outlineLvl w:val="2"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="1F3B57"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Desc"><w:name w:val="Explicacion"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="120"/><w:jc w:val="both"/></w:pPr><w:rPr><w:color w:val="3A4449"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Calc"><w:name w:val="Calculo"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:keepLines/><w:pBdr><w:left w:val="single" w:sz="18" w:space="8" w:color="9AB4CC"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F3F5F4"/><w:spacing w:after="0" w:line="264" w:lineRule="auto"/><w:ind w:left="284" w:right="113"/></w:pPr><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Cambria"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Result"><w:name w:val="Resultado"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="100" w:after="160"/><w:ind w:left="284"/></w:pPr><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>`+
+   `<w:style w:type="paragraph" w:styleId="Caption"><w:name w:val="caption"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="60" w:after="280"/><w:jc w:val="center"/></w:pPr><w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="5B656A"/></w:rPr></w:style></w:styles>`;
+  const z=new JSZip();
+  z.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`);
+  z.file('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  z.file('word/_rels/document.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${IMGS.map(i=>`<Relationship Id="${i.rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${i.name}"/>`).join('')}</Relationships>`);
+  z.file('word/document.xml',doc); z.file('word/styles.xml',styles);
+  IMGS.forEach(i=>z.file('word/media/'+i.name,i.b64,{base64:true}));
+  return z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+$('memBtn').onclick=async()=>{ msg('Generando la memoria…');
+  try{ const blob=await buildMemo(); const fn=((projName||'Seccion').replace(/[\/:*?"<>|]+/g,'-').trim())+' - Memoria '+(tab==='fc'?'flexocompresion':'flexion')+'.docx';
+    if(dlCap){ try{ await dlCap.save({filename:fn,data:blob}); msg('Memoria descargada: '+fn); }catch(e){ msg(e&&e.code==='declined'?'Descarga cancelada.':'No se pudo descargar en esta vista.'); } }
+    else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); msg('Memoria descargada: '+fn); }
+    window.__lastDocx=blob;
+  }catch(e){ msg('No se pudo generar la memoria: '+e.message); } };
+
 let tmr=null; function schedule(){ clearTimeout(tmr); tmr=setTimeout(render,250); }
 new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render()); }catch(e){}

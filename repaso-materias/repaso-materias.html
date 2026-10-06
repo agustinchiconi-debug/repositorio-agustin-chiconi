@@ -1512,6 +1512,28 @@ td.num,th.num{text-align:right}
           <figcaption><b>IC 103 P-II 2021, Tabla 2.1.</b> Momento de inercia efectivo de vigas para el análisis sísmico: 0,40 I<sub>g</sub> rectangulares y 0,35 I<sub>g</sub> T o L. Es la "rigidez efectiva" (EI)<sub>efec</sub> = M<sub>y</sub>/φ<sub>y</sub> de la ec. (3.7b) llevada a un valor de reglamento. <span class="pg">IC 103 P-II 2021, pág. 29</span></figcaption>
         </figure>
       </div>
+      <div class="box nota">
+        <span class="lbl">Aclaración · ¿Es obligatorio usar I<sub>e</sub> = 0,40 I<sub>g</sub>?</span>
+        <ul>
+          <li><strong>Lo obligatorio es considerar la fisuración, no el número de la tabla.</strong> El IC 103 P-II 2021 (art. 2.2.2.1) dice que la rigidez efectiva "deberá tener en cuenta los efectos del agrietamiento" y que "podrá obtenerse" por análisis seccional (resistencia nominal y deformación de fluencia) o con la Tabla 2.1, que el comentario llama "valores recomendados". Igual para columnas (Tabla 2.2) y tabiques (Tabla 3.1). La Parte I exige secciones fisuradas para el período (6.2.3) y el análisis modal (7.2.1).</li>
+          <li><strong>Camino 1, la tabla:</strong> 0,40 I<sub>g</sub> rectangulares y 0,35 I<sub>g</sub> T o L. Valor aceptado por el reglamento; no hay que verificarlo después.</li>
+          <li><strong>Camino 2, el M–φ de la viga real</strong> (ec. 3.7b), iterativo porque necesita la armadura: se arranca con un valor, se diseña, se calculan M<sub>n</sub> y φ<sub>y</sub> y, si I<sub>e</sub> da distinta, se vuelve a analizar. En el Apéndice D: 2 354/(235 × 60·10⁻⁶) = 166 950 cm⁴ = 0,40 I<sub>g</sub>.</li>
+        </ul>
+        <div class="eq"><math display="block"><mrow><msub><mi>I</mi><mi>e</mi></msub><mo>=</mo><mfrac><mrow><msub><mi>M</mi><mi>n</mi></msub></mrow><mrow><msub><mi>E</mi><mi>c</mi></msub><mspace width="0.17em"/><msub><mi>φ</mi><mi>y</mi></msub></mrow></mfrac></mrow></math></div>
+        <ul>
+          <li><strong>No se puede adoptar un valor mayor "para cumplir la regularidad"</strong> (por ejemplo 0,70): una viga fisurada en fluencia queda entre 0,3 y 0,5 I<sub>g</sub> (para la viga del Apéndice D, la Tabla 6.6.3.1.1(b) del 201-25 da 0,33 I<sub>g</sub>, con tope 0,50 para vigas). Una rigidez inflada subestima el período y las distorsiones, y la regularidad (Tablas 2.3 y 2.4 de la Parte I) se evalúa con desplazamientos. Si sale irregular, se corrige la estructura, no la hipótesis.</li>
+          <li><strong>¿Es inseguro usar la tabla sin verificar?</strong> La rigidez es proporcional a la resistencia: φ<sub>y</sub> ≈ 1,8ε<sub>y</sub>/h casi no depende de la armadura y M<sub>n</sub> crece con A<sub>s</sub>. Para H-25 y d/h ≈ 0,9, I<sub>e</sub>/I<sub>g</sub> ≈ 41ρ (sección en fluencia; la losa, A'<sub>s</sub> y los tramos sin fisurar suben el promedio de la barra):</li>
+        </ul>
+        <div class="tbl"><table>
+          <thead><tr><th>ρ</th><th class="num">0,33 %</th><th class="num">0,50 %</th><th class="num">0,75 %</th><th class="num">1,0 %</th><th class="num">1,4 %</th></tr></thead>
+          <tbody><tr><td>I<sub>e</sub>/I<sub>g</sub> ≈</td><td class="num">0,14</td><td class="num">0,21</td><td class="num">0,31</td><td class="num">0,41</td><td class="num">0,58</td></tr></tbody>
+        </table></div>
+        <ul>
+          <li>La tabla corresponde a ρ ≈ 1 %: con vigas poco armadas sobrestima la rigidez y subestima la distorsión. El error en la distorsión es menor que el de I<sub>e</sub>: si la real fuera 0,25 y las vigas aportan el 50–70 % de la flexibilidad del piso, la distorsión crece 14–19 % en la zona de velocidad del espectro y 30–42 % en la meseta. Para las fuerzas la tabla queda del lado seguro (período más corto, acotado además a C<sub>u</sub>·T<sub>a</sub>).</li>
+          <li><strong>Conviene verificar con M–φ</strong> (criterio propio, no obligación): vigas con ρ menor que ~0,7 %, vigas anchas y chatas, distorsión cerca del límite, cocientes de regularidad cerca de 1,2 o 1,4, y sistemas mixtos pórtico–tabique.</li>
+          <li>Los valores numéricos son cálculos míos, verificados con script.</li>
+        </ul>
+      </div>
       <div class="box torrisi">
         <span class="lbl">Aporte de Torrisi · §3.8 y §3.13–3.14, págs. 53–90</span>
         <p>Resume la misma secuencia con un esquema propio: comportamiento dúctil contra frágil en tres zonas (A: frágil; B: dúctil; C: sobrearmada).</p>

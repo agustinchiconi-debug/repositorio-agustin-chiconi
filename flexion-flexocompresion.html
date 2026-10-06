@@ -653,7 +653,7 @@ function render(){
   const pm=(a,b,u)=>(a!=null&&b!=null&&Math.abs(a-b)<0.005)?fmt(a,2)+' '+u:fmt(a,2)+' / '+fmt(b,2)+' '+u;
   $('kv').innerHTML=(tab==='fc'
     ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['As,e (M+ / M−)',(aeP!=null&&aeN!=null&&Math.abs(aeP-aeN)<0.005)?fmt(aeP,2)+' cm²':fmt(aeP,2)+' / '+fmt(aeN,2)+' cm²'],['ρ total = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
-    : [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Mn (M+ / M−)',pm(MnP,MnN,'tm')],['Mo = Mn con 1,4·fy (M+ / M−)',pm(MoP,MoN,'tm')]]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
+    : [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Mn+',fmt(MnP,2)+' tm'],['Mn−',fmt(MnN,2)+' tm'],['Mo+ (1,4·fy)',fmt(MoP,2)+' tm'],['Mo− (1,4·fy)',fmt(MoN,2)+' tm']]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
   // controles
   const ck=[];
   const bad=layers.some(L=>L.n>0&&(L.d<=0||L.d>=m.h)); ck.push(bad?['bad','Hay capas con di ≤ 0 o di ≥ h']:['ok','Barras dentro de la sección']);

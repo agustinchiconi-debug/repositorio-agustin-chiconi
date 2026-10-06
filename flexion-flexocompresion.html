@@ -336,7 +336,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
         <div class="legend"><span><i style="background:var(--accent);height:4px"></i>Real (3 ELU)</span><span><i style="background:var(--steel);height:4px"></i>Idealizada bilineal</span><span><i style="background:var(--muted)"></i>Fibras (referencia, punteada)</span></div>
         <div class="tbl-wrap">
           <table id="mft">
-            <thead><tr><th>Estado</th><th class="num">M+ [tm]</th><th class="num">φ+ [1/cm]</th><th class="num">M− [tm]</th><th class="num">φ− [1/cm]</th></tr></thead>
+            <thead><tr><th>Estado</th><th class="num">M+ [tm]</th><th class="num">φ+ [1/cm]</th><th class="num">c+ [cm]</th><th class="num">M− [tm]</th><th class="num">φ− [1/cm]</th><th class="num">c− [cm]</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -862,7 +862,7 @@ function mphiBranch(m,th,opt){
   let At=m.Ag, St=0; for(const b of S.bars){At+=(S.n-1)*b.A; St+=(S.n-1)*b.A*b.t;}
   const tb=St/At; let It=S.Ig+m.Ag*tb*tb; for(const b of S.bars) It+=(S.n-1)*b.A*(b.t-tb)**2;
   const yt=tb-S.tmin, Mp=(S.fr+P/At)*It/yt;
-  out.cr={M:(Mp+P*tb)/100, phi:Mp/(S.Ec*It)};
+  out.cr={M:(Mp+P*tb)/100, phi:Mp/(S.Ec*It)}; out.cr.c=S.tmax-(tb-(P/At/S.Ec)/out.cr.phi); // eje neutro: ε(t)=P/(At·Ec)+φ(t−tb)=0
   // ELU2: primera fluencia de la capa más traccionada, parábola, sin tracción del H°
   { // c hasta el valor en que la fibra comprimida llega a εcu: más allá el hormigón (parábola) se anula y el equilibrio deja de ser monótono
     let lo=1e-6, hi=Math.min(dt*(1-1e-9), opt.ecu*dt/(opt.ecu+m.fy/m.Es)), ok=true;
@@ -929,7 +929,7 @@ function drawMphi(m){
     Plotly.react(div,tr,{...plotTheme(),margin:{l:56,r:14,t:8,b:46},showlegend:false,annotations:ann,xaxis:axs('Curvatura φ [1/m]'),yaxis:{...axs('Momento [tm]'),range:[0,ymax]}},{responsive:true,displaylogo:false});
   }
   const e=v=>(v==null||!isFinite(v))?'—':v.toExponential(3).replace('.',',');
-  const row=(t,a,b,c,d)=>`<tr><td style="font-family:var(--sans)">${t}</td><td class="num">${a}</td><td class="num">${b}</td><td class="num">${c}</td><td class="num">${d}</td></tr>`;
+  const row=(t,a,b,c,d,ca='',cb='')=>`<tr><td style="font-family:var(--sans)">${t}</td><td class="num">${a}</td><td class="num">${b}</td><td class="num">${ca}</td><td class="num">${c}</td><td class="num">${d}</td><td class="num">${cb}</td></tr>`;
   const P1=Bp, N1=Bn;
   // cuantía de flexión con área efectiva, según reglamento elegido
   const reg=$('regFl').value, bw = mfAx==='x' ? m.b : m.h, sfc=Math.sqrt(m.fcM), fyM=m.fyM;
@@ -976,9 +976,9 @@ function drawMphi(m){
   const q0=qp||qn;
   $('rhoRef').innerHTML = q0 ? (reg==='IC103' ? `ρmín: As,e tal que Mn = 1,5·Mcr [2.2-12], con Mcr = 0,6√f’c·Ig/yt de la sección bruta [2.2-13] (M+: ${qp?fmt(qp.McrIC/100,2):'—'} tm; M−: ${qn?fmt(qn.McrIC/100,2):'—'} tm); Mn por análisis seccional. ρmáx = mín((f’c+10)/(6fy) ; 0,025) [2.2-11].` : `ρmín = máx(0,25√f’c/fy ; 1,4/fy) [9.6.1.2]. ρmáx = 0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1].`) + ` bw = ${fmt(bw,1)} cm.` + (reg==='C201'?' ρ = As,t/(bw·d̄) con As,t = armadura traccionada y d̄ hasta su baricentro (art. 9.6.1.2 y definición de d). El CIRSOC 201-25 no fija ρmáx explícita: se exige εt ≥ εty+0,003; la ρmáx mostrada es la equivalente para una capa.':' ρ con área efectiva según art. 2.2.5(a). A’s = capa más cercana a la cara comprimida; el resto se toma como traccionado (igual que el Excel de flexión).') : '';
   $('mft').tBodies[0].innerHTML=[
-    row('ELU1 · Fisuración (Mcr, φcr)',fmt(Math.abs(P1.cr.M),3),e(P1.cr.phi),fmt(Math.abs(N1.cr.M),3),e(N1.cr.phi)),
-    row('ELU2 · Primera fluencia (My, φy)',P1.y?fmt(Math.abs(P1.y.M),3):'no fluye',P1.y?e(P1.y.phi):'—',N1.y?fmt(Math.abs(N1.y.M),3):'no fluye',N1.y?e(N1.y.phi):'—'),
-    row('ELU3 · Rotura (Mn, φu)',P1.u?fmt(Math.abs(P1.u.M),3):'—',P1.u?e(P1.u.phi):'—',N1.u?fmt(Math.abs(N1.u.M),3):'—',N1.u?e(N1.u.phi):'—'),
+    row('ELU1 · Fisuración (Mcr, φcr)',fmt(Math.abs(P1.cr.M),3),e(P1.cr.phi),fmt(Math.abs(N1.cr.M),3),e(N1.cr.phi),fmt(P1.cr.c,2),fmt(N1.cr.c,2)),
+    row('ELU2 · Primera fluencia (My, φy)',P1.y?fmt(Math.abs(P1.y.M),3):'no fluye',P1.y?e(P1.y.phi):'—',N1.y?fmt(Math.abs(N1.y.M),3):'no fluye',N1.y?e(N1.y.phi):'—',P1.y?fmt(P1.y.c,2):'—',N1.y?fmt(N1.y.c,2):'—'),
+    row('ELU3 · Rotura (Mn, φu)',P1.u?fmt(Math.abs(P1.u.M),3):'—',P1.u?e(P1.u.phi):'—',N1.u?fmt(Math.abs(N1.u.M),3):'—',N1.u?e(N1.u.phi):'—',P1.u?fmt(P1.u.c,2):'—',N1.u?fmt(N1.u.c,2):'—'),
     row('Fluencia idealizada φ\'y = φy·Mn/My','',P1.id?e(P1.id.phiY2):'—','',N1.id?e(N1.id.phiY2):'—'),
     row('<b>Ductilidad de curvatura μ = φu/φ\'y</b>',P1.id?'<b>'+fmt(P1.id.mu,2)+'</b>':'—','',N1.id?'<b>'+fmt(N1.id.mu,2)+'</b>':'—',''),
     row('E·Ie = Mn/φ\'y [t·cm²]',P1.id?fmt(Math.abs(P1.id.EIe),0):'—','',N1.id?fmt(Math.abs(N1.id.EIe),0):'—',''),

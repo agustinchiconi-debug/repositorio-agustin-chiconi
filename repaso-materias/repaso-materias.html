@@ -304,6 +304,7 @@ td.num,th.num{text-align:right}
             <li><a href="#u3-4">3.4 Bloque rectangular</a></li>
             <li><a href="#u3-5">3.5 ε<sub>cu</sub> y áreas no rectangulares</a></li>
             <li><a href="#u3-6">3.7 Diferencias entre normas</a></li>
+            <li><a href="#u3-transformada">Sección transformada</a></li>
             <li><a href="#u3-7">3.8 Resistencia de vigas</a></li>
             <li><a href="#u3-8">3.9 Fórmula aproximada</a></li>
             <li><a href="#u3-9">3.10 Falla balanceada</a></li>
@@ -1694,6 +1695,31 @@ td.num,th.num{text-align:right}
       </div>
 
       <!-- ===== 3.8 ===== -->
+      <h4 id="u3-transformada">Área de H°A° transformada a hormigón</h4>
+      <div class="box clase">
+        <span class="lbl">Apuntes de clase · manuscritos de Agustín, hojas 21–22 (Unidad 3)</span>
+        <p>"En vez de tener toda la sección de hormigón armado, tengo una sección toda de H° simple, pero con la misma respuesta." Suponiendo una carga axial N (compresión), en una sección de área A<sub>c</sub> de hormigón con armadura longitudinal total A<sub>st</sub>:</p>
+      <div class="deriv">
+      <div class="dt">Sección transformada con carga axial</div>
+      <div class="st"><div class="why">Por condición de compatibilidad de deformaciones, el acortamiento es igual en ambos materiales</div><div class="ex"><math display="block"><mrow><mi>ε</mi><mo>=</mo><msub><mi>ε</mi><mi>s</mi></msub><mo>=</mo><msub><mi>ε</mi><mi>c</mi></msub></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">Por condición de equilibrio se debe verificar (N: carga axial; f'<sub>c</sub>: tensión de compresión del H°; A<sub>c</sub>: área del hormigón; f<sub>s</sub>: tensión en el acero; A<sub>st</sub>: área de armadura longitudinal total)</div><div class="ex"><math display="block"><mrow><mi>N</mi><mo>=</mo><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup><mo>·</mo><msub><mi>A</mi><mi>c</mi></msub><mo>+</mo><msub><mi>f</mi><mi>s</mi></msub><mo>·</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">st</mi></mrow></msub></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">como ε<sub>c</sub> = ε<sub>s</sub>, y llamando n a la relación entre módulos de elasticidad del acero y del H°</div><div class="ex"><math display="block"><mrow><mfrac><mrow><msubsup><mi>f</mi><mi>c</mi><mrow><mo>′</mo></mrow></msubsup></mrow><mrow><msub><mi>E</mi><mi>c</mi></msub></mrow></mfrac><mo>=</mo><mfrac><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow><mrow><msub><mi>E</mi><mi>s</mi></msub></mrow></mfrac><mspace width="2em"/><mi>n</mi><mo>=</mo><mfrac><mrow><msub><mi>E</mi><mi>s</mi></msub></mrow><mrow><msub><mi>E</mi><mi>c</mi></msub></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">el área transformada al equivalente de hormigón es</div><div class="ex"><math display="block"><mrow><msub><mi>A</mi><mrow><mi mathvariant="normal">tt</mi></mrow></msub><mo>=</mo><msub><mi>A</mi><mi>c</mi></msub><mo>+</mo><mi>n</mi><mo>·</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">st</mi></mrow></msub></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">pero si la referimos al área total A<sub>g</sub> = A<sub>c</sub> + A<sub>st</sub></div><div class="ex"><math display="block"><mrow><msub><mi>A</mi><mrow><mi mathvariant="normal">tt</mi></mrow></msub><mo>=</mo><msub><mi>A</mi><mi>g</mi></msub><mo>−</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">st</mi></mrow></msub><mo>+</mo><mi>n</mi><mo>·</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">st</mi></mrow></msub><mo>=</mo><msub><mi>A</mi><mi>g</mi></msub><mo>+</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">st</mi></mrow></msub><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">si designamos con ρ a la cuantía de acero longitudinal, ρ = A<sub>st</sub>/A<sub>g</sub>, el área transformada queda expresada como</div><div class="ex"><math display="block"><mrow><msub><mi>A</mi><mrow><mi mathvariant="normal">tt</mi></mrow></msub><mo>=</mo><msub><mi>A</mi><mi>g</mi></msub><mo>+</mo><msub><mi>A</mi><mi>g</mi></msub><mspace width="0.17em"/><mi>ρ</mi><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mo>=</mo><msub><mi>A</mi><mi>g</mi></msub><mo stretchy="true">[</mo><mn>1</mn><mo>+</mo><mi>ρ</mi><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mo stretchy="true">]</mo></mrow></math></div><div class="tag"></div></div>
+      <div class="st"><div class="why">de la combinación de ecuaciones</div><div class="ex"><math display="block"><mrow><mi>N</mi><mo>=</mo><msub><mi>f</mi><mi>c</mi></msub><msub><mi>A</mi><mi>c</mi></msub><mo>+</mo><msub><mi>f</mi><mi>c</mi></msub><mspace width="0.17em"/><mi>n</mi><mspace width="0.17em"/><msub><mi>A</mi><mrow><mi mathvariant="normal">st</mi></mrow></msub><mo>=</mo><msub><mi>f</mi><mi>c</mi></msub><mspace width="0.17em"/><mo stretchy="false">(</mo><msub><mi>A</mi><mi>c</mi></msub><mo>+</mo><mi>n</mi><msub><mi>A</mi><mrow><mi mathvariant="normal">st</mi></mrow></msub><mo stretchy="false">)</mo><mo>=</mo><msub><mi>f</mi><mi>c</mi></msub><mo>·</mo><msub><mi>A</mi><mrow><mi mathvariant="normal">tt</mi></mrow></msub></mrow></math></div><div class="tag"></div></div>
+      <div class="st res"><div class="why">por lo que</div><div class="ex"><math display="block"><mrow><msub><mi>f</mi><mi>c</mi></msub><mo>=</mo><mfrac><mrow><mi>N</mi></mrow><mrow><msub><mi>A</mi><mi>g</mi></msub><mo stretchy="true">[</mo><mn>1</mn><mo>+</mo><mi>ρ</mi><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mo stretchy="true">]</mo></mrow></mfrac><mspace width="2em"/><msub><mi>f</mi><mi>s</mi></msub><mo>=</mo><mfrac><mrow><mi>n</mi><mo>·</mo><mi>N</mi></mrow><mrow><msub><mi>A</mi><mi>g</mi></msub><mo stretchy="true">[</mo><mn>1</mn><mo>+</mo><mi>ρ</mi><mspace width="0.17em"/><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mo stretchy="true">]</mo></mrow></mfrac></mrow></math></div><div class="tag"></div></div>
+      </div>
+      </div>
+      <div class="box nota">
+        <span class="lbl">Aclaración</span>
+        <ul>
+          <li>En las dos primeras ecuaciones la tensión del hormigón es la tensión actuante f<sub>c</sub> (rango elástico), no la resistencia f'<sub>c</sub>; así aparece después en la combinación de ecuaciones.</li>
+          <li>El (n − 1) aparece porque el hueco que ocupan las barras ya está contado en A<sub>g</sub>: a cada barra solo se le suma el "exceso" de rigidez. Es la misma sección transformada que usa Llopiz para la fisuración (Apéndices A y D, con A<sub>s</sub> y A'<sub>s</sub> en lugar de A<sub>st</sub>).</li>
+          <li>Con E<sub>s</sub> = 200 000 MPa (CIRSOC 201-25) y E<sub>c</sub> = 4 700√f'<sub>c</sub>, para un H-25 resulta n = 8,5.</li>
+        </ul>
+      </div>
+
       <h3 id="u3-7"><span class="n">3.8</span>Resistencia de vigas en flexión simple. Generalización del problema</h3>
       <h4>Vigas o losas simplemente armadas <span class="pg">· págs. 27–28</span></h4>
       <p>La Fig. 3.15 muestra una sección simplemente armada, con una sola capa de acero a la distancia d del borde comprimido (altura útil según la norma).</p>

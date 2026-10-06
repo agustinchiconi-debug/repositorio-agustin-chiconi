@@ -190,6 +190,16 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
       <div class="row"><button id="addLayer" type="button">Agregar capa</button></div>
       </div>
 
+      <div class="only-fl" style="display:grid;gap:12px">
+      <h2>Criterio</h2>
+      <label>Reglamento
+        <select id="regFl">
+          <option value="C201">CIRSOC 201-25</option>
+          <option value="IC103">INPRES-CIRSOC 103 P.II-2021 (sismo)</option>
+        </select>
+      </label>
+      <p class="hint" id="regFlTxt"></p>
+      </div>
       <div class="only-fc" style="display:grid;gap:12px">
       <h2>Criterio</h2>
       <label>Reglamento y armadura transversal
@@ -231,13 +241,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
             <svg id="secSvg" viewBox="0 0 340 340" role="img" aria-label="Sección transversal con barras"></svg>
           </div>
           <div class="only-fl rhocard">
-            <div class="row" style="justify-content:space-between">
-              <h2>Cuantía de flexión</h2>
-              <select id="regFl" aria-label="Reglamento para cuantías" style="width:auto">
-                <option value="IC103">INPRES-CIRSOC 103 P.II-2021</option>
-                <option value="C201">CIRSOC 201-2025</option>
-              </select>
-            </div>
+            <h2>Cuantía de flexión</h2>
             <div class="tbl-wrap">
               <table id="rhoc">
                 <thead><tr><th></th><th class="num">M+</th><th class="num">M−</th></tr></thead>
@@ -956,6 +960,7 @@ function drawMphi(m){
     rr('¿Verifica?',q=>pill(q.rho>=q.rmin&&q.rho<=q.rmax, q.rho<q.rmin?'No: ρ < ρmín':q.rho>q.rmax?'No: ρ > ρmáx':'Verifica'),'sep'),
   ];
   $('rhoc').tBodies[0].innerHTML=rows.join('');
+  $('regFlTxt').textContent = reg==='IC103' ? 'Cuantía con área efectiva As,e/(bw·d) [art. 2.2.5(a)] · ρmín: Mn ≥ 1,5·Mcr [2.2-12] · ρmáx = mín((f’c+10)/(6fy) ; 0,025) [2.2-11]' : 'Cuantía con armadura traccionada As,t/(bw·d̄), d̄ al baricentro [9.6.1.2] · ρmín = máx(0,25√f’c/fy ; 1,4/fy) · ρmáx: εt ≥ εty+0,003 [9.3.3.1]';
   const q0=qp||qn;
   $('rhoRef').innerHTML = q0 ? (reg==='IC103' ? `ρmín: As,e tal que Mn = 1,5·Mcr [2.2-12], con Mcr = 0,6√f’c·Ig/yt de la sección bruta [2.2-13] (M+: ${qp?fmt(qp.McrIC/100,2):'—'} tm; M−: ${qn?fmt(qn.McrIC/100,2):'—'} tm); Mn por análisis seccional. ρmáx = mín((f’c+10)/(6fy) ; 0,025) [2.2-11].` : `ρmín = máx(0,25√f’c/fy ; 1,4/fy) [9.6.1.2]. ρmáx = 0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1].`) + ` bw = ${fmt(bw,1)} cm.` + (reg==='C201'?' ρ = As,t/(bw·d̄) con As,t = armadura traccionada y d̄ hasta su baricentro (art. 9.6.1.2 y definición de d). El CIRSOC 201-25 no fija ρmáx explícita: se exige εt ≥ εty+0,003; la ρmáx mostrada es la equivalente para una capa.':' ρ con área efectiva según art. 2.2.5(a). A’s = capa más cercana a la cara comprimida; el resto se toma como traccionado (igual que el Excel de flexión).') : '';
   $('mft').tBodies[0].innerHTML=[
@@ -1029,7 +1034,7 @@ $('pFile').addEventListener('change',()=>{ const fl=$('pFile').files[0]; if(!fl)
   rd.onerror=()=>msg('No se pudo leer el archivo.'); rd.readAsText(fl); });
 $('pClear').onclick=()=>only('pClearPanel');
 $('pClearCancel').onclick=()=>only(null);
-$('pClearOk').onclick=()=>{ const blank={tipo:'R',ala:'sup',b:20,h:40,bf:60,hf:10,fc:30,fy:420,Es:200000,rx:4,crit:'C201E',cN:8,cF:16,cR:5,regFl:'IC103',mfEcu:0.003,mfE0:0.002,mfFr:0.62,
+$('pClearOk').onclick=()=>{ const blank={tipo:'R',ala:'sup',b:20,h:40,bf:60,hf:10,fc:30,fy:420,Es:200000,rx:4,crit:'C201E',cN:8,cF:16,cR:5,regFl:'C201',mfEcu:0.003,mfE0:0.002,mfFr:0.62,
   layers:[{d:4,n:0,f:12},{d:36,n:0,f:12}], loads:[{name:'Caso 1',P:0,Mx:0,My:0,color:PAL[0]}]}; setState(blank); setName(''); only(null); msg('Datos limpiados: cargá la sección, la armadura y las solicitaciones.'); };
 let tmr=null; function schedule(){ clearTimeout(tmr); tmr=setTimeout(render,250); }
 new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

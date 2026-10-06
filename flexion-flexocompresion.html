@@ -62,6 +62,8 @@ button.x{padding:2px 7px;color:var(--muted)}
 .main{display:grid;gap:16px;min-width:0}
 .top{display:grid;grid-template-columns:minmax(240px,340px) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:760px){.top{grid-template-columns:1fr}}
+.clsbox{padding:8px 10px;border-radius:4px;background:var(--bg);font-size:13px;line-height:1.45}
+.clsbox b{font-family:var(--sans)}
 .rhocard{display:grid;gap:8px;align-content:start;min-width:0}
 #rhoc td:first-child{font-family:var(--sans);font-size:12.5px}
 #rhoc tr.sep td{border-top:2px solid var(--line)}
@@ -245,8 +247,11 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
             <p class="hint" id="rhoRef"></p>
           </div>
           <div class="only-fc" style="display:grid;gap:8px;align-content:start;min-width:0">
-            <h2>Controles de columna</h2>
+            <h2 id="ctrlTit">Controles</h2>
+            <div class="clsbox" id="clsBox"></div>
             <ul class="checks" id="checks"></ul>
+            <div class="tbl-wrap"><table id="rhoFc"><thead><tr><th>Cuantías</th><th class="num">Cara inf. traccionada (M+)</th><th class="num">Cara sup. traccionada (M−)</th></tr></thead><tbody></tbody></table></div>
+            <p class="hint" id="rhoFcRef"></p>
           </div>
         </div>
         <div class="kv" id="kv"></div>
@@ -629,7 +634,7 @@ function render(){
   drawSection(m);
   const rho=m.As/m.Ag;
   $('kv').innerHTML=(tab==='fc'
-    ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['ρ columna = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
+    ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['ρ total = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
     : [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm']]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
   // controles
   const ck=[];
@@ -638,11 +643,42 @@ function render(){
   if((m.tipo==='T'||m.tipo==='L'||m.tipo==='X')&&(m.bf<=m.b||m.hf>=m.h)) ck.push(['warn','Ala mal definida: requiere bf > bw y hf < h']);
   const rmin=m.crit==='IC103'?0.008:0.01, rmax=m.crit==='IC103'?18/m.fyM:0.08;
   if(tab==='fc'){
-  ck.push([rho>=rmin?'ok':'warn',`Cuantía de columna ≥ ${fmt(rmin*100,1)} % (${m.crit==='IC103'?'IC103 art. 2.3.6':'C201 art. 10.6.1.1'})`]);
-  ck.push([rho<=rmax?'ok':'bad',`Cuantía ≤ ${fmt(rmax*100,2)} %`]);
+  const ic=m.crit==='IC103', sfc=Math.sqrt(m.fcM), bw=m.b;
+  // ¿viga o columna? Pu de compresión máxima contra 0,10·f'c·Ag (t = MPa·cm²/100)
+  const Pmax=Math.max(0,...loads.map(L=>+L.P||0)), Plim=0.10*m.fcM*m.Ag/100, esViga=Pmax<Plim;
+  $('ctrlTit').textContent=esViga?'Controles de viga':'Controles de columna';
+  $('clsBox').innerHTML=`<b>Se comporta como ${esViga?'VIGA':'COLUMNA'}.</b> Pu,máx de compresión = ${fmt(Pmax,2)} t ${esViga?'<':'≥'} 0,10·f’c·Ag = 0,10 × ${fmt(m.fcM,0)} MPa × ${fmt(m.Ag,0)} cm² = ${fmt(Plim,2)} t (${ic?'IC103 cap. 2.2 vigas / 2.3 columnas':'C201-25 art. 9.5.2.1 / cap. 10'}). `+(esViga?'Se aplican la cuantía mínima y máxima de flexión sobre la armadura traccionada; no rigen la cuantía de columna ni la dimensión mínima de 20 cm.':'Se aplican los requisitos de columna sobre la cuantía total As/Ag.');
+  // cuantías por cara traccionada (flexión en Mx): capa más cercana a la cara comprimida = A's, resto traccionado
+  const ety=m.ety, rq=sg=>{ const S=m.bars.map(q=>({A:q.A,s:sg>0?(m.yTop-q.y):(q.y-(m.yTop-m.h))}));
+    if(!S.length) return null; const smin=Math.min(...S.map(q=>q.s)), tr=S.filter(q=>q.s>smin+1e-6); if(!tr.length) return null;
+    const d=Math.max(...tr.map(q=>q.s)), Ast=tr.reduce((a,q)=>a+q.A,0), Ase=tr.reduce((a,q)=>a+q.A*q.s/d,0);
+    const rmin=Math.max(0.25*sfc/m.fyM,1.4/m.fyM), rmax=ic?Math.min((m.fcM+10)/(6*m.fyM),0.025):0.85*m.b1*(m.fcM/m.fyM)*0.003/(0.006+ety);
+    return {d,Ast,Ase,rt:Ast/(bw*d),re:Ase/(bw*d),rmin,rmax}; };
+  const qp=rq(1), qn=rq(-1), f=(q,g)=>q?g(q):'—';
+  const vr=q=>{ if(!esViga) return '<span class="hint">no rige (columna)</span>'; const ok=q.re>=q.rmin&&q.re<=q.rmax; return `<span class="pill ${ok?'ok':'bad'}">${q.re<q.rmin?'No: ρe < ρmín':q.re>q.rmax?'No: ρe > ρmáx':'Cumple'}</span>`; };
+  $('rhoFc').tBodies[0].innerHTML=[
+    ['ρ total = As/Ag (toda la armadura)',()=>fmt(rho*100,3)+' %'],
+    ['d [cm]',q=>fmt(q.d,1)],
+    ['As traccionada [cm²]',q=>fmt(q.Ast,2)],
+    ['ρ traccionada = As,t/(bw·d)',q=>fmt(q.rt*100,3)+' %'],
+    ['As,e efectiva = Σ As,i·di/d [cm²]',q=>fmt(q.Ase,2)],
+    ['<b>ρ efectiva = As,e/(bw·d)</b>',q=>'<b>'+fmt(q.re*100,3)+' %</b>'],
+    ['ρmín viga',q=>fmt(q.rmin*100,3)+' %'],
+    ['ρmáx viga',q=>fmt(q.rmax*100,3)+' %'],
+    ['¿Cuantía de viga?',vr]
+  ].map(([t,g],k)=>`<tr${k===8?' class="sep"':''}><td>${t}</td><td class="num">${k===0?g():f(qp,g)}</td><td class="num">${k===0?g():f(qn,g)}</td></tr>`).join('');
+  $('rhoFcRef').innerHTML=`ρ total: As/Ag, la que usan los requisitos de columna. ρ traccionada: barras traccionadas (todas menos la capa más cercana a la cara comprimida) sobre bw·d. ρ efectiva: cada barra traccionada pesada por su brazo di/d, la que se compara con ρmín y ρmáx de viga. bw = ${fmt(bw,1)} cm. ρmín = máx(0,25√f’c/fy ; 1,4/fy) ${ic?'[2.2-14]':'[9.6.1.2]'}; ρmáx = ${ic?'mín((f’c+10)/(6fy) ; 0,025) [2.2-11]':'0,85·β1·(f’c/fy)·εcu/(εcu+εty+0,003), equivalente a εt ≥ εty+0,003 [9.3.3.1]'}.`;
+  if(esViga){
+    const qs=[qp,qn].filter(Boolean), okv=qs.every(q=>q.re>=q.rmin), okx=qs.every(q=>q.re<=q.rmax);
+    ck.push([okv?'ok':'bad',`ρ efectiva ≥ ρmín de viga en ambas caras (${ic?'IC103 [2.2-14]':'C201 art. 9.6.1.2'})`]);
+    ck.push([okx?'ok':'warn',`ρ efectiva ≤ ρmáx de viga (${ic?'IC103 [2.2-11]':'C201 art. 9.3.3.1'})`]);
+  } else {
+  ck.push([rho>=rmin?'ok':'warn',`Cuantía de columna As/Ag ≥ ${fmt(rmin*100,1)} % (${ic?'IC103 art. 2.3.6':'C201 art. 10.6.1.1'})`]);
+  ck.push([rho<=rmax?'ok':'bad',`Cuantía de columna As/Ag ≤ ${fmt(rmax*100,2)} %`]);
   const dmin=Math.min(m.b,m.h,m.tipo==='R'?Infinity:m.hf);
-  ck.push([dmin>=20?'ok':'warn',`Dimensión mínima de columna ≥ 20 cm (${m.crit==='IC103'?'IC103 art. 2.3.1.3':'C201 art. 10.3.1'})`]);
-  if(m.crit==='IC103') ck.push([m.fcM>=20&&m.fcM<=70?'ok':'bad','20 ≤ f\'c ≤ 70 MPa (IC103 art. 1.2.1)']);
+  ck.push([dmin>=20?'ok':'warn',`Dimensión mínima de columna ≥ 20 cm (${ic?'IC103 art. 2.3.1.3':'C201 art. 10.3.1'})`]);
+  }
+  if(ic) ck.push([m.fcM>=20&&m.fcM<=70?'ok':'bad','20 ≤ f\'c ≤ 70 MPa (IC103 art. 1.2.1)']);
   }
   if(m.EsM!==200000) ck.push(['warn','Es distinto de 200.000 MPa (C201-25 art. 20.2.2.2)']);
   $('checks').innerHTML=ck.map(([k,t])=>`<li><span class="pill ${k}">${k==='ok'?'Cumple':k==='warn'?'Revisar':'No cumple'}</span>${t}</li>`).join('');

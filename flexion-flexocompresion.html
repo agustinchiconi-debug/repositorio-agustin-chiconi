@@ -647,9 +647,11 @@ function render(){
   const aeP=AsE(1), aeN=AsE(-1);
   // Mn y Mo (sobrerresistencia: fy × 1,4) por análisis seccional con P = 0, en la dirección elegida para M-φ
   const MnSec=(mm,th)=>{ if(!mm.bars.length) return null; const ecu=+$('mfEcu').value||0.003, D=depthRange(mm,th); let lo=1e-5*D, hi=60*D; const v=c=>secU(mm,th,c,ecu).P;
-    if(v(lo)>0||v(hi)<0) return null; for(let it=0;it<80;it++){const mid=Math.sqrt(lo*hi); if(v(mid)<0) lo=mid; else hi=mid;} return Math.abs(secU(mm,th,Math.sqrt(lo*hi),ecu).Mt); };
+    if(v(lo)>0||v(hi)<0) return null; for(let it=0;it<80;it++){const mid=Math.sqrt(lo*hi); if(v(mid)<0) lo=mid; else hi=mid;} const c=Math.sqrt(lo*hi); MnSec.c=c; return Math.abs(secU(mm,th,c,ecu).Mt); };
   const thF=mfAx==='x'?Math.PI/2:0, mO={...m,fy:1.4*m.fy,fyM:1.4*m.fyM};
-  const MnP=tab==='fc'?null:MnSec(m,thF), MnN=tab==='fc'?null:MnSec(m,thF+Math.PI), MoP=tab==='fc'?null:MnSec(mO,thF), MoN=tab==='fc'?null:MnSec(mO,thF+Math.PI);
+  let MnP=null,MnN=null,MoP=null,MoN=null; window.__MO=null;
+  if(tab!=='fc'){ const cc={}; MnP=MnSec(m,thF); cc.nP=MnSec.c; MnN=MnSec(m,thF+Math.PI); cc.nN=MnSec.c; MoP=MnSec(mO,thF); cc.oP=MnSec.c; MoN=MnSec(mO,thF+Math.PI); cc.oN=MnSec.c;
+    window.__MO={MnP,MnN,MoP,MoN,c:cc,fy:m.fyM,ecu:+$('mfEcu').value||0.003,ax:mfAx}; }
   const pm=(a,b,u)=>(a!=null&&b!=null&&Math.abs(a-b)<0.005)?fmt(a,2)+' '+u:fmt(a,2)+' / '+fmt(b,2)+' '+u;
   $('kv').innerHTML=(tab==='fc'
     ? [['Ag',fmt(m.Ag,0)+' cm²'],['As total',fmt(m.As,2)+' cm²'],['As,e (M+ / M−)',(aeP!=null&&aeN!=null&&Math.abs(aeP-aeN)<0.005)?fmt(aeP,2)+' cm²':fmt(aeP,2)+' / '+fmt(aeN,2)+' cm²'],['ρ total = As/Ag',fmt(rho*100,2)+' %'],['β1',fmt(m.b1,3)],['Baricentro desde arriba',fmt(m.yTop,2)+' cm'],['Po',fmt(m.P0,1)+' t'],['φPn,max',fmt(m.cap,1)+' t'],['Tracción pura',fmt(m.Pt,1)+' t'],['εty',fmt(m.ety,4)]]
@@ -1123,6 +1125,18 @@ async function buildMemo(){
     if($('rhoRef').textContent) b.push(Wp(X($('rhoRef').textContent),'Desc'));
     const bad=$('rhoc').querySelectorAll('.pill.bad').length;
     b.push(Wp(bad?'La cuantía de flexión NO VERIFICA.':'La cuantía de flexión VERIFICA en M+ y M−.','Result',`<w:color w:val="${bad?'8E3B5A':'2F7A4E'}"/>`));
+    const MO=window.__MO;
+    if(MO){ H1('Momento nominal M<sub>n</sub> y de sobrerresistencia M<sub>o</sub>');
+      b.push(Wp(`M<sub>n</sub>: análisis seccional por compatibilidad de deformaciones con P = 0, ε<sub>cu</sub> = ${fmt(MO.ecu,4)} en la fibra comprimida, bloque rectangular 0,85·f'c en a = β<sub>1</sub>·c y acero elastoplástico con f<sub>y</sub> = ${fmt(MO.fy,0)} MPa. Flexión en ${MO.ax==='x'?'x (Mx)':'y (My)'}.`,'Desc'));
+      b.push(Wp(`M<sub>o</sub> (sobrerresistencia): el mismo análisis seccional, pero con la tensión de fluencia del acero multiplicada por 1,4: λ<sub>o</sub>·f<sub>y</sub> = 1,4 × ${fmt(MO.fy,0)} = ${fmt(1.4*MO.fy,0)} MPa (en tracción y en compresión). Se vuelve a buscar el eje neutro que equilibra la sección, por eso M<sub>o</sub>/M<sub>n</sub> resulta menor que 1,4: al crecer la fuerza del acero, el bloque comprimido se hace más profundo y el brazo interno se acorta.`,'Desc'));
+      b.push(Wtbl([['','M+','M−'],
+        ['Profundidad del eje neutro con f<sub>y</sub>, c [cm]',fmt(MO.c.nP,2),fmt(MO.c.nN,2)],
+        ['<b>M<sub>n</sub> [tm]</b>','<b>'+fmt(MO.MnP,3)+'</b>','<b>'+fmt(MO.MnN,3)+'</b>'],
+        ['Profundidad del eje neutro con 1,4·f<sub>y</sub>, c [cm]',fmt(MO.c.oP,2),fmt(MO.c.oN,2)],
+        ['<b>M<sub>o</sub> [tm]</b>','<b>'+fmt(MO.MoP,3)+'</b>','<b>'+fmt(MO.MoN,3)+'</b>'],
+        ['M<sub>o</sub>/M<sub>n</sub>',fmt(MO.MoP/MO.MnP,3),fmt(MO.MoN/MO.MnN,3)],
+        ['Referencia: 1,4·M<sub>n</sub> [tm]',fmt(1.4*MO.MnP,3),fmt(1.4*MO.MnN,3)]],[5000,2300,2300]));
+    }
     H1('Momento-curvatura, ductilidad e I<sub>e</sub>/I<sub>g</sub>');
     b.push(Wp(`Flexión en ${mfAx==='x'?'x (Mx)':'y (My)'} · ε<sub>cu</sub> = ${X($('mfEcu').value)} · ε<sub>0</sub> = ${X($('mfE0').value)} · f<sub>r</sub> = ${X($('mfFr').value)}·√f'c`,'Desc'));
     const mt=domRows('mft'); if(mt.length) b.push(Wtbl(mt,[3800,1450,1450,1450,1450]));

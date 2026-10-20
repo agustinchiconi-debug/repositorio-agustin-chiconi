@@ -289,7 +289,7 @@ function gaussSolve(A,b){const n=b.length;const M=A.map((row,i)=>[...row,b[i]]);
 function solveBeam(L,supports,loads,hinges,EI){
   const psSet=new Set([0,L].map(v=>+v.toFixed(9)));
   supports.forEach(s=>psSet.add(+s.pos.toFixed(9)));
-  loads.forEach(l=>{if(l.pos!==undefined)psSet.add(+l.pos.toFixed(9));if(l.start!==undefined){psSet.add(+l.start.toFixed(9));psSet.add(+l.end.toFixed(9));}});
+  loads.forEach(l=>{if(l.pos!==undefined&&l.type!=='point-e')psSet.add(+l.pos.toFixed(9));if(l.start!==undefined){psSet.add(+l.start.toFixed(9));psSet.add(+l.end.toFixed(9));}});
   hinges.forEach(h=>psSet.add(+h.pos.toFixed(9)));
   const criticalPos=new Set([...psSet]);
   const sorted0=[...psSet].sort((a,b)=>a-b);
@@ -314,11 +314,13 @@ function solveBeam(L,supports,loads,hinges,EI){
     for(let i=0;i<4;i++)for(let j=0;j<4;j++)K[d[i]][d[j]]+=ke[i][j];
     loads.forEach(ld=>{
       if(ld.type==='udl'){const w=ld.mag;Fa[d[0]]+=w*Le/2;Fa[d[1]]+=w*Le2/12;Fa[d[2]]+=w*Le/2;Fa[d[3]]-=w*Le2/12;}
+      else if(ld.type==='point-e'&&ld.pos>x1+1e-9&&ld.pos<x2-1e-9){const P=ld.mag,a=ld.pos-x1,b=Le-a;Fa[d[0]]+=P*b*b*(3*a+b)/(Le*Le*Le);Fa[d[1]]+=P*a*b*b/(Le*Le);Fa[d[2]]+=P*a*a*(a+3*b)/(Le*Le*Le);Fa[d[3]]-=P*a*a*b/(Le*Le);}
       else if(ld.type==='partial'){const aG=Math.max(ld.start,x1)-x1,bG=Math.min(ld.end,x2)-x1;if(bG>aG+1e-9){const w=ld.mag,ns=32,dx=(bG-aG)/ns;for(let s=0;s<=ns;s++){const xi=aG+s*dx,wt=dx*(s===0||s===ns?0.5:1.0),P=w*wt,a=Math.max(0,Math.min(Le,xi)),b=Le-a;Fa[d[0]]+=P*b*b*(3*a+b)/(Le*Le*Le);Fa[d[1]]+=P*a*b*b/(Le*Le);Fa[d[2]]+=P*a*a*(a+3*b)/(Le*Le*Le);Fa[d[3]]-=P*a*a*b/(Le*Le);}}}
     });
   }
   loads.forEach(ld=>{
     if(ld.type==='point-v'){const ni=nearestNode(nodes,ld.pos);Fa[vDof[ni]]+=ld.mag;}
+    else if(ld.type==='point-e'){const ni=nearestNode(nodes,ld.pos);if(Math.abs(nodes[ni]-ld.pos)<=1e-9)Fa[vDof[ni]]+=ld.mag;}
     else if(ld.type==='moment'){const ni=nearestNode(nodes,ld.pos);if(nodeRot[ni]>=0)Fa[nodeRot[ni]]+=ld.mag;}
   });
   const restrained=new Set();
@@ -345,7 +347,7 @@ function solveBeam(L,supports,loads,hinges,EI){
   });
   const sumRy=reactions.reduce((a,r)=>a+r.Ry,0);
   let loadFy=0;
-  loads.forEach(l=>{if(l.type==='point-v')loadFy+=l.mag;else if(l.type==='udl')loadFy+=l.mag*L;else if(l.type==='partial')loadFy+=l.mag*(l.end-l.start);});
+  loads.forEach(l=>{if(l.type==='point-v'||l.type==='point-e')loadFy+=l.mag;else if(l.type==='udl')loadFy+=l.mag*L;else if(l.type==='partial')loadFy+=l.mag*(l.end-l.start);});
   const residual=Math.abs(sumRy+loadFy),ref=Math.max(1,Math.abs(loadFy)),stable=residual<0.01*ref;
   return{reactions,nodes,D,vDof,nodeRot,elemTL,elemTR,stable,residual};
 }
@@ -601,8 +603,9 @@ function interpEta(xs,eta,x){
 }
 function integEta(xs,eta,x1,x2,L){
   const a=Math.max(0,x1),b=Math.min(L,x2);if(b<=a+1e-12)return 0;
-  const n=Math.max(4,Math.ceil((b-a)/(L/800)));const dx=(b-a)/n;let s=0;
-  for(let i=0;i<=n;i++){const w=(i===0||i===n)?.5:1;s+=w*interpEta(xs,eta,a+i*dx);}return s*dx;
+  // integral exacta de la interpolación lineal de η (tramo a tramo de la grilla: respeta los saltos de la LI de V)
+  let lo=0,hi=xs.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(xs[m]<=a)lo=m;else hi=m;}
+  let s=0;for(let i=lo;i<xs.length-1&&xs[i]<b;i++){const u=Math.max(a,xs[i]),v=Math.min(b,xs[i+1]);if(v>u)s+=(interpEta(xs,eta,u)+interpEta(xs,eta,v))/2*(v-u);}return s;
 }
 function areasEta(xs,eta){let ap=0,an=0;for(let i=0;i<xs.length-1;i++){const dx=xs[i+1]-xs[i],e1=eta[i],e2=eta[i+1];if(e1>=0&&e2>=0)ap+=(e1+e2)/2*dx;else if(e1<=0&&e2<=0)an+=(e1+e2)/2*dx;else{const xc=dx*Math.abs(e1)/(Math.abs(e1)+Math.abs(e2));const p1=e1*xc/2,p2=e2*(dx-xc)/2;if(e1>0){ap+=p1;an+=p2;}else{an+=p1;ap+=p2;}}}return{ap,an};}
 
@@ -611,30 +614,37 @@ function analyzeIL(){
   if(!state.supports.length){alert('Agregá al menos un vínculo a la viga.');return;}
   const pts=train.items.filter(i=>i.kind!=='crowd'),crowd=train.items.find(i=>i.kind==='crowd');
   if(!train.items.length){alert('Definí el tren de cargas.');return;}
-  {const nR=state.supports.reduce((a,s)=>a+(s.type==='fixed'?3:s.type==='pinned'?2:1),0),doi=nR-(3+state.hinges.length),hasFixed=state.supports.some(s=>s.type==='fixed');
-   if(hasFixed||doi>0){const motivo=hasFixed?'la viga tiene <strong>empotramiento</strong>':`la viga es <strong>hiperestática</strong> (grado ${doi})`;
-     document.getElementById('alertText').innerHTML=`<strong>Líneas de influencia no disponibles:</strong> ${motivo}. Este cálculo es solo para vigas isostáticas (apoyo simple + apoyo doble, con o sin articulaciones que mantengan la isostaticidad).`;
+  const nR=state.supports.reduce((a,s)=>a+(s.type==='fixed'?3:s.type==='pinned'?2:1),0),doi=nR-(3+state.hinges.length);
+  if(doi<0){document.getElementById('alertText').innerHTML=`<strong>Estructura hipostática</strong> — faltan ${-doi} vínculo(s). Tiene ${nR} reacción(es) y necesita al menos ${3+state.hinges.length}.`;
      document.getElementById('alertBanner').classList.add('show');train.res=null;document.getElementById('ilResults').style.display='none';document.getElementById('ilEmpty').style.display='flex';document.getElementById('memView').innerHTML='';
-     setStatus('⚠ Líneas de influencia solo para vigas isostáticas.','error');return;}}
+     setStatus('⚠ Estructura hipostática.','error');return;}
   const n=Math.max(2,Math.round(parseFloat(document.getElementById('ilN').value)||8));
   let step=parseFloat(document.getElementById('ilStep').value)||0.05;
   const both=document.getElementById('ilBoth').checked;
   setStatus('Calculando líneas de influencia...','loading');
   setTimeout(()=>{try{
-    const EI=getEI(),S=[];for(let k=0;k<=n;k++)S.push(+(k*L/n).toFixed(9));
-    const xsSet=new Set();const G=400;for(let i=0;i<=G;i++)xsSet.add(+(i*L/G).toFixed(9));
-    S.forEach(s=>{xsSet.add(s);if(s-1e-6>=0)xsSet.add(+(s-1e-6).toFixed(9));if(s+1e-6<=L)xsSet.add(+(s+1e-6).toFixed(9));const xv=s>=L-1e-9?s-1e-6:s+1e-6;[-5e-7,5e-7].forEach(d=>{const x=xv+d;if(x>=0&&x<=L)xsSet.add(+x.toFixed(9));});});
+    // EI: en vigas de EI constante las LI de M y V no dependen de su valor; si la sección no es válida se usa una por defecto
+    const EI0=getEI(),EI=isFinite(EI0)&&EI0>0?EI0:217e4*(30*50*50*50/12)/1e8,hyper=doi>0;
+    // secciones k·L/n + ambos lados de cada apoyo interior (side: +1 corte a la derecha, −1 a la izquierda)
+    const secs=[];for(let k=0;k<=n;k++){const s=+(k*L/n).toFixed(9);secs.push({s,side:k===n?-1:1,lbl:`${k}·L/${n}`});}
+    state.supports.forEach(sp=>{const p=+sp.pos.toFixed(9);if(p<=1e-9||p>=L-1e-9)return;[-1,1].forEach(sd=>{if(!secs.some(o=>Math.abs(o.s-p)<1e-9&&o.side===sd))secs.push({s:p,side:sd,lbl:`apoyo ${sd<0?'izq.':'der.'}`});});});
+    secs.sort((a,b)=>a.s-b.s||a.side-b.side);
+    const S=secs.map(o=>o.s),side=secs.map(o=>o.side),slbl=secs.map(o=>o.lbl);
+    const xsSet=new Set();const G=hyper?1000:400;for(let i=0;i<=G;i++)xsSet.add(+(i*L/G).toFixed(9));
+    S.forEach((s,k)=>{xsSet.add(s);if(s-1e-6>=0)xsSet.add(+(s-1e-6).toFixed(9));if(s+1e-6<=L)xsSet.add(+(s+1e-6).toFixed(9));const xv=s+side[k]*1e-6;[-5e-7,5e-7].forEach(d=>{const x=xv+d;if(x>=0&&x<=L)xsSet.add(+x.toFixed(9));});});
     state.supports.forEach(sp=>xsSet.add(+sp.pos.toFixed(9)));state.hinges.forEach(h=>xsSet.add(+h.pos.toFixed(9)));
     const xs=[...xsSet].filter(x=>x>=0&&x<=L).sort((a,b)=>a-b);
     const etaM=S.map(()=>new Float64Array(xs.length)),etaV=S.map(()=>new Float64Array(xs.length));
-    const vcut=S.map(s=>s>=L-1e-9?s-1e-6:s+1e-6);
+    const vcut=S.map((s,k)=>s+side[k]*1e-6);
+    // M por equilibrio de la porción izquierda; el momento de un empotramiento ubicado en la sección entra solo si el corte es a su derecha
+    const mSec=(R,s,k)=>{let M=0;R.forEach(r=>{if(r.pos<=s+1e-9){M+=r.Ry*(s-r.pos);if(r.Mx&&(r.pos<s-1e-9||side[k]>0))M+=r.Mx;}});return M;};
     let unstable=false;
     xs.forEach((xu,j)=>{
-      const sol=solveBeam(L,state.supports,[{type:'point-v',mag:-1,pos:xu}],state.hinges,EI);
+      const sol=solveBeam(L,state.supports,[{type:'point-e',mag:-1,pos:xu}],state.hinges,EI);
       if(!sol.stable)unstable=true;
       const R=sol.reactions;
       S.forEach((s,k)=>{
-        let M=0;R.forEach(r=>{if(r.pos<=s+1e-9){M+=r.Ry*(s-r.pos);if(r.Mx)M+=r.Mx;}});if(xu<s-1e-9)M+=-1*(s-xu);
+        let M=mSec(R,s,k);if(xu<s-1e-9)M+=-1*(s-xu);
         const xv=vcut[k];let V=0;R.forEach(r=>{if(r.pos<=xv+1e-9)V+=r.Ry;});if(xu<xv-1e-9)V+=-1;
         etaM[k][j]=M;etaV[k][j]=V;
       });
@@ -666,6 +676,11 @@ function analyzeIL(){
           });
         }
       });
+      // búsqueda local alrededor de cada extremo (en hiperestáticas la LI es curva y el pico puede caer entre dos pasos)
+      S.forEach((s,k)=>['Mmax','Mmin','Vmax','Vmin'].forEach(c=>{
+        const b=best[k][c];if(!isFinite(b.val))return;const et=c[0]==='M'?etaM[k]:etaV[k],sg=c.endsWith('max')?1:-1,loc=b.dir===1?loc0:loc0.map(mirror);
+        let h=step;for(let it=0;it<3;it++){const a0=b.a;h/=10;for(let i=-10;i<=10;i++){const a=a0+i*h;if(!i||a<-Lt-1e-9||a>L+1e-9)continue;const v=effect(loc,a,k,et);if(sg*(v-b.val)>1e-12){b.val=v;b.a=a;}}}
+      }));
     }
     const qc=crowd?crowd.q:0;
     const cases=S.map((s,k)=>{
@@ -689,7 +704,7 @@ function analyzeIL(){
       const sol=solveBeam(L,state.supports,state.loads,state.hinges,EI),R=sol.reactions;
       const Md=[],Vd=[];
       S.forEach((s,k)=>{
-        let M=0;R.forEach(r=>{if(r.pos<=s+1e-9){M+=r.Ry*(s-r.pos);if(r.Mx)M+=r.Mx;}});
+        let M=mSec(R,s,k);
         state.loads.forEach(l=>{if(l.type==='point-v'&&l.pos<s-1e-9)M+=l.mag*(s-l.pos);else if(l.type==='udl')M+=l.mag*s*s/2;else if(l.type==='partial'&&s>l.start+1e-9){const eff=Math.min(s,l.end)-l.start,cen=l.start+eff/2;M+=l.mag*eff*(s-cen);}else if(l.type==='moment'&&l.pos<s-1e-9)M+=l.mag;});
         const x=vcut[k];let V=0;R.forEach(r=>{if(r.pos<=x+1e-9)V+=r.Ry;});
         state.loads.forEach(l=>{if(l.type==='point-v'&&l.pos<x-1e-9)V+=l.mag;else if(l.type==='udl')V+=l.mag*x;else if(l.type==='partial'&&x>l.start+1e-9)V+=l.mag*Math.min(x-l.start,l.end-l.start);});
@@ -699,8 +714,8 @@ function analyzeIL(){
       S.forEach((s,k)=>{['Mmax','Mmin','Vmax','Vmin'].forEach(c=>{const d=c[0]==='M'?Md[k]:Vd[k];tot[c].push(GD*d+GL*cases[k][c].val);});});
       dead={M:Md,V:Vd,tot,loads:JSON.parse(JSON.stringify(state.loads)),reactions:R.map(r=>({pos:r.pos,Ry:r.Ry,Mx:r.Mx}))};
     }
-    train.res={L,S,xs,etaM,etaV,cases,n,step,both,qc,ex,dead,GD,GL,supports:JSON.parse(JSON.stringify(state.supports)),hinges:JSON.parse(JSON.stringify(state.hinges)),items:JSON.parse(JSON.stringify(train.items))};
-    const sel=document.getElementById('ilSecSel');sel.innerHTML=S.map((s,k)=>`<option value="${k}">x = ${s.toFixed(3)} m  (${k}·L/${n})</option>`).join('');sel.value=String(Math.round(n/2));
+    train.res={L,S,side,slbl,doi,xs,etaM,etaV,cases,n,step,both,qc,ex,dead,GD,GL,supports:JSON.parse(JSON.stringify(state.supports)),hinges:JSON.parse(JSON.stringify(state.hinges)),items:JSON.parse(JSON.stringify(train.items))};
+    const sel=document.getElementById('ilSecSel');sel.innerHTML=S.map((s,k)=>`<option value="${k}">x = ${s.toFixed(3)} m  (${slbl[k]})</option>`).join('');{let k0=0;S.forEach((s,k)=>{if(Math.abs(s-L/2)<Math.abs(S[k0]-L/2)-1e-9)k0=k;});sel.value=String(k0);}
     document.getElementById('ilEmpty').style.display='none';document.getElementById('ilResults').style.display='flex';
     setILTab(train.tab);
     let mx=-Infinity,mn=Infinity;cases.forEach(c=>{mx=Math.max(mx,c.Mmax.val);mn=Math.min(mn,c.Mmin.val);});
@@ -791,24 +806,24 @@ function buildILBlocks(){
     sS.value=k0;sC.value=c0;return o;});
   B.push(MB.h2('Memoria de cálculo — líneas de influencia'));
   B.push(MB.h3('1. Datos'));
-  B.push(MB.p(`Viga de longitud L = ${r.L.toFixed(3)} m. Vínculos: ${sup}. Articulaciones internas: ${hin}.`));
+  B.push(MB.p(`Viga de longitud L = ${r.L.toFixed(3)} m. Vínculos: ${sup}. Articulaciones internas: ${hin}. ${r.doi>0?`Estructura hiperestática de grado ${r.doi}.`:'Estructura isostática.'}`));
   const trRows=r.items.map((it,i)=>it.kind==='P'?[`P${i+1}`,'Puntual',`${it.P} t`,it.x.toFixed(3)]:it.kind==='q'?[`q${i+1}`,'Distribuida',`${it.q} t/m`,`${it.x1.toFixed(3)} – ${it.x2.toFixed(3)}`]:['Muched.','Muchedumbre',`${it.q} t/m`,'Zonas desfavorables']);
   B.push(MB.tbl(['Carga','Tipo','Valor','Posición en el tren (m)'],trRows));
   B.push(MB.img(imgs.train,'Figura 1: Tren de cargas (coordenadas locales).'));
-  B.push(MB.p(`Longitud del tren: ${r.ex.len.toFixed(3)} m. Secciones estudiadas: x = k·L/${r.n} (k = 0 … ${r.n}). Paso de avance: ${r.step.toFixed(3)} m. Sentidos de circulación: ${r.both?'ambos (→ y ←)':'solo →'}.`));
+  B.push(MB.p(`Longitud del tren: ${r.ex.len.toFixed(3)} m. Secciones estudiadas: x = k·L/${r.n} (k = 0 … ${r.n})${r.supports.some(s=>s.pos>1e-9&&s.pos<r.L-1e-9)?', más ambos lados de cada apoyo interior':''}. Paso de avance: ${r.step.toFixed(3)} m. Sentidos de circulación: ${r.both?'ambos (→ y ←)':'solo →'}.`));
   B.push(MB.h3('2. Método'));
-  B.push(MB.p(`Para cada sección se obtiene la línea de influencia η(x) del momento y del corte, resolviendo la viga con una carga unitaria descendente ubicada en x (${r.xs.length} posiciones). El efecto del tren con su origen en la abscisa a es la superposición de los efectos de cada carga:`));
+  B.push(MB.p(`Para cada sección se obtiene la línea de influencia η(x) del momento y del corte, resolviendo la viga con una carga unitaria descendente ubicada en x (${r.xs.length} posiciones) por el método de rigidez (elementos de Euler-Bernoulli, EI constante). ${r.doi>0?'Al ser la viga hiperestática, las líneas de influencia son curvas (polinomios cúbicos por tramo) y no dependen del valor de EI cuando éste es constante. ':'Al ser la viga isostática, las líneas de influencia son poligonales. '}El efecto del tren con su origen en la abscisa a es la superposición de los efectos de cada carga:`));
   B.push(MB.eq('E(a) = Σ P_{i} · η(a + u_{i}) + Σ q_{j} · ∫ η(x) dx   (tramo de q_{j} dentro de la viga)'));
-  B.push(MB.p('Se recorre la viga con el tren desde que entra hasta que sale, probando además las posiciones en que cada eje cae exactamente sobre una sección o un apoyo, y se toman el máximo y el mínimo. La muchedumbre se ubica solo donde aporta al efecto buscado: q_{m}·A^{+} para el máximo y q_{m}·A^{−} para el mínimo. Convención: cargas hacia abajo positivas; M positivo tracciona la fibra inferior; V es el corte inmediatamente a la derecha de la sección (a la izquierda en x = L). Los valores del tren no incluyen incremento dinámico.'));
+  B.push(MB.p('Se recorre la viga con el tren desde que entra hasta que sale, probando además las posiciones en que cada eje cae exactamente sobre una sección o un apoyo; alrededor de cada extremo se hace una búsqueda local con paso refinado, y se toman el máximo y el mínimo. La muchedumbre se ubica solo donde aporta al efecto buscado: q_{m}·A^{+} para el máximo y q_{m}·A^{−} para el mínimo. Convención: cargas hacia abajo positivas; M positivo tracciona la fibra inferior; V es el corte inmediatamente a la derecha de la sección (a la izquierda en x = L; en los apoyos interiores se dan ambos lados). Los valores del tren no incluyen incremento dinámico.'));
   B.push(MB.h3('3. Envolventes del tren de cargas'));
   B.push(MB.img(imgs.envM,'Figura 2: Envolvente de momentos del tren (máximo y mínimo por sección).'));
   B.push(MB.img(imgs.envV,'Figura 3: Envolvente de cortes del tren.'));
-  B.push(MB.tbl(['Sección','x (m)','M máx (t·m)','M mín (t·m)','V máx (t)','V mín (t)'],r.S.map((s,k)=>{const C=r.cases[k];return[`${k}·L/${r.n}`,s.toFixed(3),f3(C.Mmax.val),f3(C.Mmin.val),f3(C.Vmax.val),f3(C.Vmin.val)];})));
+  B.push(MB.tbl(['Sección','x (m)','M máx (t·m)','M mín (t·m)','V máx (t)','V mín (t)'],r.S.map((s,k)=>{const C=r.cases[k];return[r.slbl[k],s.toFixed(3),f3(C.Mmax.val),f3(C.Mmin.val),f3(C.Vmax.val),f3(C.Vmin.val)];})));
   B.push(MB.h3('4. Cálculo por sección'));
   const lab={Mmax:'M máximo',Mmin:'M mínimo',Vmax:'V máximo',Vmin:'V mínimo'};let fig=4;
   r.S.forEach((s,k)=>{
     const C=r.cases[k];
-    B.push(MB.h3(`Sección ${k} — x = ${s.toFixed(3)} m (${k}·L/${r.n})`));
+    B.push(MB.h3(`Sección ${k} — x = ${s.toFixed(3)} m (${r.slbl[k]})`));
     B.push(MB.p(`Áreas de la línea de influencia: M → A^{+} = ${f3(C.areas.M.ap)}, A^{−} = ${f3(C.areas.M.an)} (t·m por t/m) · V → A^{+} = ${f3(C.areas.V.ap)}, A^{−} = ${f3(C.areas.V.an)} (t por t/m).`));
     ['Mmax','Mmin','Vmax','Vmin'].forEach(c=>{
       const cs=C[c],u=c[0]==='M'?'t·m':'t';
@@ -832,14 +847,14 @@ function buildILBlocks(){
     B.push(MB.p('Cargas fijas aplicadas sobre la viga (signo del programa: hacia arriba positivo).'));
     B.push(MB.tbl(['Carga','Valor','Ubicación (m)'],d.loads.map(l=>[lt[l.type]||l.type,l.type==='udl'||l.type==='partial'?`${l.mag} t/m`:l.type==='moment'?`${l.mag} t·m`:`${l.mag} t`,l.pos!==undefined?l.pos.toFixed(3):l.start!==undefined?`${l.start.toFixed(3)} – ${l.end.toFixed(3)}`:`0 – ${r.L.toFixed(3)}`])));
     B.push(MB.p('Reacciones: '+d.reactions.map(x=>`R(${x.pos.toFixed(2)} m) = ${f3(x.Ry)} t`+(Math.abs(x.Mx)>1e-6?`, M = ${f3(x.Mx)} t·m`:'')).join(' · ')+'.'));
-    B.push(MB.tbl(['Sección','x (m)','M_{est} (t·m)','V_{est} (t)'],r.S.map((s,k)=>[`${k}·L/${r.n}`,s.toFixed(3),f3(d.M[k]),f3(d.V[k])])));
+    B.push(MB.tbl(['Sección','x (m)','M_{est} (t·m)','V_{est} (t)'],r.S.map((s,k)=>[r.slbl[k],s.toFixed(3),f3(d.M[k]),f3(d.V[k])])));
     B.push(MB.h3('6. Superposición — cargas estáticas + tren de cargas'));
     B.push(MB.p('En cada sección se suma el efecto de las cargas estáticas, que es fijo, al máximo y al mínimo del tren:'));
     B.push(MB.eq(`M_{tot} = γ_{est}·M_{est} + γ_{tren}·M_{tren}   ·   V_{tot} = γ_{est}·V_{est} + γ_{tren}·V_{tren}   (γ_{est} = ${r.GD.toFixed(2)}, γ_{tren} = ${r.GL.toFixed(2)})`));
     B.push(MB.img(imgs.totM,`Figura ${fig++}: Envolvente total de momentos (línea punteada: cargas estáticas solas).`));
-    B.push(MB.tbl(['Sección','x (m)','M_{est}','M_{tren} máx','M_{tren} mín','M_{tot} máx','M_{tot} mín'],r.S.map((s,k)=>{const C=r.cases[k];return[`${k}·L/${r.n}`,s.toFixed(3),f3(d.M[k]),f3(C.Mmax.val),f3(C.Mmin.val),`**${f3(d.tot.Mmax[k])}**`,`**${f3(d.tot.Mmin[k])}**`];})));
+    B.push(MB.tbl(['Sección','x (m)','M_{est}','M_{tren} máx','M_{tren} mín','M_{tot} máx','M_{tot} mín'],r.S.map((s,k)=>{const C=r.cases[k];return[r.slbl[k],s.toFixed(3),f3(d.M[k]),f3(C.Mmax.val),f3(C.Mmin.val),`**${f3(d.tot.Mmax[k])}**`,`**${f3(d.tot.Mmin[k])}**`];})));
     B.push(MB.img(imgs.totV,`Figura ${fig++}: Envolvente total de cortes.`));
-    B.push(MB.tbl(['Sección','x (m)','V_{est}','V_{tren} máx','V_{tren} mín','V_{tot} máx','V_{tot} mín'],r.S.map((s,k)=>{const C=r.cases[k];return[`${k}·L/${r.n}`,s.toFixed(3),f3(d.V[k]),f3(C.Vmax.val),f3(C.Vmin.val),`**${f3(d.tot.Vmax[k])}**`,`**${f3(d.tot.Vmin[k])}**`];})));
+    B.push(MB.tbl(['Sección','x (m)','V_{est}','V_{tren} máx','V_{tren} mín','V_{tot} máx','V_{tot} mín'],r.S.map((s,k)=>{const C=r.cases[k];return[r.slbl[k],s.toFixed(3),f3(d.V[k]),f3(C.Vmax.val),f3(C.Vmin.val),`**${f3(d.tot.Vmax[k])}**`,`**${f3(d.tot.Vmin[k])}**`];})));
     let iM=0;d.tot.Mmax.forEach((v,k)=>{if(Math.abs(v)>Math.abs(d.tot.Mmax[iM]))iM=k;});let iV=0;r.S.forEach((s,k)=>{const a=Math.max(Math.abs(d.tot.Vmax[k]),Math.abs(d.tot.Vmin[k])),b=Math.max(Math.abs(d.tot.Vmax[iV]),Math.abs(d.tot.Vmin[iV]));if(a>b)iV=k;});
     B.push(MB.p(`**Valores de diseño:** M_{tot} máx = ${f3(d.tot.Mmax[iM])} t·m en x = ${r.S[iM].toFixed(3)} m · |V_{tot}| máx = ${f3(Math.max(Math.abs(d.tot.Vmax[iV]),Math.abs(d.tot.Vmin[iV])))} t en x = ${r.S[iV].toFixed(3)} m.`));
   }else B.push(MB.p('No se definieron cargas estáticas: la envolvente total coincide con la del tren.'));

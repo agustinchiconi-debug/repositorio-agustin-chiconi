@@ -159,6 +159,8 @@ canvas{display:block;width:100%;cursor:crosshair;border-radius:3px}
   </select>
   <label>Posición (m)</label>
   <input type="number" id="supPos" value="0" min="0" step="0.1">
+  <label>Empotramiento (%) — solo para empotramientos</label>
+  <input type="number" id="supFix" value="100" min="0" max="100" step="any">
   <button class="btn" onclick="addSupport()">+ Agregar vínculo</button>
 </div>
 <div class="sec" id="secLoads">
@@ -201,6 +203,7 @@ canvas{display:block;width:100%;cursor:crosshair;border-radius:3px}
 <div class="sec">
   <div class="stitle">Modelo actual</div>
   <div id="modelItems"><p style="color:var(--text3);font-family:var(--mono);font-size:10px;">Sin elementos.</p></div>
+  <div id="redisCheck" style="display:none;margin-top:10px;font-family:var(--mono);font-size:10px;line-height:1.45"></div>
 </div>
 <div style="padding:11px 13px">
   <button class="btn primary" onclick="analyze()">▶ CALCULAR</button>
@@ -286,7 +289,8 @@ canvas{display:block;width:100%;cursor:crosshair;border-radius:3px}
 <script>
 function gaussSolve(A,b){const n=b.length;const M=A.map((row,i)=>[...row,b[i]]);for(let c=0;c<n;c++){let pivot=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[pivot][c]))pivot=r;[M[c],M[pivot]]=[M[pivot],M[c]];if(Math.abs(M[c][c])<1e-14)continue;const inv=1/M[c][c];for(let j=c;j<=n;j++)M[c][j]*=inv;for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c];for(let j=c;j<=n;j++)M[r][j]-=f*M[c][j];}}return M.map(row=>row[n]);}
 
-function solveBeam(L,supports,loads,hinges,EI){
+function solveBeam(L,supports,loads,hinges,EI,springs){
+  springs=springs||{};
   const psSet=new Set([0,L].map(v=>+v.toFixed(9)));
   supports.forEach(s=>psSet.add(+s.pos.toFixed(9)));
   loads.forEach(l=>{if(l.pos!==undefined&&l.type!=='point-e')psSet.add(+l.pos.toFixed(9));if(l.start!==undefined){psSet.add(+l.start.toFixed(9));psSet.add(+l.end.toFixed(9));}});
@@ -328,7 +332,7 @@ function solveBeam(L,supports,loads,hinges,EI){
     let ni=-1;for(let i=0;i<nodes.length;i++)if(Math.abs(nodes[i]-s.pos)<1e-7){ni=i;break;}
     if(ni<0)ni=nearestNode(nodes,s.pos);
     restrained.add(vDof[ni]);
-    if(s.type==='fixed'){if(nodeRot[ni]>=0){restrained.add(nodeRot[ni]);}else{if(ni>0)restrained.add(elemTR[ni-1]);if(ni<nN-1)restrained.add(elemTL[ni]);}}
+    if(s.type==='fixed'){const k=springs[s.pos];if(k!==undefined&&nodeRot[ni]>=0){K[nodeRot[ni]][nodeRot[ni]]+=k;}else if(nodeRot[ni]>=0){restrained.add(nodeRot[ni]);}else{if(ni>0)restrained.add(elemTR[ni-1]);if(ni<nN-1)restrained.add(elemTL[ni]);}}
   });
   const free=[];for(let i=0;i<nDof;i++)if(!restrained.has(i))free.push(i);
   const D=new Float64Array(nDof);
@@ -339,7 +343,7 @@ function solveBeam(L,supports,loads,hinges,EI){
     if(ni<0)ni=nearestNode(nodes,s.pos);
     let Ry=0,Mx=0;
     for(let j=0;j<nDof;j++)Ry+=K[vDof[ni]][j]*D[j];Ry-=Fa[vDof[ni]];
-    if(s.type==='fixed'&&nodeRot[ni]>=0){let tmp=0;for(let j=0;j<nDof;j++)tmp+=K[nodeRot[ni]][j]*D[j];Mx=-(tmp-Fa[nodeRot[ni]]);}
+    if(s.type==='fixed'&&nodeRot[ni]>=0){const k=springs[s.pos];if(k!==undefined){Mx=k*D[nodeRot[ni]];}else{let tmp=0;for(let j=0;j<nDof;j++)tmp+=K[nodeRot[ni]][j]*D[j];Mx=-(tmp-Fa[nodeRot[ni]]);}}
     let Rx=0;const totalHx=loads.filter(l=>l.type==='point-h').reduce((a,l)=>a+l.mag,0);
     const nH=supports.filter(s2=>s2.type==='pinned'||s2.type==='fixed').length;
     if((s.type==='pinned'||s.type==='fixed')&&nH>0)Rx=-totalHx/nH;
@@ -352,12 +356,64 @@ function solveBeam(L,supports,loads,hinges,EI){
   return{reactions,nodes,D,vDof,nodeRot,elemTL,elemTR,stable,residual};
 }
 
+function mAt(pts,x){return pts.reduce((b,p)=>Math.abs(p.x-x)<Math.abs(b.x-x)?p:b,pts[0]).M;}
+function renderRedisCheck(r){
+  const box=document.getElementById('redisCheck');
+  if(!r.redis||!r.redis.length){box.style.display='none';box.innerHTML='';return;}
+  const L=state.length,sup100=state.supports.map(s=>({...s,fix:100}));
+  const r0=computeDiagrams(L,sup100,state.loads,state.hinges);
+  const xs=[...new Set(state.supports.map(s=>+s.pos.toFixed(6)))].sort((a,b)=>a-b);
+  const e=1e-3;let h='<div class="stitle">Verificación de la redistribución</div>';
+  h+='<div style="color:var(--text3)">Se debe mantener el momento de viga simplemente apoyada M<sub>f</sub> = M(x) − línea de cierre entre los momentos extremos.</div>';
+  let allOk=true;
+  for(let i=0;i<xs.length-1;i++){
+    const xa=xs[i],xb=xs[i+1],Lt=xb-xa;if(Lt<1e-6)continue;
+    const Ma0=mAt(r0.points,xa+e),Mb0=mAt(r0.points,xb-e),Ma=mAt(r.points,xa+e),Mb=mAt(r.points,xb-e);
+    // punto de máximo M_f del tramo (elástico)
+    let xm=xa,best=-1;r0.points.filter(p=>p.x>xa+e&&p.x<xb-e).forEach(p=>{const mf=Math.abs(p.M-(Ma0+(Mb0-Ma0)*(p.x-xa)/Lt));if(mf>best){best=mf;xm=p.x;}});
+    const t=(xm-xa)/Lt,Mm0=mAt(r0.points,xm),Mm=mAt(r.points,xm);
+    const Mf0=Mm0-(Ma0+(Mb0-Ma0)*t),Mf=Mm-(Ma+(Mb-Ma)*t);
+    const ok=Math.abs(Mf-Mf0)<=Math.max(0.005*Math.abs(Mf0),0.01);allOk=allOk&&ok;
+    const dA=Ma-Ma0,dB=Mb-Mb0,dM=Mm-Mm0,dLin=dA+(dB-dA)*t;
+    h+=`<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:4px"><b>Tramo ${xa.toFixed(2)}–${xb.toFixed(2)} m</b> (x = ${xm.toFixed(2)} m)<br>`+
+       `M extremos: ${Ma0.toFixed(2)} / ${Mb0.toFixed(2)} → ${Ma.toFixed(2)} / ${Mb.toFixed(2)} t·m<br>`+
+       `M tramo: ${Mm0.toFixed(2)} → ${Mm.toFixed(2)} t·m (Δ = ${dM.toFixed(2)})<br>`+
+       `Δ línea de cierre en x: ${dLin.toFixed(2)} t·m<br>`+
+       `M<sub>f</sub> elástico = ${Mf0.toFixed(2)} · M<sub>f</sub> redistribuido = ${Mf.toFixed(2)} t·m `+
+       `<span style="color:${ok?'var(--green)':'var(--red)'}">${ok?'✓ se mantiene':'✗ no se mantiene'}</span></div>`;
+  }
+  r.reactions.filter(q=>q.Mel!==undefined).forEach(q=>{const pr=100-q.fix;h+=`<div style="margin-top:6px">Apoyo x = ${q.pos.toFixed(2)} m: reducción ${pr.toFixed(1)} % ${pr>20?'<span style="color:var(--red)">⚠ > 20 % (CIRSOC 201 6.6.5, cargas gravitatorias; requiere ε<sub>t</sub> ≥ 0,0075)</span>':'<span style="color:var(--green)">≤ 20 % ✓</span>'}</div>`;});
+  h+=`<div style="margin-top:6px;color:${allOk?'var(--green)':'var(--red)'}"><b>${allOk?'Equilibrio verificado: ΔM tramo = Δ línea de cierre.':'Revisar: el momento simplemente apoyado cambió.'}</b></div>`;
+  box.innerHTML=h;box.style.display='block';
+}
+function pr20(r){return !!(r.redis&&r.redis.some(q=>100-q.fix>20));}
 function nearestNode(nodes,x){for(let i=0;i<nodes.length;i++)if(Math.abs(nodes[i]-x)<1e-7)return i;let best=0,bd=Infinity;nodes.forEach((n,i)=>{const d=Math.abs(n-x);if(d<bd){bd=d;best=i;}});return best;}
 
 function getEI(){const E=parseFloat(document.getElementById('secE').value)||217;const Iv=document.getElementById('secI').value;let I;if(Iv&&Iv.trim()!==''){I=parseFloat(Iv);}else{const b=parseFloat(document.getElementById('secB').value)||30,H=parseFloat(document.getElementById('secH').value)||50;I=b*H*H*H/12;}return(E*1e4)*(I/1e8);}
 
 function computeDiagrams(L,supports,loads,hinges,nPts=500){
-  const EI=getEI(),sol=solveBeam(L,supports,loads,hinges,EI);
+  const EI=getEI();
+  const partial=supports.filter(s=>s.type==='fixed'&&s.fix!==undefined&&s.fix<100);
+  const springs={},redis=[];
+  if(partial.length){
+    const sol0=solveBeam(L,supports,loads,hinges,EI);
+    const Mel={};sol0.reactions.forEach(r=>{Mel[r.pos]=r.Mx;});
+    partial.forEach(s=>{springs[s.pos]=s.fix<=0?0:EI;});
+    const Mof=(sol,pos)=>{const r=sol.reactions.find(rr=>Math.abs(rr.pos-pos)<1e-9);return r?r.Mx:0;};
+    for(let it=0;it<6;it++){
+      partial.forEach(s=>{
+        if(s.fix<=0){springs[s.pos]=0;return;}
+        const target=s.fix/100*Mel[s.pos];
+        if(Math.abs(Mel[s.pos])<1e-9){springs[s.pos]=EI;return;}
+        let lo=-8,hi=8;
+        for(let k=0;k<60;k++){const mid=(lo+hi)/2;springs[s.pos]=EI*Math.pow(10,mid);const m=Mof(solveBeam(L,supports,loads,hinges,EI,springs),s.pos);if(Math.abs(m)<Math.abs(target))lo=mid;else hi=mid;}
+        springs[s.pos]=EI*Math.pow(10,(lo+hi)/2);
+      });
+    }
+    partial.forEach(s=>redis.push({pos:s.pos,fix:s.fix,Mel:Mel[s.pos]}));
+  }
+  const sol=solveBeam(L,supports,loads,hinges,EI,springs);
+  sol.reactions.forEach(r=>{const d=redis.find(q=>Math.abs(q.pos-r.pos)<1e-9);if(d){r.Mel=d.Mel;r.fix=d.fix;}});
   const{reactions,D,nodes,vDof,elemTL,elemTR,stable,residual}=sol;
   const xsSet=new Set();
   for(let i=0;i<=nPts;i++)xsSet.add(+(i/nPts*L).toFixed(6));
@@ -371,12 +427,13 @@ function computeDiagrams(L,supports,loads,hinges,nPts=500){
   const points=xa.map(x=>({x:+x.toFixed(6),M:+getM(x).toFixed(5),V:+getV(x).toFixed(5),d:+(getDefl(x)*100).toFixed(5)}));
   let nR=0;supports.forEach(s=>nR+=s.type==='fixed'?3:s.type==='pinned'?2:1);
   const doi=Math.max(0,nR-(3+hinges.length));
-  return{reactions,points,isHyperstatic:doi>0,degreesOfIndeterminacy:doi,EI,stable,residual};
+  return{reactions,points,isHyperstatic:doi>0,degreesOfIndeterminacy:doi,EI,stable,residual,redis};
 }
 
 const state={length:8,supports:[],loads:[],hinges:[],results:null,deflEnabled:false};
 const PL=68,PR=28,PT=48,PB=44;
 const supLbl={pinned:'Apoyo doble',roller:'Apoyo simple',fixed:'Empotramiento'};
+function supName(s){return s.type==='fixed'&&s.fix!==undefined&&s.fix<100?'Empotramiento parcial ⟲':supLbl[s.type];}
 const loadLbl={'point-v':'Puntual V','point-h':'Puntual H',udl:'Dist. unif.',partial:'Dist. parcial',moment:'Momento'};
 let lightMode=false;
 
@@ -388,16 +445,17 @@ function updateSecInfo(){const b=parseFloat(document.getElementById('secB').valu
 
 function updateLoadInputs(){const t=document.getElementById('loadType').value,L=parseFloat(document.getElementById('beamLen').value)||8,mid=(L/2).toFixed(1);let h='';if(t==='point-v')h=`<label>Magnitud (t, ↑+)</label><input type="number" id="loadMag" value="-10" step="1"><label>Posición (m)</label><input type="number" id="loadPos" value="${mid}" step="0.1">`;else if(t==='point-h')h=`<label>Magnitud (t, →+)</label><input type="number" id="loadMag" value="5" step="1"><label>Posición (m)</label><input type="number" id="loadPos" value="${mid}" step="0.1">`;else if(t==='udl')h=`<label>Magnitud (t/m, ↑+)</label><input type="number" id="loadMag" value="-2" step="0.5"><div class="r2"><div><label>x inicial (m)</label><input type="number" id="loadStart" value="0" step="0.1"></div><div><label>x final (m)</label><input type="number" id="loadEnd" value="${L}" data-auto="1" step="0.1" oninput="this.dataset.auto=''"></div></div>`;else if(t==='partial')h=`<label>Magnitud (t/m, ↑+)</label><input type="number" id="loadMag" value="-2" step="0.5"><div class="r2"><div><label>Inicio (m)</label><input type="number" id="loadStart" value="0" step="0.1"></div><div><label>Fin (m)</label><input type="number" id="loadEnd" value="${mid}" step="0.1"></div></div>`;else if(t==='moment')h=`<label>Magnitud (t·m, ↺+)</label><input type="number" id="loadMag" value="5" step="1"><label>Posición (m)</label><input type="number" id="loadPos" value="${mid}" step="0.1">`;document.getElementById('loadInputs').innerHTML=h;}
 
-function addSupport(){const type=document.getElementById('supType').value,pos=parseFloat(document.getElementById('supPos').value),L=parseFloat(document.getElementById('beamLen').value)||8;if(isNaN(pos)||pos<0||pos>L){alert('Posición fuera de la viga.');return;}state.length=L;state.supports.push({type,pos});renderModel();}
+function addSupport(){const type=document.getElementById('supType').value,pos=parseFloat(document.getElementById('supPos').value),L=parseFloat(document.getElementById('beamLen').value)||8;if(isNaN(pos)||pos<0||pos>L){alert('Posición fuera de la viga.');return;}state.length=L;let fix=parseFloat(document.getElementById('supFix').value);if(isNaN(fix))fix=100;fix=Math.max(0,Math.min(100,fix));state.supports.push({type,pos,fix});renderModel();}
 function addLoad(){const type=document.getElementById('loadType').value,mag=parseFloat(document.getElementById('loadMag').value),L=parseFloat(document.getElementById('beamLen').value)||8;if(isNaN(mag)){alert('Magnitud inválida.');return;}state.length=L;let ld={type,mag};if(type==='point-v'||type==='point-h'||type==='moment'){const pos=parseFloat(document.getElementById('loadPos').value);if(isNaN(pos)||pos<0||pos>L){alert('Posición fuera de la viga.');return;}ld.pos=pos;}else if(type==='partial'||type==='udl'){const s=parseFloat(document.getElementById('loadStart').value),e=parseFloat(document.getElementById('loadEnd').value);if(isNaN(s)||isNaN(e)||s>=e||s<0||e>L){alert('Rango inválido.');return;}ld.start=s;ld.end=e;if(s<1e-9&&e>L-1e-9){ld.type='udl';delete ld.start;delete ld.end;}else ld.type='partial';}state.loads.push(ld);renderModel();}
 function addHinge(){const pos=parseFloat(document.getElementById('hingePos').value),L=parseFloat(document.getElementById('beamLen').value)||8;if(isNaN(pos)||pos<=0||pos>=L){alert('La articulación debe estar en el interior de la viga.');return;}state.length=L;state.hinges.push({pos});const nR=state.supports.reduce((a,s)=>a+(s.type==='fixed'?3:s.type==='pinned'?2:1),0);document.getElementById('warnHinge').style.display=nR<3+state.hinges.length?'block':'none';renderModel();}
+function setFix(i,v){let f=parseFloat(v);if(isNaN(f))f=100;state.supports[i].fix=Math.max(0,Math.min(100,f));if(state.results)analyze();}
 function remove(cat,idx){if(cat==='s')state.supports.splice(idx,1);else if(cat==='l')state.loads.splice(idx,1);else if(cat==='h')state.hinges.splice(idx,1);renderModel();}
 
-function renderModel(){state.length=parseFloat(document.getElementById('beamLen').value)||8;let h='';state.supports.forEach((s,i)=>h+=`<div class="icard"><div><div class="id">${supLbl[s.type]}</div><div class="is">x = ${s.pos.toFixed(2)} m</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag ts">VÍNCULO</span><button class="del" onclick="remove('s',${i})">✕</button></div></div>`);state.hinges.forEach((hg,i)=>h+=`<div class="icard"><div><div class="id">Articulación</div><div class="is">x = ${hg.pos.toFixed(2)} m</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag th">BISAG.</span><button class="del" onclick="remove('h',${i})">✕</button></div></div>`);state.loads.forEach((l,i)=>{let sub=`${l.mag>0?'+':''}${l.mag} ${l.type==='moment'?'t·m':l.type==='point-h'?'t(H)':'t'}`;if(l.pos!==undefined)sub+=` @ ${l.pos.toFixed(2)} m`;if(l.start!==undefined)sub+=` [${l.start.toFixed(1)}–${l.end.toFixed(1)} m]`;h+=`<div class="icard"><div><div class="id">${loadLbl[l.type]||l.type}</div><div class="is">${sub}</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag tl">CARGA</span><button class="del" onclick="remove('l',${i})">✕</button></div></div>`;});if(!h)h='<p style="color:var(--text3);font-family:var(--mono);font-size:10px;">Sin elementos.</p>';document.getElementById('modelItems').innerHTML=h;}
+function renderModel(){state.length=parseFloat(document.getElementById('beamLen').value)||8;let h='';state.supports.forEach((s,i)=>h+=`<div class="icard"><div><div class="id">${supName(s)}</div><div class="is">x = ${s.pos.toFixed(2)} m${s.type==='fixed'?` · empotr. <input type="number" value="${s.fix===undefined?100:s.fix}" min="0" max="100" step="any" style="width:52px;padding:1px 3px;font-size:10px" onchange="setFix(${i},this.value)"> %`:''}</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag ts">VÍNCULO</span><button class="del" onclick="remove('s',${i})">✕</button></div></div>`);state.hinges.forEach((hg,i)=>h+=`<div class="icard"><div><div class="id">Articulación</div><div class="is">x = ${hg.pos.toFixed(2)} m</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag th">BISAG.</span><button class="del" onclick="remove('h',${i})">✕</button></div></div>`);state.loads.forEach((l,i)=>{let sub=`${l.mag>0?'+':''}${l.mag} ${l.type==='moment'?'t·m':l.type==='point-h'?'t(H)':'t'}`;if(l.pos!==undefined)sub+=` @ ${l.pos.toFixed(2)} m`;if(l.start!==undefined)sub+=` [${l.start.toFixed(1)}–${l.end.toFixed(1)} m]`;h+=`<div class="icard"><div><div class="id">${loadLbl[l.type]||l.type}</div><div class="is">${sub}</div></div><div style="display:flex;gap:4px;align-items:center"><span class="tag tl">CARGA</span><button class="del" onclick="remove('l',${i})">✕</button></div></div>`;});if(!h)h='<p style="color:var(--text3);font-family:var(--mono);font-size:10px;">Sin elementos.</p>';document.getElementById('modelItems').innerHTML=h;}
 
 function toggleDefl(){state.deflEnabled=!state.deflEnabled;const btn=document.getElementById('deflToggle'),sec=document.getElementById('secSection');btn.textContent=state.deflEnabled?'☑ Calcular deformada':'☐ Calcular deformada';btn.className=state.deflEnabled?'btn tog-on':'btn';sec.style.opacity=state.deflEnabled?'1':'.35';sec.style.pointerEvents=state.deflEnabled?'auto':'none';if(state.results)requestAnimationFrame(()=>{drawAll();updateMetrics();});}
 
-function clearAll(){state.supports=[];state.loads=[];state.hinges=[];state.results=null;renderModel();document.getElementById('diagrams').style.display='none';document.getElementById('emptyState').style.display='flex';document.getElementById('rg').style.display='none';document.getElementById('warnHinge').style.display='none';document.getElementById('alertBanner').classList.remove('show');setStatus('Listo.');}
+function clearAll(){const rc=document.getElementById('redisCheck');if(rc){rc.style.display='none';rc.innerHTML='';}state.supports=[];state.loads=[];state.hinges=[];state.results=null;renderModel();document.getElementById('diagrams').style.display='none';document.getElementById('emptyState').style.display='flex';document.getElementById('rg').style.display='none';document.getElementById('warnHinge').style.display='none';document.getElementById('alertBanner').classList.remove('show');setStatus('Listo.');}
 
 function analyze(){if(typeof ilMode!=='undefined'&&ilMode){analyzeIL();return;}if(typeof train!=='undefined'&&train.tab==='mem')setILTab('diag');analyzeStatic();}
 function analyzeStatic(){
@@ -409,6 +467,7 @@ function analyzeStatic(){
     try{
       const r=computeDiagrams(state.length,state.supports,state.loads,state.hinges);
       state.results=r;
+      renderRedisCheck(r);
       document.getElementById('emptyState').style.display='none';
       document.getElementById('diagrams').style.display='flex';
       document.getElementById('rg').style.display='grid';
@@ -417,7 +476,7 @@ function analyzeStatic(){
       let nR=0;state.supports.forEach(s=>nR+=s.type==='fixed'?3:s.type==='pinned'?2:1);
       const minR=3+state.hinges.length,hypoD=minR-nR;
       if(!r.stable||hypoD>0){const motivo=hypoD>0?`<strong>Estructura hipostática</strong> — faltan ${hypoD} vínculo(s). Tiene ${nR} reacción(es) y necesita al menos ${minR}.`:`<strong>Modelo inestable</strong> — residuo ΣFy = ${r.residual.toFixed(4)} t.`;alertTx.innerHTML=motivo;banner.classList.add('show');setStatus('⚠ Estructura inestable — diagramas no válidos.','error');}
-      else{banner.classList.remove('show');const tipo=r.isHyperstatic?`Hiperestática grado ${r.degreesOfIndeterminacy}`:'Isostática';const ei=state.deflEnabled?` | EI = ${r.EI.toFixed(1)} t·m²`:'';let hingeInfo='';if(state.hinges.length){const checks=state.hinges.map(h=>{const pts=r.points,near=pts.reduce((best,p)=>Math.abs(p.x-h.pos)<Math.abs(best.x-h.pos)?p:best,pts[0]);return`M(${h.pos.toFixed(1)}m)=${near.M.toFixed(3)}`;});hingeInfo=' | '+checks.join('  ');}setStatus(`${tipo}${ei}${hingeInfo}`,'ok');}
+      else{banner.classList.remove('show');const tipo=r.isHyperstatic?`Hiperestática grado ${r.degreesOfIndeterminacy}`:'Isostática';const ei=state.deflEnabled?` | EI = ${r.EI.toFixed(1)} t·m²`:'';let hingeInfo='';if(state.hinges.length){const checks=state.hinges.map(h=>{const pts=r.points,near=pts.reduce((best,p)=>Math.abs(p.x-h.pos)<Math.abs(best.x-h.pos)?p:best,pts[0]);return`M(${h.pos.toFixed(1)}m)=${near.M.toFixed(3)}`;});hingeInfo=' | '+checks.join('  ');}let rdInfo='';if(r.redis&&r.redis.length){rdInfo=' | '+r.reactions.filter(q=>q.Mel!==undefined).map(q=>{const pr=100-q.fix;return`Redistrib. x=${q.pos.toFixed(2)} m: M_el=${q.Mel.toFixed(2)} → ${q.Mx.toFixed(2)} t·m (−${pr.toFixed(0)} %${pr>20?' ⚠ >20 % CIRSOC 201 6.6.5 (solo grav.)':''})`;}).join('  ');}setStatus(`${tipo}${ei}${hingeInfo}${rdInfo}`,pr20(r)?'error':'ok');}
     }catch(e){setStatus('Error: '+e.message,'error');console.error(e);}
   },10);
 }
@@ -481,16 +540,22 @@ function drawBeam(){
   state.loads.forEach(l=>drawLoadSym(ctx,l,xOf,bY,L));
   ctx.strokeStyle=lightMode?'#374151':'#d1d5db';ctx.lineWidth=5;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(PL,bY);ctx.lineTo(PL+pw,bY);ctx.stroke();
   state.hinges.forEach(h=>{const hx=xOf(h.pos);ctx.fillStyle=gc('--bg');ctx.beginPath();ctx.arc(hx,bY,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#a855f7';ctx.lineWidth=2;ctx.beginPath();ctx.arc(hx,bY,7,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#a855f7';ctx.font='9px monospace';ctx.textAlign='center';ctx.fillText('◉',hx,bY+18);});
-  state.supports.forEach(s=>drawSupportSym(ctx,xOf(s.pos),bY,s.type));
+  state.supports.forEach(s=>drawSupportSym(ctx,xOf(s.pos),bY,s.type,s.fix));
   ctx.fillStyle=gc('--text3');ctx.font='10px monospace';ctx.textAlign='center';for(let i=0;i<=10;i++)ctx.fillText((i/10*L).toFixed(1),PL+(i/10)*pw,H-4);
   if(state.results){state.results.reactions.forEach(r=>{const rx=xOf(r.pos);if(Math.abs(r.Ry)>1e-4){const up=r.Ry>0;drawArrowV(ctx,rx,bY+(up?48:-48),rx,bY+(up?3:-3),up?'up':'dn','#3b82f6');ctx.fillStyle='#3b82f6';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(r.Ry.toFixed(3)+' t',rx,bY+(up?62:-60));}if(Math.abs(r.Rx)>1e-4){const rt=r.Rx>0;drawArrowH(ctx,rx+(rt?-42:42),bY+28,rx,bY+28,rt?'rt':'lt','#60a5fa');ctx.fillStyle='#60a5fa';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(r.Rx.toFixed(3)+' t',rx+(rt?-21:21),bY+44);}if(Math.abs(r.Mx)>1e-4){drawMomSym(ctx,rx,bY,r.Mx,'#3b82f6');ctx.fillStyle='#60a5fa';ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(r.Mx.toFixed(3)+' t·m',rx,bY-34);}});}
 }
 
+function drawPartialFix(ctx,sx,bY,fix){const side=sx<=state.length/2?-1:1,col='#f59e0b',wx=sx+side*16;
+ /* pared (empotramiento) separada de la viga por un resorte al giro */
+ ctx.strokeStyle='#3b82f6';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(wx,bY-20);ctx.lineTo(wx,bY+20);ctx.stroke();ctx.lineWidth=1;drawHatchV(ctx,wx,bY-20,bY+20,side);
+ ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.beginPath();for(let t=0;t<=4*Math.PI;t+=0.15){const r=2+t*1.0,x=sx+side*8+r*Math.cos(t)*0.9*side,y=bY+r*Math.sin(t);if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();
+ ctx.beginPath();ctx.moveTo(sx,bY);ctx.lineTo(sx+side*4,bY);ctx.stroke();
+ ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign=side>0?'right':'left';ctx.fillText('empotr. '+fix+' %',sx+side*20,bY-50);}
 function drawArrowV(ctx,x1,y1,x2,y2,dir,col){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const up=dir==='up',aw=5,ah=9;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-aw,y2+(up?ah:-ah));ctx.lineTo(x2+aw,y2+(up?ah:-ah));ctx.closePath();ctx.fill();}function drawArrowH(ctx,x1,y1,x2,y2,dir,col){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const rt=dir==='rt',aw=9,ah=5;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2+(rt?-aw:aw),y2-ah);ctx.lineTo(x2+(rt?-aw:aw),y2+ah);ctx.closePath();ctx.fill();}
 function drawMomSym(ctx,cx,cy,mag,col){ctx.strokeStyle=col;ctx.lineWidth=1.5;const r=12,cw=mag<0,st=cw?.45:Math.PI+.45,en=cw?Math.PI+.45:.45;ctx.beginPath();ctx.arc(cx,cy,r,st,en,cw);ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(cx+r*Math.cos(en),cy+r*Math.sin(en),3,0,Math.PI*2);ctx.fill();}
 function drawHatch(ctx,x1,x2,y){ctx.strokeStyle='#3b82f6';ctx.lineWidth=.8;for(let x=x1;x<=x2;x+=5){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-5,y+7);ctx.stroke();}}
 function drawHatchV(ctx,x,y1,y2,side){ctx.strokeStyle='#3b82f6';ctx.lineWidth=.8;for(let y=y1;y<=y2;y+=5){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+7*side,y-5);ctx.stroke();}}
-function drawSupportSym(ctx,sx,bY,type){ctx.strokeStyle='#3b82f6';ctx.lineWidth=1.5;if(type==='roller'){ctx.beginPath();ctx.moveTo(sx,bY);ctx.lineTo(sx-10,bY+17);ctx.lineTo(sx+10,bY+17);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(sx,bY+23,5,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(sx-14,bY+29);ctx.lineTo(sx+14,bY+29);ctx.stroke();drawHatch(ctx,sx-14,sx+14,bY+29);}else if(type==='pinned'){ctx.beginPath();ctx.moveTo(sx,bY);ctx.lineTo(sx-10,bY+17);ctx.lineTo(sx+10,bY+17);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(sx-14,bY+18);ctx.lineTo(sx+14,bY+18);ctx.stroke();drawHatch(ctx,sx-14,sx+14,bY+18);}else if(type==='fixed'){ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(sx,bY-20);ctx.lineTo(sx,bY+20);ctx.stroke();ctx.lineWidth=1;const side=sx<=state.length/2?-1:1;drawHatchV(ctx,sx,bY-20,bY+20,side);}}
+function drawSupportSym(ctx,sx,bY,type,fix){if(type==='fixed'&&fix!==undefined&&fix<100){drawPartialFix(ctx,sx,bY,fix);return;}ctx.strokeStyle='#3b82f6';ctx.lineWidth=1.5;if(type==='roller'){ctx.beginPath();ctx.moveTo(sx,bY);ctx.lineTo(sx-10,bY+17);ctx.lineTo(sx+10,bY+17);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(sx,bY+23,5,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(sx-14,bY+29);ctx.lineTo(sx+14,bY+29);ctx.stroke();drawHatch(ctx,sx-14,sx+14,bY+29);}else if(type==='pinned'){ctx.beginPath();ctx.moveTo(sx,bY);ctx.lineTo(sx-10,bY+17);ctx.lineTo(sx+10,bY+17);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(sx-14,bY+18);ctx.lineTo(sx+14,bY+18);ctx.stroke();drawHatch(ctx,sx-14,sx+14,bY+18);}else if(type==='fixed'){ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(sx,bY-20);ctx.lineTo(sx,bY+20);ctx.stroke();ctx.lineWidth=1;const side=sx<=state.length/2?-1:1;drawHatchV(ctx,sx,bY-20,bY+20,side);}}
 function drawLoadSym(ctx,ld,xOf,bY,L){const col='#10b981';if(ld.type==='point-v'){const lx=xOf(ld.pos),up=ld.mag>0;if(up){drawArrowV(ctx,lx,bY+52,lx,bY+3,'up',col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText('+'+ld.mag+' t',lx,bY+64);}else{drawArrowV(ctx,lx,bY-52,lx,bY-3,'dn',col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(ld.mag+' t',lx,bY-58);}}else if(ld.type==='point-h'){const lx=xOf(ld.pos),rt=ld.mag>0;drawArrowH(ctx,lx+(rt?-44:44),bY-10,lx,bY-10,rt?'rt':'lt',col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(Math.abs(ld.mag)+' t',lx,bY-26);}else if(ld.type==='udl'){drawUDL(ctx,xOf(0),xOf(L),bY,ld.mag,col);}else if(ld.type==='partial'){drawUDL(ctx,xOf(ld.start),xOf(ld.end),bY,ld.mag,col);}else if(ld.type==='moment'){drawMomSym(ctx,xOf(ld.pos),bY-10,ld.mag,col);ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(Math.abs(ld.mag)+' t·m',xOf(ld.pos),bY-30);}}
 function drawUDL(ctx,x1,x2,bY,mag,col){const up=mag>0,h=32,n=Math.max(3,Math.round((x2-x1)/18));ctx.strokeStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x1,bY-h);ctx.lineTo(x2,bY-h);ctx.stroke();for(let i=0;i<=n;i++){const ax=x1+(x2-x1)*i/n;drawArrowV(ctx,ax,bY-h,ax,bY+(up?2:-2),up?'up':'dn',col);}ctx.fillStyle=col;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.fillText(Math.abs(mag)+' t/m',(x1+x2)/2,bY-h-7);}
 
@@ -759,7 +824,7 @@ function drawILSection(){
   const L=r.L,pw=w-PL-PR,xOf=x=>PL+(x/L)*pw,bY=86,zeroY=220,amp=80;
   let peak=0;for(let i=0;i<et.length;i++)peak=Math.max(peak,Math.abs(et[i]));peak=peak||1;const yOf=v=>zeroY+(isM?v:-v)/peak*amp;
   ctx.strokeStyle=lightMode?'#374151':'#d1d5db';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(PL,bY);ctx.lineTo(PL+pw,bY);ctx.stroke();
-  r.supports.forEach(s=>drawSupportSym(ctx,xOf(s.pos),bY,s.type));
+  r.supports.forEach(s=>drawSupportSym(ctx,xOf(s.pos),bY,s.type,s.fix));
   r.hinges.forEach(h=>{const hx=xOf(h.pos);ctx.fillStyle=gc('--bg');ctx.beginPath();ctx.arc(hx,bY,6,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#a855f7';ctx.lineWidth=2;ctx.stroke();});
   const sx=xOf(r.S[k]);ctx.strokeStyle=lightMode?'rgba(0,0,0,.3)':'rgba(255,255,255,.3)';ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sx,20);ctx.lineTo(sx,H-30);ctx.stroke();ctx.setLineDash([]);
   ctx.fillStyle=gc('--text2');ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('sección '+r.S[k].toFixed(2)+' m',sx,14);

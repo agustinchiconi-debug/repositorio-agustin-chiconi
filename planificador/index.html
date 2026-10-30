@@ -90,6 +90,48 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .refbox svg{display:block;width:30px;height:12px}
 .refbox .sub{grid-column:1/-1;margin-top:4px;font:600 10.5px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 @media (max-width:640px){.refbox{bottom:auto;top:calc(8px + env(safe-area-inset-top,0px));right:max(8px,env(safe-area-inset-right,0px));max-width:200px}}
+/* Ficha del aeródromo */
+.sheet{position:fixed;z-index:6;top:12px;right:12px;bottom:12px;width:min(400px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 10px 40px rgba(20,30,30,.25);display:flex;flex-direction:column;color:var(--ink)}
+.sheet[hidden],.viewer[hidden]{display:none}
+.sh-hd{padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sh-hd h2{margin:0;font:600 24px/1.05 var(--f-display);letter-spacing:.03em}
+.sh-hd small{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+.xbtn{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:4px;min-width:34px;height:34px;cursor:pointer;font:500 18px/1 var(--f-body)}
+.sh-bd{overflow:auto;overscroll-behavior:contain}
+.sh-bd section{padding:10px 16px 12px;border-bottom:1px solid var(--line)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:13.5px;margin:8px 0 0}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.chk{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:5px;background:var(--chip);font-size:13px;line-height:1.35}
+.chk b{font-weight:600}.chk .ic{font-weight:700}.chk.ok .ic{color:#2f7d4f}.chk.warn .ic{color:#b26a00}
+.tb{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums}
+.tb th{text-align:left;color:var(--muted);font-weight:500;padding:4px;border-bottom:1px solid var(--line)}
+.tb td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.tb td.r,.tb th.r{text-align:right}
+.grp{border-top:1px solid var(--line)}.grp:first-of-type{border-top:0}
+.grp summary{cursor:pointer;padding:9px 0;font:600 13.5px var(--f-body);display:flex;justify-content:space-between;list-style:none}
+.grp summary::-webkit-details-marker{display:none}
+.grp summary::before{content:"▸";color:var(--muted);margin-right:6px}.grp[open] summary::before{content:"▾"}
+.grp summary span:first-child{flex:1}.grp summary .n{color:var(--muted);font-weight:500}
+.grp ul{list-style:none;margin:0 0 8px;padding:0}
+.grp li button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:54px 1fr;gap:8px;width:100%;padding:7px 8px;border-radius:4px;cursor:pointer;font-size:13.5px;line-height:1.3}
+.grp li button:hover,.grp li button:focus-visible{background:var(--chip)}
+.grp .ix{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums;padding-top:1px}
+.note{font-size:12px;color:var(--muted);line-height:1.4;margin:8px 0 0}
+.note.alert{color:#9a4b00}
+@media (max-width:640px){.sheet{top:auto;left:8px;right:8px;bottom:8px;width:auto;max-height:74vh}}
+/* Visor de cartas */
+.viewer{position:fixed;inset:0;z-index:30;background:#2a3133;display:flex;flex-direction:column}
+.vbar{display:flex;align-items:center;gap:6px;padding:8px 10px;padding-top:calc(8px + env(safe-area-inset-top,0px));background:#1c2326;color:#e8eeea}
+.vbar .t{flex:1;min-width:0;font:600 14px/1.2 var(--f-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vbar .t small{display:block;font-weight:400;color:#a9b6b3;font-size:12px}
+.vbar button{border:1px solid #445055;background:#283135;color:#e8eeea;border-radius:4px;min-width:36px;height:36px;font:600 15px/1 var(--f-body);cursor:pointer;padding:0 8px}
+.vbar button:disabled{opacity:.4;cursor:default}
+.vwrap{flex:1;overflow:auto;position:relative;cursor:grab}
+.vwrap.drag{cursor:grabbing}
+.vwrap canvas{display:block;margin:12px auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+.vmsg{position:absolute;inset:0;display:grid;place-items:center;color:#cfd8d5;font-size:14px;pointer-events:none}
+@media (max-width:640px){.vbar .hide-sm{display:none}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 
@@ -132,6 +174,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
         <option value="ush">Ushuaia</option>
       </select>
     </div>
+    <div class="row">
+      <span>Aeródromo</span>
+      <select id="adSel" style="max-width:62%" aria-label="Abrir la ficha de un aeródromo"><option value="">Elegir…</option></select>
+    </div>
   </div>
 
   <div class="sec">
@@ -157,6 +203,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     <div class="row"><label><input type="checkbox" id="rAgua" checked> Ríos, lagos y embalses</label></div>
     <div class="row"><label><input type="checkbox" id="rPob" checked> Ciudades y pueblos</label></div>
     <div class="row"><label><input type="checkbox" id="rObs" checked> Obstáculos y aeródromos</label></div>
+    <div class="row"><label><input type="checkbox" id="rAD" checked> Aeródromos con cartas (tocalos)</label></div>
+    <div class="row"><label><input type="checkbox" id="rIso" checked> Líneas isogónicas</label></div>
     <p class="hint">Fuente: OpenStreetMap, guardado en la carpeta. Los obstáculos son los que cargó la comunidad: puede haber antenas o torres que falten.</p>
     <div class="row"><label><input type="checkbox" id="cLim" checked> Límites y provincias</label></div>
   </div>
@@ -172,6 +220,24 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     <div class="status" id="status">Cargando datos…</div>
   </div>
 </aside>
+
+<aside class="sheet" id="sheet" hidden aria-labelledby="shT">
+  <div class="sh-hd"><div><h2 id="shT"></h2><small id="shS"></small></div><button class="xbtn" id="shX" aria-label="Cerrar ficha">✕</button></div>
+  <div class="sh-bd" id="shB"></div>
+</aside>
+
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-labelledby="vt">
+  <div class="vbar">
+    <button id="vBack" aria-label="Volver al índice">✕</button>
+    <div class="t" id="vt"></div>
+    <button id="vPrev" aria-label="Carta anterior">‹</button>
+    <button id="vNext" aria-label="Carta siguiente">›</button>
+    <button id="vOut" aria-label="Alejar">−</button>
+    <button id="vIn" aria-label="Acercar">+</button>
+    <button id="vRot" class="hide-sm" aria-label="Girar la carta">⟳</button>
+  </div>
+  <div class="vwrap" id="vwrap"><canvas id="vcv"></canvas><div class="vmsg" id="vmsg"></div></div>
+</div>
 
 <details class="refbox" id="refbox" open>
   <summary>Referencias</summary>
@@ -192,6 +258,9 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     <li><svg viewBox="0 0 30 12" aria-hidden="true"><line x1="1" y1="6" x2="29" y2="6" stroke="#1c282b" stroke-width="4" stroke-linecap="round"/></svg><span>Pista</span></li>
     <li><svg viewBox="0 0 30 12" aria-hidden="true"><circle cx="15" cy="6" r="3.2" fill="#5b2a86" stroke="#fff" stroke-width="1"/></svg><span>Antena, torre, chimenea o molino</span></li>
     <li><svg viewBox="0 0 30 12" aria-hidden="true"><line x1="1" y1="6" x2="29" y2="6" stroke="#7b3fa0" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="3 2"/></svg><span>Línea de alta tensión</span></li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><circle cx="15" cy="6" r="4.5" fill="#a8236f" stroke="#fff" stroke-width="1.6"/></svg><span>Aeródromo con cartas (tocá para abrir)</span></li>
+    <li class="sub">Magnetismo</li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><line x1="1" y1="6" x2="29" y2="6" stroke="#0f766e" stroke-width="1.5" stroke-dasharray="5 3"/></svg><span>Isogónica (variación magnética, WMM)</span></li>
   </ul>
 </details>
 
@@ -454,6 +523,11 @@ const ui={color:true,shade:true,cont:false,ci:152.4,num:true};
 const COLOR_URL='color://{z}/{x}/{y}';
 const contUrl=()=>`cont://{z}/{x}/{y}?ci=${ui.ci}&n=${ui.num?1:0}&u=${[152.4,304.8].includes(ui.ci)?'ft':'m'}`;
 const limites=await fetch('datos/limites.json').then(r=>r.json()).catch(()=>null);
+// aeródromos del Trip Kit de Jeppesen (ficha, elevación validada contra el modelo, índice de cartas) e isogónicas ajustadas a su variación
+const ADDATA=await fetch('datos/aerodromos.json').then(r=>r.json()).catch(()=>null);
+const ADS=ADDATA?ADDATA.aerodromos:[], ADX=Object.fromEntries(ADS.map(a=>[a.icao,a]));
+const ISO=await fetch('datos/isogonas.json').then(r=>r.json()).catch(()=>null);
+const FC=f=>({type:'FeatureCollection',features:f});
 
 /* ---------- Referencias visuales (OpenStreetMap), con colores de carta aeronáutica ---------- */
 const GLYPHS=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'')+'datos/fonts/{fontstack}/{range}.pbf';
@@ -501,6 +575,8 @@ const map=new maplibregl.Map({
       osm:{type:'vector',tiles:['osm://{z}/{x}/{y}'],minzoom:4,maxzoom:10},
       paises:{type:'geojson',data:limites?limites.paises:{type:'FeatureCollection',features:[]}},
       prov:{type:'geojson',data:limites?limites.provincias:{type:'FeatureCollection',features:[]}},
+      iso:{type:'geojson',data:FC(ISO?ISO.features:[])},
+      aip:{type:'geojson',data:FC(ADS.map(a=>({type:'Feature',properties:{icao:a.icao},geometry:{type:'Point',coordinates:[a.lon,a.lat]}})))},
     },
     layers:[
       {id:'bg',type:'background',paint:{'background-color':'rgb(169,205,224)'}},
@@ -510,6 +586,11 @@ const map=new maplibregl.Map({
       ...REFS,
       {id:'prov',type:'line',source:'prov',paint:{'line-color':'#5d4a6b','line-width':['interpolate',['linear'],['zoom'],3,0.5,8,1.4],'line-dasharray':[3,2],'line-opacity':0.8}},
       {id:'paises',type:'line',source:'paises',paint:{'line-color':'#7a1f4f','line-width':['interpolate',['linear'],['zoom'],3,1.2,8,2.6],'line-opacity':0.9}},
+      {id:'iso',type:'line',source:'iso',filter:['==',['%',['get','v'],2],0],paint:{'line-color':'#0f766e','line-width':['interpolate',['linear'],['zoom'],4,1,10,1.8],'line-dasharray':[5,3],'line-opacity':0.9}},
+      {id:'iso2',type:'line',source:'iso',minzoom:6,filter:['!=',['%',['get','v'],2],0],paint:{'line-color':'#0f766e','line-width':['interpolate',['linear'],['zoom'],6,1,10,1.8],'line-dasharray':[5,3],'line-opacity':0.9}},
+      {id:'iso-n',type:'symbol',source:'iso',filter:['any',['>=',['zoom'],6],['==',['%',['get','v'],2],0]],layout:{'symbol-placement':'line','text-field':['get','l'],'text-font':FB,'text-size':11.5,'symbol-spacing':320},paint:{'text-color':'#0b5d56',...HALO}},
+      {id:'aip-pt',type:'circle',source:'aip',paint:{'circle-radius':['interpolate',['linear'],['zoom'],4,4.5,11,8],'circle-color':'#a8236f','circle-stroke-color':'#fff','circle-stroke-width':1.8}},
+      {id:'aip-n',type:'symbol',source:'aip',minzoom:5,maxzoom:7,layout:{'text-field':['get','icao'],'text-font':FB,'text-size':11.5,'text-offset':[0,1],'text-anchor':'top'},paint:{'text-color':'#6d1747',...HALO}},
     ]}
 });
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
@@ -542,6 +623,9 @@ const popup=new maplibregl.Popup({closeButton:false,offset:8});
 const dot=document.createElement('div');dot.style.cssText='width:10px;height:10px;border-radius:50%;background:#a8236f;border:2px solid #fff;box-shadow:0 0 0 1px #a8236f';
 const marker=new maplibregl.Marker({element:dot});
 map.on('click',async e=>{
+  const {x,y}=e.point;
+  const hit=map.getLayoutProperty('aip-pt','visibility')==='none'?[]:map.queryRenderedFeatures([[x-12,y-12],[x+12,y+12]],{layers:['aip-pt']});
+  if(hit.length){openAD(hit[0].properties.icao);return;}
   const {lng,lat}=e.lngLat;
   marker.setLngLat([lng,lat]).addTo(map);
   const r=await elevationAt(lng,lat);
@@ -551,9 +635,166 @@ map.on('click',async e=>{
   readEl.innerHTML=`<div class="big"><div class="ft">${sea?'0':fmt(ft)}<span>ft</span></div><div class="m">${sea?'0':fmt(r.m)}<span>m</span></div></div>
    <dl><dt>Posición</dt><dd class="num">${dm(lat,'N','S',2)}&nbsp; ${dm(lng,'E','O',3)}</dd>
    <dt>Decimal</dt><dd class="num">${lat.toFixed(5)}, ${lng.toFixed(5)}</dd>
-   <dt>Lugar</dt><dd>${where(lng,lat)}</dd>
+   <dt>Lugar</dt><dd>${where(lng,lat)}</dd>${varTxt(lng,lat)}
    <dt>Celda</dt><dd>${fmt(r.res)} m · ${r.res>150?'zona de menor detalle':r.res<=30?'máximo detalle del dato':'detalle alto'}</dd></dl>`;
 });
+
+/* ---------- Variación magnética en un punto: Modelo Magnético Mundial (WMM-2025), grilla de 0,25° ---------- */
+function varAt(lng,lat){
+  if(!ISO||!ISO.grid) return null;
+  const {w,s,d,nx,ny,v}=ISO.grid, fx=(lng-w)/d, fy=(lat-s)/d, i=Math.floor(fx), j=Math.floor(fy);
+  if(i<0||j<0||i>=nx-1||j>=ny-1) return null;
+  const a=fx-i,b=fy-j,g=(ii,jj)=>v[jj*nx+ii];
+  return (g(i,j)*(1-a)+g(i+1,j)*a)*(1-b)+(g(i,j+1)*(1-a)+g(i+1,j+1)*a)*b;
+}
+const varLbl=v=>`${fmt(Math.abs(v),1)}° ${v<0?'W':'E'}`;
+const EPOCA=ISO?String(Math.floor(ISO.epoca)):'';
+function varTxt(lng,lat){
+  const v=varAt(lng,lat);
+  return v==null?'':`<dt>Variación</dt><dd>${varLbl(v)} <span style="color:var(--muted)">(WMM ${EPOCA})</span></dd>`;
+}
+
+/* ---------- Ficha del aeródromo e índice de cartas ---------- */
+const CATS=[['apt','Plano del aeródromo'],['apch','Aproximaciones'],['sid','Salidas (SID)'],['star','Llegadas (STAR)'],['mins','Mínimos de despegue y alternativa'],['brief','Briefing'],['otros','Otros']];
+const SFC={concrete:'hormigón',asphalt:'asfalto','asphalt/concrete':'asfalto/hormigón',grass:'pasto',gravel:'ripio',dirt:'tierra'};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const m2=ft=>Math.round(ft*0.3048);
+const shB=document.getElementById('shB');
+let curAD=null;
+function openAD(icao,fly){
+  const a=ADX[icao]; if(!a) return;
+  curAD=a;
+  document.getElementById('shT').textContent=`${a.icao}${a.iata?' · '+a.iata:''}`;
+  document.getElementById('shS').textContent=[a.name,a.loc].filter((v,i,l)=>v&&l.indexOf(v)===i).join(' · ');
+  const d=a.mod==null?null:a.mod-a.elev, ok=d!=null&&Math.abs(d)<=30;
+  const rw=a.rwy.map(r=>{
+    const m=/(\d+) ft x (\d+) ft/.exec(r.dim), tdz=parseInt(r.tdz);
+    return `<tr><td><b>${esc(r.id)}</b></td><td>${m?`${fmt(m2(+m[1]))} × ${m2(+m[2])} m`:''}<br><span style="color:var(--muted)">${esc(SFC[r.sfc]||r.sfc)}${r.despl?` · umbral desplazado ${m2(parseInt(r.despl))} m`:''}</span></td>
+      <td class="r">${isNaN(tdz)?'—':fmt(tdz)}</td><td class="r">${r.mod==null?'—':fmt(r.mod)}</td></tr>`;}).join('');
+  const com=a.com.map(c=>{const i=c.lastIndexOf(': ');return `<tr><td>${esc(c.slice(0,i).replace(' Secondary',''))}</td><td class="r">${esc(c.slice(i+2).replace(' Secondary',' (sec.)'))}</td></tr>`;}).join('');
+  const groups=CATS.map(([k,n])=>{
+    const L=a.charts.map((c,j)=>[c,j]).filter(([c])=>c.c===k); if(!L.length) return '';
+    return `<details class="grp"${k==='apt'?' open':''}><summary><span>${n}</span><span class="n">${L.length}</span></summary><ul>${
+      L.map(([c,j])=>`<li><button data-k="${j}"><span class="ix">${esc(c.i)}</span><span>${esc(c.t)}</span></button></li>`).join('')}</ul></details>`;}).join('');
+  shB.innerHTML=`
+   <section>
+    <dl class="kv">
+     <dt>Elevación</dt><dd><b>${fmt(a.elev)} ft</b> · ${fmt(m2(a.elev))} m</dd>
+     <dt>Variación</dt><dd>${varLbl(a.var)} <span style="color:var(--muted)">(Jeppesen)</span>${a.wmm!=null?`<br>${varLbl(a.wmm)} <span style="color:var(--muted)">(WMM ${EPOCA}, hoy)</span>`:''}</dd>
+     <dt>Posición</dt><dd class="num">${dm(a.lat,'N','S',2)}&nbsp; ${dm(a.lon,'E','O',3)}</dd>
+     ${a.comb?`<dt>Combustible</dt><dd>${esc(a.comb.replace('100 Octane (LL)','100LL'))}</dd>`:''}
+     <dt>Torre</dt><dd>${a.torre==='Yes'?'Sí':'No'}${a.aduana==='Yes'?' · aduana':''}</dd>
+    </dl>
+    ${d==null?'':`<div class="chk ${ok?'ok':'warn'}"><span class="ic">${ok?'✓':'!'}</span><span>Terreno del mapa sobre la pista: <b>${fmt(a.mod)} ft</b> (${d>0?'+':''}${d} ft). ${ok?'Coincide con la elevación publicada dentro del margen del modelo (±30 ft).':'Diferencia mayor que el margen habitual del modelo (±30 ft).'}</span></div>`}
+   </section>
+   <section>
+    <div class="lbl">Pistas</div>
+    <table class="tb"><thead><tr><th>Cab.</th><th>Largo × ancho</th><th class="r">TDZ ft</th><th class="r">Mapa ft</th></tr></thead><tbody>${rw}</tbody></table>
+    <p class="note">TDZ: elevación publicada. Mapa: terreno del modelo en el umbral (dato de 30 m, ±15 ft típico).</p>
+   </section>
+   ${com?`<section><div class="lbl">Frecuencias</div><table class="tb"><tbody>${com}</tbody></table></section>`:''}
+   <section>
+    <div class="lbl">Cartas (${a.charts.length})</div>
+    ${WEB?'<p class="note">Las cartas están solo en la copia del planificador de tu computadora.</p>':groups}
+    <p class="note alert">Jeppesen Trip Kit impreso el 20 ago 2026: según Jeppesen, después del 26 ago 2026 puede no estar vigente. Verificá la versión actual antes de volar.</p>
+   </section>`;
+  document.getElementById('sheet').hidden=false;
+  document.getElementById('refbox').hidden=true;
+  document.getElementById('adSel').value=a.icao;
+  if(fly) map.flyTo({center:[a.lon,a.lat],zoom:Math.max(map.getZoom(),11.5),bearing:map.getTerrain()?map.getBearing():0,duration:1800,essential:true});
+}
+shB.addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b) showChart(curAD,+b.dataset.k);});
+document.getElementById('shX').onclick=()=>{document.getElementById('sheet').hidden=true;document.getElementById('refbox').hidden=false;document.getElementById('adSel').value='';};
+{const sel=document.getElementById('adSel');
+ for(const a of [...ADS].sort((p,q)=>p.loc.localeCompare(q.loc,'es')||p.icao.localeCompare(q.icao))){
+   const o=document.createElement('option');o.value=a.icao;o.textContent=`${a.loc}${a.name&&a.name!==a.loc?' – '+a.name:''} (${a.icao})`;sel.appendChild(o);}
+ sel.onchange=e=>{if(e.target.value)openAD(e.target.value,true);};}
+map.on('mouseenter','aip-pt',()=>map.getCanvas().style.cursor='pointer');
+map.on('mouseleave','aip-pt',()=>map.getCanvas().style.cursor='');
+
+/* ---------- Visor de cartas (PDF.js: la carta se dibuja vectorial, nítida a cualquier zoom) ---------- */
+let PDFLIB=null;
+const loadPdf=()=>PDFLIB??=new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='lib/pdf.min.js';
+  sc.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='lib/pdf.worker.min.js';ok(pdfjsLib);};sc.onerror=()=>{PDFLIB=null;ko(new Error('pdf.js'));};document.head.appendChild(sc);});
+const DOCS={};
+const VW={a:null,k:0,zoom:1,rot:0,task:null,t:0,seq:0};
+const vwrap=document.getElementById('vwrap'), vcv=document.getElementById('vcv'), vmsg=document.getElementById('vmsg');
+function showChart(a,k){
+  VW.a=a;VW.k=k;VW.zoom=1;VW.rot=0;
+  document.getElementById('viewer').hidden=false;
+  vcv.style.width=vcv.style.height='0px';
+  drawChart(true);
+}
+async function drawChart(reset){
+  const a=VW.a,c=a.charts[VW.k],seq=++VW.seq;
+  document.getElementById('vt').innerHTML=`${esc(a.icao)} ${esc(c.i)} · ${esc(c.t)}<small>${VW.k+1} de ${a.charts.length} · ${esc(a.name||a.loc)}</small>`;
+  document.getElementById('vPrev').disabled=VW.k===0;document.getElementById('vNext').disabled=VW.k===a.charts.length-1;
+  if(reset) vmsg.textContent='Cargando carta…';
+  try{
+    const lib=await loadPdf();
+    const doc=await (DOCS[a.icao]??=lib.getDocument(`datos/cartas/${a.icao}.pdf`).promise);
+    const page=await doc.getPage(c.p);
+    if(seq!==VW.seq) return;
+    const base=page.getViewport({scale:1,rotation:VW.rot});
+    const fit=Math.min((vwrap.clientWidth-24)/base.width,(vwrap.clientHeight-24)/base.height);
+    const css=fit*VW.zoom;
+    // resolución del dibujo: la pantalla × zoom, con un tope de ~16 millones de píxeles (límite de los celulares)
+    const px=Math.min(css*(devicePixelRatio||1),Math.sqrt(16e6/(base.width*base.height)));
+    const vp=page.getViewport({scale:px,rotation:VW.rot});
+    const off=document.createElement('canvas');off.width=Math.floor(vp.width);off.height=Math.floor(vp.height);
+    VW.task?.cancel();
+    VW.task=page.render({canvasContext:off.getContext('2d'),viewport:vp});
+    await VW.task.promise;
+    if(seq!==VW.seq) return;
+    vcv.width=off.width;vcv.height=off.height;vcv.getContext('2d').drawImage(off,0,0);
+    vcv.style.width=base.width*css+'px';vcv.style.height=base.height*css+'px';
+    if(reset){vwrap.scrollTop=0;vwrap.scrollLeft=(vwrap.scrollWidth-vwrap.clientWidth)/2;}
+    vmsg.textContent='';
+  }catch(e){
+    if(e&&e.name==='RenderingCancelledException') return;
+    console.warn(e);vmsg.textContent='No se pudo abrir la carta. Abrí el planificador con “Abrir planificador.bat”.';
+  }
+}
+// zoom manteniendo fijo el punto (cx,cy) de la pantalla; la carta se vuelve a dibujar nítida al terminar
+function setZoom(z,cx,cy){
+  z=Math.max(1,Math.min(8,z)); if(z===VW.zoom) return;
+  const wr=vwrap.getBoundingClientRect(), r=vcv.getBoundingClientRect();
+  if(cx==null){cx=wr.width/2;cy=wr.height/2;}
+  const fx=(wr.left+cx-r.left)/r.width, fy=(wr.top+cy-r.top)/r.height, k=z/VW.zoom;
+  VW.zoom=z; vcv.style.width=r.width*k+'px'; vcv.style.height=r.height*k+'px';
+  const r2=vcv.getBoundingClientRect();
+  vwrap.scrollLeft+=r2.left+fx*r2.width-(wr.left+cx); vwrap.scrollTop+=r2.top+fy*r2.height-(wr.top+cy);
+  clearTimeout(VW.t); VW.t=setTimeout(()=>drawChart(false),200);
+}
+const closeViewer=()=>{document.getElementById('viewer').hidden=true;VW.task?.cancel();VW.seq++;};
+const step=d=>{const n=VW.k+d;if(n<0||n>=VW.a.charts.length)return;VW.k=n;VW.zoom=1;VW.rot=0;drawChart(true);};
+document.getElementById('vBack').onclick=closeViewer;
+document.getElementById('vPrev').onclick=()=>step(-1);
+document.getElementById('vNext').onclick=()=>step(1);
+document.getElementById('vIn').onclick=()=>setZoom(VW.zoom*1.5);
+document.getElementById('vOut').onclick=()=>setZoom(VW.zoom/1.5);
+document.getElementById('vRot').onclick=()=>{VW.rot=(VW.rot+90)%360;VW.zoom=1;drawChart(true);};
+addEventListener('keydown',e=>{
+  if(document.getElementById('viewer').hidden) return;
+  if(e.key==='Escape')closeViewer(); else if(e.key==='ArrowLeft')step(-1); else if(e.key==='ArrowRight')step(1);
+  else if(e.key==='+'||e.key==='=')setZoom(VW.zoom*1.5); else if(e.key==='-')setZoom(VW.zoom/1.5);
+});
+addEventListener('resize',()=>{if(!document.getElementById('viewer').hidden)drawChart(false);});
+// rueda con Ctrl (o pellizco en el touchpad) = zoom; doble clic = acercar ahí
+vwrap.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const wr=vwrap.getBoundingClientRect();setZoom(VW.zoom*Math.exp(-e.deltaY/250),e.clientX-wr.left,e.clientY-wr.top);},{passive:false});
+vwrap.addEventListener('dblclick',e=>{const wr=vwrap.getBoundingClientRect();setZoom(VW.zoom>=4?1:VW.zoom*2,e.clientX-wr.left,e.clientY-wr.top);});
+// arrastrar con el mouse para mover la carta
+{let d=null;
+ vwrap.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;d={x:e.clientX,y:e.clientY,l:vwrap.scrollLeft,t:vwrap.scrollTop};vwrap.classList.add('drag');});
+ addEventListener('pointermove',e=>{if(!d)return;vwrap.scrollLeft=d.l-(e.clientX-d.x);vwrap.scrollTop=d.t-(e.clientY-d.y);});
+ addEventListener('pointerup',()=>{d=null;vwrap.classList.remove('drag');});}
+// pellizcar con dos dedos en el celular; con un dedo se desplaza normalmente
+{let p=null;
+ const mid=t=>{const wr=vwrap.getBoundingClientRect();return [(t[0].clientX+t[1].clientX)/2-wr.left,(t[0].clientY+t[1].clientY)/2-wr.top];};
+ const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+ vwrap.addEventListener('touchstart',e=>{if(e.touches.length===2){p={d:dist(e.touches),z:VW.zoom};e.preventDefault();}},{passive:false});
+ vwrap.addEventListener('touchmove',e=>{if(!p||e.touches.length!==2)return;e.preventDefault();const [cx,cy]=mid(e.touches);setZoom(p.z*dist(e.touches)/p.d,cx,cy);},{passive:false});
+ vwrap.addEventListener('touchend',e=>{if(e.touches.length<2)p=null;});}
 
 /* ---------- Controles ---------- */
 const $=id=>document.getElementById(id);
@@ -579,6 +820,8 @@ $('cNum').onchange=e=>{ui.num=e.target.checked;refreshCont();};
 for(const [id,grp] of [['rVias','vias'],['rAgua','agua'],['rPob','pob'],['rObs','obs']])
   $(id).onchange=ready(e=>{for(const l of REFS)if(l.metadata.g===grp)map.setLayoutProperty(l.id,'visibility',e.target.checked?'visible':'none');});
 $('rPob').addEventListener('change',e=>{showCities=e.target.checked;updCities();});
+$('rAD').onchange=ready(e=>{for(const l of ['aip-pt','aip-n'])vis(l,e.target.checked);});
+$('rIso').onchange=ready(e=>{for(const l of ['iso','iso2','iso-n'])vis(l,e.target.checked);});
 $('cLim').onchange=ready(e=>{for(const l of ['prov','paises'])map.setLayoutProperty(l,'visibility',e.target.checked?'visible':'none');});
 
 const PLACES={

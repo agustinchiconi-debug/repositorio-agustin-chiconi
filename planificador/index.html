@@ -55,6 +55,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .read .m{font:400 17px/1 var(--f-data)}
 .read dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:4px 0 0;font-size:13px}
 .read dt{color:var(--muted)} .read dd{margin:0;min-width:0}
+.asp{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.asp li{border-left:3px solid var(--c);padding:2px 0 2px 8px;font-size:12.5px;line-height:1.35}
+.asp b{font-weight:600}.asp .lim{font-variant-numeric:tabular-nums;color:var(--ink)}
+.asp small{display:block;color:var(--muted);font-size:11.5px}
 .hint{font-size:13px;color:var(--muted);line-height:1.4;margin:0}
 .legend{display:grid;grid-template-columns:18px 1fr auto;gap:3px 8px;align-items:center;font-size:12.5px}
 .legend i{width:18px;height:12px;border-radius:2px;border:1px solid rgba(0,0,0,.15)}
@@ -210,6 +214,15 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   </div>
 
   <div class="sec">
+    <div class="lbl">Espacios aéreos</div>
+    <div class="row"><label><input type="checkbox" id="aCtl" checked> TMA, CTR y ATZ</label></div>
+    <div class="row"><label><input type="checkbox" id="aZon" checked> Zonas prohibidas, restringidas y peligrosas</label></div>
+    <div class="row"><label><input type="checkbox" id="aVfr" checked> Corredores y sectores VFR</label></div>
+    <div class="row"><label><input type="checkbox" id="aLag" checked> Antigranizo (se activa por NOTAM)</label></div>
+    <p class="hint">Fuente: AIP Argentina (ANAC), enmienda AIRAC 1/2026 del 11 jun 2026. Tocá el mapa para ver qué espacios hay en ese punto. Revisá los NOTAM antes de volar.</p>
+  </div>
+
+  <div class="sec">
     <div class="lbl">Elevación</div>
     <div class="legend" id="legend"></div>
   </div>
@@ -259,6 +272,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     <li><svg viewBox="0 0 30 12" aria-hidden="true"><circle cx="15" cy="6" r="3.2" fill="#5b2a86" stroke="#fff" stroke-width="1"/></svg><span>Antena, torre, chimenea o molino</span></li>
     <li><svg viewBox="0 0 30 12" aria-hidden="true"><line x1="1" y1="6" x2="29" y2="6" stroke="#7b3fa0" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="3 2"/></svg><span>Línea de alta tensión</span></li>
     <li><svg viewBox="0 0 30 12" aria-hidden="true"><circle cx="15" cy="6" r="4.5" fill="#a8236f" stroke="#fff" stroke-width="1.6"/></svg><span>Aeródromo con cartas (tocá para abrir)</span></li>
+    <li class="sub">Espacio aéreo</li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><line x1="1" y1="6" x2="29" y2="6" stroke="#1f4e9c" stroke-width="1.8"/></svg><span>TMA</span></li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><line x1="1" y1="6" x2="29" y2="6" stroke="#1f4e9c" stroke-width="1.8" stroke-dasharray="5 3"/></svg><span>CTR o ATZ</span></li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><rect x="2" y="1" width="26" height="10" rx="2" fill="rgba(181,23,158,.15)" stroke="#b5179e"/></svg><span>Zona restringida (R)</span></li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><rect x="2" y="1" width="26" height="10" rx="2" fill="rgba(208,0,0,.18)" stroke="#d00000"/></svg><span>Zona prohibida (P) o peligrosa (D)</span></li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><rect x="2" y="3" width="26" height="6" rx="3" fill="rgba(19,135,122,.35)" stroke="#13877a"/></svg><span>Corredor o sector VFR</span></li>
+    <li><svg viewBox="0 0 30 12" aria-hidden="true"><rect x="2" y="1" width="26" height="10" rx="2" fill="rgba(209,138,0,.15)" stroke="#d18a00" stroke-dasharray="4 2"/></svg><span>Antigranizo (temporada, por NOTAM)</span></li>
     <li class="sub">Magnetismo</li>
     <li><svg viewBox="0 0 30 12" aria-hidden="true"><line x1="1" y1="6" x2="29" y2="6" stroke="#0f766e" stroke-width="1.5" stroke-dasharray="5 3"/></svg><span>Isogónica (variación magnética, WMM)</span></li>
   </ul>
@@ -528,6 +548,11 @@ const ADDATA=await fetch('datos/aerodromos.json').then(r=>r.json()).catch(()=>nu
 const ADS=ADDATA?ADDATA.aerodromos:[], ADX=Object.fromEntries(ADS.map(a=>[a.icao,a]));
 const ISO=await fetch('datos/isogonas.json').then(r=>r.json()).catch(()=>null);
 const FC=f=>({type:'FeatureCollection',features:f});
+// espacios aéreos del AIP: se dibujan y se consultan al tocar el mapa
+const ASP=await fetch('datos/espacios.json').then(r=>r.json()).catch(()=>null);
+const ASPF=ASP?ASP.features:[];
+const ACOL=['match',['get','t'],'TMA','#1f4e9c','CTR','#1f4e9c','ATZ','#3b6fc4','R','#b5179e','P','#d00000','D','#e85d04','CORR','#13877a','SECT','#13877a','LAG','#d18a00','#555'];
+const AGRP={ctl:['TMA','CTR','ATZ'],zon:['P','R','D'],vfr:['CORR','SECT'],lag:['LAG']};
 
 /* ---------- Referencias visuales (OpenStreetMap), con colores de carta aeronáutica ---------- */
 const GLYPHS=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'')+'datos/fonts/{fontstack}/{range}.pbf';
@@ -576,6 +601,7 @@ const map=new maplibregl.Map({
       paises:{type:'geojson',data:limites?limites.paises:{type:'FeatureCollection',features:[]}},
       prov:{type:'geojson',data:limites?limites.provincias:{type:'FeatureCollection',features:[]}},
       iso:{type:'geojson',data:FC(ISO?ISO.features:[])},
+      asp:{type:'geojson',data:FC(ASPF)},
       aip:{type:'geojson',data:FC(ADS.map(a=>({type:'Feature',properties:{icao:a.icao},geometry:{type:'Point',coordinates:[a.lon,a.lat]}})))},
     },
     layers:[
@@ -584,6 +610,11 @@ const map=new maplibregl.Map({
       {id:'shade',type:'hillshade',source:'demh',paint:{'hillshade-exaggeration':0.55,'hillshade-shadow-color':'#3a3024','hillshade-highlight-color':'#ffffff','hillshade-accent-color':'#5a4a38'}},
       {id:'cont',type:'raster',source:'cont',layout:{visibility:'none'},paint:{'raster-fade-duration':0}},
       ...REFS,
+      {id:'asp-fill',type:'fill',source:'asp',filter:['!=',['get','t'],'TMA'],paint:{'fill-color':ACOL,'fill-opacity':['match',['get','t'],'CORR',0.3,'P',0.16,'R',0.08,'D',0.1,'LAG',0.1,'SECT',0.1,0.05]}},
+      {id:'asp-solid',type:'line',source:'asp',filter:['in',['get','t'],['literal',['TMA','P','R','D','CORR']]],paint:{'line-color':ACOL,'line-width':['match',['get','t'],'TMA',1.7,'CORR',1,1.3],'line-opacity':0.9}},
+      {id:'asp-dash',type:'line',source:'asp',filter:['in',['get','t'],['literal',['CTR','ATZ','SECT','LAG']]],paint:{'line-color':ACOL,'line-width':['match',['get','t'],'CTR',1.7,1.3],'line-dasharray':[4,2.5],'line-opacity':0.9}},
+      {id:'asp-name',type:'symbol',source:'asp',minzoom:6.5,layout:{'symbol-placement':'line','symbol-spacing':420,'text-field':['concat',['get','n'],'  ',['coalesce',['get','sup'],''],' / ',['coalesce',['get','inf'],'']],'text-font':FB,'text-size':10.5,'text-max-angle':30,'text-keep-upright':true},
+        paint:{'text-color':ACOL,...HALO}},
       {id:'prov',type:'line',source:'prov',paint:{'line-color':'#5d4a6b','line-width':['interpolate',['linear'],['zoom'],3,0.5,8,1.4],'line-dasharray':[3,2],'line-opacity':0.8}},
       {id:'paises',type:'line',source:'paises',paint:{'line-color':'#7a1f4f','line-width':['interpolate',['linear'],['zoom'],3,1.2,8,2.6],'line-opacity':0.9}},
       {id:'iso',type:'line',source:'iso',filter:['==',['%',['get','v'],2],0],paint:{'line-color':'#0f766e','line-width':['interpolate',['linear'],['zoom'],4,1,10,1.8],'line-dasharray':[5,3],'line-opacity':0.9}},
@@ -636,7 +667,7 @@ map.on('click',async e=>{
    <dl><dt>Posición</dt><dd class="num">${dm(lat,'N','S',2)}&nbsp; ${dm(lng,'E','O',3)}</dd>
    <dt>Decimal</dt><dd class="num">${lat.toFixed(5)}, ${lng.toFixed(5)}</dd>
    <dt>Lugar</dt><dd>${where(lng,lat)}</dd>${varTxt(lng,lat)}
-   <dt>Celda</dt><dd>${fmt(r.res)} m · ${r.res>150?'zona de menor detalle':r.res<=30?'máximo detalle del dato':'detalle alto'}</dd></dl>`;
+   <dt>Celda</dt><dd>${fmt(r.res)} m · ${r.res>150?'zona de menor detalle':r.res<=30?'máximo detalle del dato':'detalle alto'}</dd></dl>${aspTxt(lng,lat)}`;
 });
 
 /* ---------- Variación magnética en un punto: Modelo Magnético Mundial (WMM-2025), grilla de 0,25° ---------- */
@@ -652,6 +683,20 @@ const EPOCA=ISO?String(Math.floor(ISO.epoca)):'';
 function varTxt(lng,lat){
   const v=varAt(lng,lat);
   return v==null?'':`<dt>Variación</dt><dd>${varLbl(v)} <span style="color:var(--muted)">(WMM ${EPOCA})</span></dd>`;
+}
+
+/* ---------- Espacios aéreos en un punto ---------- */
+const ATIPO={TMA:'TMA',CTR:'CTR',ATZ:'ATZ',R:'Zona restringida',P:'Zona prohibida',D:'Zona peligrosa',CORR:'Corredor VFR',SECT:'Sector VFR',LAG:'Antigranizo'};
+const ACOLJS={TMA:'#1f4e9c',CTR:'#1f4e9c',ATZ:'#3b6fc4',R:'#b5179e',P:'#d00000',D:'#e85d04',CORR:'#13877a',SECT:'#13877a',LAG:'#d18a00'};
+const aspOn=new Set(Object.keys(ATIPO));
+function aspTxt(lng,lat){
+  const L=ASPF.filter(f=>aspOn.has(f.properties.t)&&inPoly([lng,lat],f.geometry))
+    .sort((a,b)=>(a.properties.infft??0)-(b.properties.infft??0)||(a.properties.supft??0)-(b.properties.supft??0));
+  if(!ASP) return '';
+  if(!L.length) return '<p class="hint" style="margin-top:8px">Sin espacios aéreos publicados en este punto (espacio no controlado, clase G).</p>';
+  return `<div class="lbl" style="margin-top:10px">Espacios aéreos aquí</div><ul class="asp">${L.map(f=>{const p=f.properties;
+    return `<li style="--c:${ACOLJS[p.t]||'#555'}"><b>${esc(p.n)}</b><br><span class="lim">${esc(p.inf||'?')} → ${esc(p.sup||'?')}</span>${p.clase?` · clase ${esc(p.clase.length>40?p.clase.slice(0,40)+'…':p.clase)}`:''}
+      <small>${esc(ATIPO[p.t]||p.t)} · ${esc(p.src||'')}${p.hrs?' · '+esc(p.hrs):''}${p.aprox?' · contorno aproximado':''}</small>${p.obs?`<small>${esc(p.obs)}</small>`:''}</li>`;}).join('')}</ul>`;
 }
 
 /* ---------- Ficha del aeródromo e índice de cartas ---------- */
@@ -820,6 +865,15 @@ $('cNum').onchange=e=>{ui.num=e.target.checked;refreshCont();};
 for(const [id,grp] of [['rVias','vias'],['rAgua','agua'],['rPob','pob'],['rObs','obs']])
   $(id).onchange=ready(e=>{for(const l of REFS)if(l.metadata.g===grp)map.setLayoutProperty(l.id,'visibility',e.target.checked?'visible':'none');});
 $('rPob').addEventListener('change',e=>{showCities=e.target.checked;updCities();});
+function aspFilter(){
+  const on=['literal',[...aspOn]];
+  map.setFilter('asp-fill',['all',['!=',['get','t'],'TMA'],['in',['get','t'],on]]);
+  map.setFilter('asp-solid',['all',['in',['get','t'],['literal',['TMA','P','R','D','CORR']]],['in',['get','t'],on]]);
+  map.setFilter('asp-dash',['all',['in',['get','t'],['literal',['CTR','ATZ','SECT','LAG']]],['in',['get','t'],on]]);
+  map.setFilter('asp-name',['in',['get','t'],on]);
+}
+for(const [id,g] of [['aCtl','ctl'],['aZon','zon'],['aVfr','vfr'],['aLag','lag']])
+  $(id).onchange=ready(e=>{for(const t of AGRP[g]) e.target.checked?aspOn.add(t):aspOn.delete(t); aspFilter();});
 $('rAD').onchange=ready(e=>{for(const l of ['aip-pt','aip-n'])vis(l,e.target.checked);});
 $('rIso').onchange=ready(e=>{for(const l of ['iso','iso2','iso-n'])vis(l,e.target.checked);});
 $('cLim').onchange=ready(e=>{for(const l of ['prov','paises'])map.setLayoutProperty(l,'visibility',e.target.checked?'visible':'none');});

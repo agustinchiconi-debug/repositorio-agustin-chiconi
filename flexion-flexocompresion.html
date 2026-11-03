@@ -467,19 +467,32 @@ function model(){
     if(R<=0) barOut=true;
     for(let k=0;k<n;k++){ const t=Math.PI/2+2*Math.PI*k/n; bars.push({x:R*Math.cos(t),y:R*Math.sin(t),A,f,layer:0}); }
   } else
-  layers.forEach((L,li)=>{
-    if(!(L.n>0)) return;
-    const A=Math.PI*L.f*L.f/400;                       // cm2
-    const y=yTop-L.d;
-    let ch=chord(poly,y); if(!ch){ barOut=true; return; }
-    if((tipo==='T'||tipo==='L'||tipo==='X') && layerPos(L)==='alma'){ const ys=poly.map(p=>p[1]), yw=(tipo!=='X'&&ala==='inf')?Math.max(...ys)-0.01:Math.min(...ys)+0.01; const w=chord(poly,yw); if(w) ch=w; }
-    const x0=ch[0]+rx, x1=ch[1]-rx;
-    for(let k=0;k<L.n;k++){
-      const x = L.n===1 ? (ch[0]+ch[1])/2 : (x0 + k*(x1-x0)/(L.n-1));
-      if(!inPoly(poly,x,y)) barOut=true;
-      bars.push({x,y,A,f:L.f,layer:li});
+  { // capas agrupadas por profundidad: las de igual di y misma zona se reparten juntas, sin superponerse
+    const isTL=(tipo==='T'||tipo==='L'||tipo==='X');
+    const ys=poly.map(p=>p[1]), yw=(tipo!=='X'&&ala==='inf')?Math.max(...ys)-0.01:Math.min(...ys)+0.01, web=isTL?chord(poly,yw):null;
+    const lin=(a,b,n)=>n===1?[(a+b)/2]:Array.from({length:n},(_,k)=>a+k*(b-a)/(n-1));
+    // ordena las capas (más barras / mayor ø afuera) y llena las posiciones de afuera hacia adentro, simétrico
+    const fill=(items,xs,y)=>{ const ord=[...xs].map((x,k)=>({x,k})); const c=(xs[0]+xs[xs.length-1])/2;
+      ord.sort((a,b)=>Math.abs(b.x-c)-Math.abs(a.x-c)||a.x-b.x);
+      const it=[...items].sort((a,b)=>b.L.n-a.L.n||b.L.f-a.L.f||a.li-b.li); let p=0;
+      for(const {L,li} of it){ const A=Math.PI*L.f*L.f/400; for(let k=0;k<L.n;k++){ const x=ord[p++].x; if(!inPoly(poly,x,y)) barOut=true; bars.push({x,y,A,f:L.f,layer:li}); } } };
+    const groups=[]; layers.forEach((L,li)=>{ if(!(L.n>0)) return; const g=groups.find(g=>Math.abs(g.d-L.d)<1e-6); if(g) g.items.push({L,li}); else groups.push({d:L.d,items:[{L,li}]}); });
+    for(const g of groups){
+      const y=yTop-g.d, ch=chord(poly,y); if(!ch){ barOut=true; continue; }
+      const alma=isTL&&web?g.items.filter(o=>layerPos(o.L)==='alma'):[], resto=g.items.filter(o=>!alma.includes(o));
+      const nA=alma.reduce((a,o)=>a+o.L.n,0), nR=resto.reduce((a,o)=>a+o.L.n,0);
+      if(nA){ fill(alma, nA===1?[(web[0]+web[1])/2]:lin(web[0]+rx,web[1]-rx,nA), y); }
+      if(nR){
+        if(!nA){ fill(resto, nR===1?[(ch[0]+ch[1])/2]:lin(ch[0]+rx,ch[1]-rx,nR), y); continue; }
+        // hay barras de alma a esta misma profundidad: las del ala van en los voladizos
+        const seg=[]; if(web[0]-ch[0]>1e-6) seg.push([ch[0]+rx,web[0],'L']); if(ch[1]-web[1]>1e-6) seg.push([ch[1]-rx,web[1],'R']);
+        if(!seg.length){ fill(resto, nR===1?[(ch[0]+ch[1])/2]:lin(ch[0]+rx,ch[1]-rx,nR), y); continue; }
+        const cnt=seg.map(()=>0); for(let k=0;k<nR;k++) cnt[k%seg.length]++;
+        const xs=[]; seg.forEach((sg,k)=>{ if(cnt[k]===1) xs.push(sg[0]); else xs.push(...lin(sg[0],sg[1],cnt[k])); });
+        xs.sort((a,b)=>a-b); fill(resto, xs, y);
+      }
     }
-  });
+  }
   const As=bars.reduce((s,q)=>s+q.A,0), Ag=pp.A;
   const crit=$('crit').value;
   const ety = fyM===420 ? 0.002 : fy/Es;
@@ -620,7 +633,7 @@ function drawSection(m){
     s+=T(xr,yy+3.5,`${g.items.map(o=>'d'+(o.i+1)).join(',')}=${fmt(g.d,1)}`,false,'start');
     s+=`<text x="${xr}" y="${yy+14}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="var(--muted)">${g.items.map(({L})=>L.n+'ø'+L.f).join('+')}</text>`;
   });
-  for(const q of m.bars){ const r=Math.max(2.2,q.f/20*sc); s+=`<circle cx="${X(q.x)}" cy="${Y(q.y)}" r="${r}" fill="var(--steel)" stroke="var(--ink)" stroke-width=".6"/>`; }
+  for(const q of m.bars){ const r=Math.max(1.6,q.f/20*sc); s+=`<circle cx="${X(q.x)}" cy="${Y(q.y)}" r="${r}" fill="var(--steel)" stroke="var(--ink)" stroke-width=".6"/>`; }
   svg.innerHTML=s;
 }
 

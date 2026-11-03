@@ -97,8 +97,9 @@ body[data-tab="fc"] .only-fl{display:none!important}
 .mfplot{min-height:340px}
 #layers{table-layout:fixed}
 #layers th:nth-child(1),#layers td:nth-child(1){width:44px}
-#layers th:nth-child(4),#layers td:nth-child(4){width:78px}
-#layers th:nth-child(5),#layers td:nth-child(5){width:36px}
+#layers th:nth-child(4),#layers td:nth-child(4){width:70px}
+#layers th:nth-child(5),#layers td:nth-child(5){width:78px}
+#layers th:nth-child(6),#layers td:nth-child(6){width:36px}
 #layers td select{width:100%;min-width:66px;padding:3px 4px;font-family:var(--mono)}
 .signs{font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
 .signs ul{margin:4px 0 0;padding-left:16px;display:grid;gap:2px}
@@ -183,10 +184,10 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
       </div>
       <div class="notC" style="display:grid;gap:12px">
       <h2>Armadura por capas</h2>
-      <p class="hint">Como en el Excel: di medido desde la fibra superior al eje de la capa. Las barras de cada capa se reparten en el ancho que tiene la sección a esa profundidad (alma o ala), descontando el recubrimiento lateral; con 1 barra, va centrada en ese ancho.</p>
+      <p class="hint">Como en el Excel: di medido desde la fibra superior al eje de la capa. Las barras de cada capa se reparten en el ancho que tiene la sección a esa profundidad (alma o ala), descontando el recubrimiento lateral; con 1 barra, va centrada en ese ancho. En T, L y cruz, "Ubic." indica si la capa es del alma (se reparte en bw) o del ala (se reparte en bf).</p>
       <div class="tbl-wrap">
         <table id="layers">
-          <thead><tr><th>Capa</th><th>di [cm]</th><th>Nº</th><th>ø [mm]</th><th></th></tr></thead>
+          <thead><tr><th>Capa</th><th>di [cm]</th><th>Nº</th><th>ø [mm]</th><th>Ubic.</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -369,11 +370,17 @@ try{ const s = JSON.parse(localStorage.getItem('ib-state')||'null'); if(s){ laye
 
 function save(){ try{ const o={layers,loads}; for(const k of ['tipo','ala','b','h','bf','hf','fc','fy','Es','rx','crit','cN','cF','cR']) o[k]=$(k).value; localStorage.setItem('ib-state',JSON.stringify(o)); }catch(e){} }
 
+const hasAla=()=>['T','L','X'].includes($('tipo').value);
+// ubicación por defecto: ala si di cae dentro del espesor del ala, si no alma
+function layerPos(L){ if(L.pos==='ala'||L.pos==='alma') return L.pos; const t=$('tipo').value, h=+$('h').value, hf=+$('hf').value, ala=$('ala').value;
+  if(t==='X') return Math.abs(L.d-h/2)<=hf/2?'ala':'alma';
+  return (ala==='inf'? L.d>=h-hf : L.d<=hf)?'ala':'alma'; }
 function renderLayerRows(){
   const tb = $('layers').tBodies[0]; tb.innerHTML='';
   layers.forEach((L,i)=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${i+1}</td><td><input id="ld${i}" type="number" step="0.5" value="${L.d}"></td><td><input id="ln${i}" type="number" step="1" min="0" value="${L.n}"></td><td><select id="lf${i}">${[6,8,10,12,16,20,25,32].map(f=>`<option ${f==L.f?'selected':''}>${f}</option>`).join('')}</select></td><td><button class="x" type="button" aria-label="Quitar capa ${i+1}">×</button></td>`;
+    tr.innerHTML=`<td>${i+1}</td><td><input id="ld${i}" type="number" step="0.5" value="${L.d}"></td><td><input id="ln${i}" type="number" step="1" min="0" value="${L.n}"></td><td><select id="lf${i}">${[6,8,10,12,16,20,25,32].map(f=>`<option ${f==L.f?'selected':''}>${f}</option>`).join('')}</select></td><td>${hasAla()?`<select id="lp${i}" aria-label="Ubicación de la capa ${i+1}"><option value="ala" ${layerPos(L)==='ala'?'selected':''}>Ala</option><option value="alma" ${layerPos(L)==='alma'?'selected':''}>Alma</option></select>`:'<span class="hint">—</span>'}</td><td><button class="x" type="button" aria-label="Quitar capa ${i+1}">×</button></td>`;
+    const lp=tr.querySelector(`#lp${i}`); if(lp) lp.onchange=e=>{L.pos=e.target.value;schedule()};
     tr.querySelector(`#ld${i}`).oninput=e=>{L.d=+e.target.value;schedule()};
     tr.querySelector(`#ln${i}`).oninput=e=>{L.n=Math.max(0,Math.round(+e.target.value));schedule()};
     tr.querySelector(`#lf${i}`).onchange=e=>{L.f=+e.target.value;schedule()};
@@ -400,7 +407,7 @@ $('addLayer').onclick=()=>{const last=layers[layers.length-1]||{d:4,f:10}; layer
 $('addLoad').onclick=()=>{const used=new Set(loads.map(l=>l.color)); loads.push({name:'Caso '+(loads.length+1),P:0,Mx:0,My:0,color:PAL.find(c=>!used.has(c))||PAL[loads.length%PAL.length]}); renderLoadRows(); schedule();};
 for(const k of ['b','h','bf','hf','fc','fy','Es','rx','cN','cR']) $(k).addEventListener('input',()=>schedule());
 $('cF').addEventListener('change',()=>schedule());
-for(const k of ['crit','tipo','ala']) $(k).addEventListener('change',()=>{syncTipo();schedule();});
+for(const k of ['crit','tipo','ala']) $(k).addEventListener('change',()=>{syncTipo();renderLayerRows();schedule();});
 $('capD').addEventListener('change',()=>schedule());
 function syncTipo(){ const t=$('tipo').value;
   document.querySelectorAll('.tl').forEach(e=>e.hidden=!(t==='T'||t==='L'||t==='X'));
@@ -464,7 +471,8 @@ function model(){
     if(!(L.n>0)) return;
     const A=Math.PI*L.f*L.f/400;                       // cm2
     const y=yTop-L.d;
-    const ch=chord(poly,y); if(!ch){ barOut=true; return; }
+    let ch=chord(poly,y); if(!ch){ barOut=true; return; }
+    if((tipo==='T'||tipo==='L'||tipo==='X') && layerPos(L)==='alma'){ const ys=poly.map(p=>p[1]), yw=(tipo!=='X'&&ala==='inf')?Math.max(...ys)-0.01:Math.min(...ys)+0.01; const w=chord(poly,yw); if(w) ch=w; }
     const x0=ch[0]+rx, x1=ch[1]-rx;
     for(let k=0;k<L.n;k++){
       const x = L.n===1 ? (ch[0]+ch[1])/2 : (x0 + k*(x1-x0)/(L.n-1));
@@ -563,7 +571,7 @@ function rayHit(pts,dx,dy){
 
 // ---------- dibujo sección ----------
 function drawSection(m){
-  const svg=$('secSvg'), W=340, H=340, padL=48, padR=86, padT=44, padB=44;
+  const svg=$('secSvg'), W=340, H=340, padL=48, padR=100, padT=44, padB=44;
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const xs=m.poly.map(p=>p[0]), ys=m.poly.map(p=>p[1]);
   const xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);
@@ -605,11 +613,12 @@ function drawSection(m){
   // profundidad de capas (di desde la fibra superior) a la derecha
   const used=m.tipo==='C'?[]:layers.map((L,i)=>({L,i})).filter(o=>o.L.n>0);
   const xr=X(xmax)+(m.tipo==='R'?16:40);
-  used.forEach(({L,i})=>{
-    const yy=Y(m.yTop-L.d);
+  const grp=[]; used.forEach(o=>{ const g=grp.find(g=>Math.abs(g.d-o.L.d)<1e-6); if(g) g.items.push(o); else grp.push({d:o.L.d,items:[o]}); });
+  grp.forEach(g=>{
+    const yy=Y(m.yTop-g.d);
     s+=`<line x1="${X(xmax)+2}" y1="${yy}" x2="${xr-2}" y2="${yy}" stroke="var(--steel)" stroke-width=".8" stroke-dasharray="2 2"/>`;
-    s+=T(xr,yy+3.5,`d${i+1}=${fmt(L.d,1)}`,false,'start');
-    s+=`<text x="${xr}" y="${yy+14}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="var(--muted)">${L.n}ø${L.f}</text>`;
+    s+=T(xr,yy+3.5,`${g.items.map(o=>'d'+(o.i+1)).join(',')}=${fmt(g.d,1)}`,false,'start');
+    s+=`<text x="${xr}" y="${yy+14}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="var(--muted)">${g.items.map(({L})=>L.n+'ø'+L.f).join('+')}</text>`;
   });
   for(const q of m.bars){ const r=Math.max(2.2,q.f/20*sc); s+=`<circle cx="${X(q.x)}" cy="${Y(q.y)}" r="${r}" fill="var(--steel)" stroke="var(--ink)" stroke-width=".6"/>`; }
   svg.innerHTML=s;
@@ -1116,8 +1125,8 @@ async function buildMemo(){
   // 2. armaduras
   H1('Armadura longitudinal');
   if(m.tipo==='C') b.push(Wp(`${$('cN').value} barras ø${$('cF').value} repartidas en una circunferencia, con recubrimiento al eje de ${$('cR').value} cm.`));
-  else { const ar=[['Capa','d<sub>i</sub> desde arriba [cm]','N° de barras','ø [mm]','A<sub>s</sub> de la capa [cm²]']];
-    layers.forEach((L,i)=>{ if(L.n>0) ar.push([i+1,fmt(L.d,1),L.n,L.f,fmt(L.n*Math.PI*L.f*L.f/400,2)]); });
+  else { const ar=[['Capa','d<sub>i</sub> desde arriba [cm]','N° de barras','ø [mm]','A<sub>s</sub> de la capa [cm²]'].concat(hasAla()?['Ubicación']:[])];
+    layers.forEach((L,i)=>{ if(L.n>0) ar.push([i+1,fmt(L.d,1),L.n,L.f,fmt(L.n*Math.PI*L.f*L.f/400,2)].concat(hasAla()?[layerPos(L)==='ala'?'Ala':'Alma']:[])); });
     b.push(Wtbl(ar)); }
   const kv=[...$('kv').querySelectorAll('div')].map(d=>[X(d.querySelector('span').textContent),X(d.querySelector('b').textContent)]);
   b.push(Wtbl([['Magnitud','Valor']].concat(kv),[4600,5000]));

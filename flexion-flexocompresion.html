@@ -166,6 +166,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
         <label class="notC"><span id="bLab">b (ancho, eje x) [cm]</span><input id="b" type="number" step="1" value="16"></label>
         <label><span id="hLab">h (altura total, eje y) [cm]</span><input id="h" type="number" step="1" value="36"></label>
         <label class="tl"><span id="bfLab">bf (ancho del ala) [cm]</span><input id="bf" type="number" step="1" value="60"></label>
+        <label class="onlyZ"><span>bf2 (ancho del ala inferior, incl. alma) [cm]</span><input id="bf2" type="number" step="1" value="60"></label>
         <label class="tl"><span id="hfLab">hf (espesor del ala) [cm]</span><input id="hf" type="number" step="1" value="10"></label>
         <label>f'c [MPa]<input id="fc" type="number" step="1" value="30"></label>
         <label>fy [MPa]<input id="fy" type="number" step="10" value="420"></label>
@@ -284,6 +285,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
           <div class="tabs" role="group" aria-label="Superficies visibles">
             <button type="button" id="tNom" aria-pressed="true">Nominal (Mn, Pn)</button>
             <button type="button" id="tDes" aria-pressed="false">Diseño (φMn, φPn)</button>
+            <button type="button" id="lbl3" aria-pressed="true">Nombres de casos</button>
           </div>
         </div>
         <div id="p3d" class="plot"></div>
@@ -297,6 +299,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
             <button type="button" id="axX" aria-pressed="true">Mx (flexión en h)</button>
             <button type="button" id="axY" aria-pressed="false">My (flexión en b)</button>
             <button type="button" id="uDes" aria-pressed="true">Mostrar diseño</button>
+            <button type="button" id="lbl2" aria-pressed="true">Nombres de casos</button>
           </div>
         </div>
         <div id="p2d" class="plot"></div>
@@ -365,10 +368,10 @@ let layers = [{d:4,n:2,f:10},{d:17.5,n:2,f:10},{d:31,n:2,f:10}];
 // paleta de solicitaciones (sin rojos, para no confundir con pretensado)
 const PAL=['#B0118A','#E07B00','#0E8C7F','#6A3FB5','#1F6FB5','#8C6D1F','#2E8B3E','#D14FA0','#4A5A66','#00A3C4'];
 let loads = [{name:'Caso Excel',P:0,Mx:4.4,My:0,color:PAL[0]},{name:'Biaxial',P:20,Mx:3,My:1.2,color:PAL[1]}];
-let show = {nom:true, des:false, ax:'x', uDes:true};
-try{ const s = JSON.parse(localStorage.getItem('ib-state')||'null'); if(s){ layers=s.layers||layers; loads=s.loads||loads; for(const k of ['tipo','ala','b','h','bf','hf','fc','fy','Es','rx','crit','cN','cF','cR']) if(s[k]!=null) $(k).value=s[k]; } }catch(e){}
+let show = {nom:true, des:false, ax:'x', uDes:true, lbl:true};
+try{ const s = JSON.parse(localStorage.getItem('ib-state')||'null'); if(s){ layers=s.layers||layers; loads=s.loads||loads; for(const k of ['tipo','ala','b','h','bf','bf2','hf','fc','fy','Es','rx','crit','cN','cF','cR']) if(s[k]!=null) $(k).value=s[k]; } }catch(e){}
 
-function save(){ try{ const o={layers,loads}; for(const k of ['tipo','ala','b','h','bf','hf','fc','fy','Es','rx','crit','cN','cF','cR']) o[k]=$(k).value; localStorage.setItem('ib-state',JSON.stringify(o)); }catch(e){} }
+function save(){ try{ const o={layers,loads}; for(const k of ['tipo','ala','b','h','bf','bf2','hf','fc','fy','Es','rx','crit','cN','cF','cR']) o[k]=$(k).value; localStorage.setItem('ib-state',JSON.stringify(o)); }catch(e){} }
 
 const hasAla=()=>['T','L','X'].includes($('tipo').value);
 // ubicación por defecto: ala si di cae dentro del espesor del ala, si no alma
@@ -405,14 +408,15 @@ function renderLoadRows(){
 }
 $('addLayer').onclick=()=>{const last=layers[layers.length-1]||{d:4,f:10}; layers.push({d:last.d,n:2,f:last.f}); renderLayerRows(); schedule();};
 $('addLoad').onclick=()=>{const used=new Set(loads.map(l=>l.color)); loads.push({name:'Caso '+(loads.length+1),P:0,Mx:0,My:0,color:PAL.find(c=>!used.has(c))||PAL[loads.length%PAL.length]}); renderLoadRows(); schedule();};
-for(const k of ['b','h','bf','hf','fc','fy','Es','rx','cN','cR']) $(k).addEventListener('input',()=>schedule());
+for(const k of ['b','h','bf','bf2','hf','fc','fy','Es','rx','cN','cR']) $(k).addEventListener('input',()=>schedule());
 $('cF').addEventListener('change',()=>schedule());
 for(const k of ['crit','tipo','ala']) $(k).addEventListener('change',()=>{syncTipo();renderLayerRows();schedule();});
 $('capD').addEventListener('change',()=>schedule());
 function syncTipo(){ const t=$('tipo').value;
   document.querySelectorAll('.tl').forEach(e=>e.hidden=!(t==='T'||t==='L'||t==='X'||t==='U'||t==='Z'));
+  document.querySelectorAll('.onlyZ').forEach(e=>e.hidden=t!=='Z');
   document.querySelectorAll('.onlyTL').forEach(e=>e.hidden=!(t==='T'||t==='L'||t==='U'));
-  $('bfLab').textContent=t==='U'?'bf (ancho total) [cm]':t==='Z'?'bf (ancho de cada ala, incl. alma) [cm]':'bf (ancho del ala) [cm]';
+  $('bfLab').textContent=t==='U'?'bf (ancho total) [cm]':t==='Z'?'bf (ancho del ala superior, incl. alma) [cm]':'bf (ancho del ala) [cm]';
   $('hfLab').textContent=t==='U'?'hf (espesor del tramo horizontal) [cm]':'hf (espesor del ala) [cm]';
   document.querySelectorAll('.onlyC').forEach(e=>e.hidden=t!=='C');
   document.querySelectorAll('.notC').forEach(e=>e.hidden=t==='C');
@@ -421,7 +425,7 @@ function syncTipo(){ const t=$('tipo').value;
 
 // ---------- modelo ----------
 // Polígono de la sección (antihorario), coordenadas con y = 0 en la fibra superior hacia abajo negativo
-function rawPoly(tipo,b,h,bf,hf,ala){
+function rawPoly(tipo,b,h,bf,hf,ala,bf2){ if(!(bf2>0)) bf2=bf;
   if(tipo==='R') return [[0,0],[b,0],[b,h],[0,h]].map(([x,y])=>[x,-y]);
   if(tipo==='C'){ const n=96, r=h/2; return Array.from({length:n},(_,i)=>[r+r*Math.cos(2*Math.PI*i/n), -(r-r*Math.sin(2*Math.PI*i/n))]); }
   // construido con el ala arriba y luego espejado si va abajo
@@ -429,7 +433,7 @@ function rawPoly(tipo,b,h,bf,hf,ala){
   if(tipo==='T'){ const e=(bf-b)/2; P=[[0,0],[bf,0],[bf,hf],[e+b,hf],[e+b,h],[e,h],[e,hf],[0,hf]]; }
   else if(tipo==='X'){ const e=(bf-b)/2, y1=(h-hf)/2, y2=(h+hf)/2; P=[[e,0],[e+b,0],[e+b,y1],[bf,y1],[bf,y2],[e+b,y2],[e+b,h],[e,h],[e,y2],[0,y2],[0,y1],[e,y1]]; ala='sup'; }
   else if(tipo==='U'){ P=[[0,0],[bf,0],[bf,h],[bf-b,h],[bf-b,hf],[b,hf],[b,h],[0,h]]; }   // U: tramo horizontal arriba (hf) y dos ramas de espesor bw
-  else if(tipo==='Z'){ P=[[0,0],[bf,0],[bf,h-hf],[2*bf-b,h-hf],[2*bf-b,h],[bf-b,h],[bf-b,hf],[0,hf]]; ala='sup'; } // Z: ala sup. a la izq., alma bw, ala inf. a la der.
+  else if(tipo==='Z'){ P=[[0,0],[bf,0],[bf,h-hf],[bf-b+bf2,h-hf],[bf-b+bf2,h],[bf-b,h],[bf-b,hf],[0,hf]]; ala='sup'; } // Z: ala sup. a la izq., alma bw, ala inf. a la der.
   else { P=[[0,0],[bf,0],[bf,hf],[b,hf],[b,h],[0,h]]; }            // L: alma a la izquierda
   if(ala==='inf') P=P.map(([x,y])=>[x,h-y]);
   // a coordenadas y hacia arriba y orientación antihoraria
@@ -467,10 +471,10 @@ function inPoly(Q,x,y){
 }
 function model(){
   const tipo=$('tipo').value, ala=$('ala').value;
-  const tipo0=$('tipo').value, h=+$('h').value, b=tipo0==='C'?h:+$('b').value, bf=Math.max(+$('bf').value,b), hf=Math.min(+$('hf').value,h), fcM=+$('fc').value, fyM=+$('fy').value, EsM=+$('Es').value, rx=+$('rx').value;
+  const tipo0=$('tipo').value, h=+$('h').value, b=tipo0==='C'?h:+$('b').value, bf=Math.max(+$('bf').value,b), hf=Math.min(+$('hf').value,h), bf2=Math.max(+$('bf2').value||0,b), fcM=+$('fc').value, fyM=+$('fy').value, EsM=+$('Es').value, rx=+$('rx').value;
   const fc=fcM/100, fy=fyM/100, Es=EsM/100;           // t/cm2 (1 MPa = 0,01 t/cm2)
   const b1=Math.max(0.65,Math.min(0.85,0.85-0.05*(fcM-28)/7));
-  const raw=rawPoly(tipo,b,h,bf,hf,ala), pp=polyProps(raw);
+  const raw=rawPoly(tipo,b,h,bf,hf,ala,bf2), pp=polyProps(raw);
   const poly=raw.map(([x,y])=>[x-pp.cx,y-pp.cy]);   // origen en el baricentro de la sección bruta
   const yTop=-pp.cy;                                  // fibra superior en coordenadas centradas
   const bars=[]; let barOut=false;
@@ -518,7 +522,7 @@ function model(){
   const kMax = crit==='IC103'?0.70:(crit==='C201Z'?0.85:0.80);
   const P0 = 0.85*fc*(Ag-As)+fy*As;
   const Pt = -fy*As;
-  return {capD,phiT,tipo,ala,b,h,bf,hf,poly,yTop,ycg:pp.cy,fc,fy,Es,fcM,fyM,EsM,rx,b1,bars,barOut,As,Ag,crit,ety,phiC,kMax,P0,Pt,cap:kMax*phiC*P0};
+  return {capD,phiT,tipo,ala,b,h,bf,bf2,hf,poly,yTop,ycg:pp.cy,fc,fy,Es,fcM,fyM,EsM,rx,b1,bars,barOut,As,Ag,crit,ety,phiC,kMax,P0,Pt,cap:kMax*phiC*P0};
 }
 function phiOf(m,et){
   if(m.capD) return 1;
@@ -639,7 +643,7 @@ function drawSection(m){
   } else if(m.tipo==='Z'){
     const xw=xmin+m.bf-m.b;
     s+=dimH(xmin,xmin+m.bf,top,top-22,'bf = '+fmt(m.bf,1));
-    s+=dimH(xw,xmax,bot,bot+22,'bf = '+fmt(m.bf,1));
+    s+=dimH(xw,xmax,bot,bot+22,'bf2 = '+fmt(m.bf2,1));
     s+=dimH(xw,xmin+m.bf,top,top-40,'bw = '+fmt(m.b,1));
     s+=dimV(ymax,ymax-m.hf,X(xmin),X(xmin)-18,'hf = '+fmt(m.hf,1));
   } else if(m.tipo==='R'){
@@ -802,7 +806,7 @@ function draw3D(m){
       tr.push({type:'scatter3d',mode:'markers',x:[L.Mx*k],y:[L.My*k],z:[L.P],marker:{size:7,color:css('--surface'),symbol:'diamond',line:{color:ink,width:2}},hovertemplate:`${L.name}: φMn = ${fmt(r.cap,2)} tm<extra>Capacidad</extra>`});
     }
   });
-  tr.push({type:'scatter3d',mode:'markers+text',x:loads.map(l=>l.Mx),y:loads.map(l=>l.My),z:loads.map(l=>l.P),text:loads.map(l=>' '+l.name),textposition:'middle right',textfont:{color:ink,size:14,family:'IBM Plex Sans Condensed, sans-serif'},marker:{size:11,color:loads.map(l=>l.color),symbol:'square',line:{color:ink,width:3}},name:'Solicitaciones',hovertemplate:'%{text}<br>Mux %{x:.2f}<br>Muy %{y:.2f}<br>Pu %{z:.1f}<extra></extra>'});
+  tr.push({type:'scatter3d',mode:show.lbl?'markers+text':'markers',x:loads.map(l=>l.Mx),y:loads.map(l=>l.My),z:loads.map(l=>l.P),text:loads.map(l=>' '+l.name),textposition:'middle right',textfont:{color:ink,size:14,family:'IBM Plex Sans Condensed, sans-serif'},marker:{size:11,color:loads.map(l=>l.color),symbol:'square',line:{color:ink,width:3}},name:'Solicitaciones',hovertemplate:'%{text}<br>Mux %{x:.2f}<br>Muy %{y:.2f}<br>Pu %{z:.1f}<extra></extra>'});
   const ax=t=>({title:{text:t},gridcolor:ln,zerolinecolor:css('--muted'),backgroundcolor:'rgba(0,0,0,0)',showbackground:false,color:css('--muted')});
   Plotly.react('p3d',tr,{...plotTheme(),margin:{l:0,r:0,t:10,b:0},showlegend:false,scene:{xaxis:ax('Mx [tm]'),yaxis:ax('My [tm]'),zaxis:ax('P [t]'),aspectmode:'manual',aspectratio:{x:1,y:1,z:1.1},camera:{eye:{x:1.6,y:-1.5,z:0.8}}}},{responsive:true,displaylogo:false});
 }
@@ -822,7 +826,7 @@ function draw2D(m){
     tr.push({x:p.map(q=>q[0]),y:p.map(q=>q[1]),mode:'lines',line:{color:acc,width:2,dash:lab==='rama −'?'dash':'solid'},name:'Nominal '+lab,hovertemplate:'M %{x:.2f} tm<br>P %{y:.1f} t<extra></extra>'});
     if(show.uDes){ const d=branch(m,th,show.ax,true); tr.push({x:d.map(q=>q[0]),y:d.map(q=>q[1]),mode:'lines',line:{color:des,width:2,dash:lab==='rama −'?'dash':'solid'},name:'Diseño '+lab,hovertemplate:'φM %{x:.2f} tm<br>φP %{y:.1f} t<extra></extra>'}); }
   }
-  tr.push({x:loads.map(l=>show.ax==='x'?l.Mx:l.My),y:loads.map(l=>l.P),mode:'markers+text',text:loads.map(l=>l.name),textposition:'top right',textfont:{color:ink,size:11},marker:{size:9,color:loads.map(l=>l.color),symbol:'square',line:{color:ink,width:1}},name:'Solicitaciones',hovertemplate:'%{text}<br>Mu %{x:.2f}<br>Pu %{y:.1f}<extra></extra>'});
+  tr.push({x:loads.map(l=>show.ax==='x'?l.Mx:l.My),y:loads.map(l=>l.P),mode:show.lbl?'markers+text':'markers',text:loads.map(l=>l.name),textposition:'top right',textfont:{color:ink,size:11},marker:{size:9,color:loads.map(l=>l.color),symbol:'square',line:{color:ink,width:1}},name:'Solicitaciones',hovertemplate:'%{text}<br>Mu %{x:.2f}<br>Pu %{y:.1f}<extra></extra>'});
   const axs=t=>({title:{text:t},gridcolor:ln,zerolinecolor:css('--muted'),color:css('--muted')});
   Plotly.react('p2d',tr,{...plotTheme(),margin:{l:60,r:20,t:10,b:50},showlegend:true,legend:{orientation:'h',y:-0.18,font:{color:css('--muted')}},xaxis:axs(show.ax==='x'?'Mx [tm]':'My [tm]'),yaxis:axs('P [t] (compresión +)')},{responsive:true,displaylogo:false});
 
@@ -1052,6 +1056,8 @@ $('tNom').onclick=()=>{show.nom=!show.nom; if(!show.nom&&!show.des) show.des=tru
 $('tDes').onclick=()=>{show.des=!show.des; if(!show.nom&&!show.des) show.nom=true; setTab('tNom',show.nom); setTab('tDes',show.des); draw3D(model());};
 $('axX').onclick=()=>{show.ax='x'; setTab('axX',true); setTab('axY',false); draw2D(model());};
 $('axY').onclick=()=>{show.ax='y'; setTab('axX',false); setTab('axY',true); draw2D(model());};
+const lblT=()=>{show.lbl=!show.lbl; setTab('lbl2',show.lbl); setTab('lbl3',show.lbl); const m=model(); draw3D(m); draw2D(m);};
+$('lbl2').onclick=lblT; $('lbl3').onclick=lblT;
 $('uDes').onclick=()=>{show.uDes=!show.uDes; setTab('uDes',show.uDes); draw2D(model());};
 
 $('regFl').addEventListener('change',()=>render());
@@ -1067,7 +1073,7 @@ document.body.dataset.tab=tab;
     catch(e){ $('dlMsg').textContent = e&&e.code==='declined' ? 'Descarga cancelada.' : e&&e.code==='rate_limited' ? 'Ya hay una descarga pendiente; esperá un momento.' : 'No se pudo descargar en esta vista.'; } };
  }catch(e){} })();
 // ---------- proyectos ----------
-const KEYS=['tipo','ala','b','h','bf','hf','fc','fy','Es','rx','crit','cN','cF','cR','regFl','mfEcu','mfE0','mfFr'];
+const KEYS=['tipo','ala','b','h','bf','bf2','hf','fc','fy','Es','rx','crit','cN','cF','cR','regFl','mfEcu','mfE0','mfFr'];
 let projName='';
 function getState(){ const o={layers:JSON.parse(JSON.stringify(layers)),loads:JSON.parse(JSON.stringify(loads))}; for(const k of KEYS) o[k]=$(k).value; o.capD=$('capD').checked; return o; }
 function setState(o){ layers=o.layers||[]; loads=o.loads||[]; for(const k of KEYS) if(o[k]!=null&&$(k)) $(k).value=o[k]; $('capD').checked=!!o.capD; syncTipo(); renderLayerRows(); renderLoadRows(); render(); }

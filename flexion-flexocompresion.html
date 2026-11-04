@@ -61,7 +61,7 @@ button.x{padding:2px 7px;color:var(--muted)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .hint{font-size:12px;color:var(--muted);margin:0}
 .main{display:grid;gap:16px;min-width:0}
-.top{display:grid;grid-template-columns:minmax(320px,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+.top{display:grid;grid-template-columns:minmax(340px,1.7fr) minmax(260px,1fr);gap:20px;align-items:start}
 @media (max-width:760px){.top{grid-template-columns:1fr}}
 .clsbox{padding:8px 10px;border-radius:4px;background:var(--bg);font-size:13px;line-height:1.45}
 .clsbox b{font-family:var(--sans)}
@@ -242,7 +242,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
         <div class="top">
           <div>
             <h2>Sección</h2>
-            <svg id="secSvg" viewBox="0 0 460 380" role="img" aria-label="Sección transversal con barras"></svg>
+            <svg id="secSvg" viewBox="0 0 420 380" role="img" aria-label="Sección transversal con barras"></svg>
           </div>
           <div class="only-fl rhocard">
             <h2>Cuantía de flexión</h2>
@@ -584,7 +584,7 @@ function rayHit(pts,dx,dy){
 
 // ---------- dibujo sección ----------
 function drawSection(m){
-  const svg=$('secSvg'), W=460, H=380, padL=66, padR=150, padT=44, padB=44;
+  const svg=$('secSvg'), W=420, H=380, padL=62, padR=124, padT=40, padB=40;
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const xs=m.poly.map(p=>p[0]), ys=m.poly.map(p=>p[1]);
   const xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);

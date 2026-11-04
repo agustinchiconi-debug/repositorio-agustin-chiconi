@@ -828,7 +828,7 @@ function draw2D(m){
   }
   tr.push({x:loads.map(l=>show.ax==='x'?l.Mx:l.My),y:loads.map(l=>l.P),mode:show.lbl?'markers+text':'markers',text:loads.map(l=>l.name),textposition:'top right',textfont:{color:ink,size:11},marker:{size:9,color:loads.map(l=>l.color),symbol:'square',line:{color:ink,width:1}},name:'Solicitaciones',hovertemplate:'%{text}<br>Mu %{x:.2f}<br>Pu %{y:.1f}<extra></extra>'});
   const axs=t=>({title:{text:t},gridcolor:ln,zerolinecolor:css('--muted'),color:css('--muted')});
-  Plotly.react('p2d',tr,{...plotTheme(),margin:{l:60,r:20,t:10,b:50},showlegend:true,legend:{orientation:'h',y:-0.18,font:{color:css('--muted')}},xaxis:axs(show.ax==='x'?'Mx [tm]':'My [tm]'),yaxis:axs('P [t] (compresión +)')},{responsive:true,displaylogo:false});
+  Plotly.react('p2d',tr,{...plotTheme(),margin:{l:60,r:20,t:10,b:110},showlegend:true,legend:{orientation:'h',x:0,xanchor:'left',y:-0.27,yanchor:'top',font:{color:css('--muted')}},xaxis:axs(show.ax==='x'?'Mx [tm]':'My [tm]'),yaxis:axs('P [t] (compresión +)')},{responsive:true,displaylogo:false});
 
   // puntos notables rama +
   const comp=show.ax==='x'?'Mx':'My';

@@ -61,7 +61,7 @@ button.x{padding:2px 7px;color:var(--muted)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .hint{font-size:12px;color:var(--muted);margin:0}
 .main{display:grid;gap:16px;min-width:0}
-.top{display:grid;grid-template-columns:minmax(240px,340px) minmax(0,1fr);gap:20px;align-items:start}
+.top{display:grid;grid-template-columns:minmax(260px,460px) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:760px){.top{grid-template-columns:1fr}}
 .clsbox{padding:8px 10px;border-radius:4px;background:var(--bg);font-size:13px;line-height:1.45}
 .clsbox b{font-family:var(--sans)}
@@ -242,7 +242,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
         <div class="top">
           <div>
             <h2>Sección</h2>
-            <svg id="secSvg" viewBox="0 0 340 340" role="img" aria-label="Sección transversal con barras"></svg>
+            <svg id="secSvg" viewBox="0 0 460 380" role="img" aria-label="Sección transversal con barras"></svg>
           </div>
           <div class="only-fl rhocard">
             <h2>Cuantía de flexión</h2>
@@ -584,7 +584,7 @@ function rayHit(pts,dx,dy){
 
 // ---------- dibujo sección ----------
 function drawSection(m){
-  const svg=$('secSvg'), W=340, H=340, padL=48, padR=100, padT=44, padB=44;
+  const svg=$('secSvg'), W=460, H=380, padL=66, padR=150, padT=44, padB=44;
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const xs=m.poly.map(p=>p[0]), ys=m.poly.map(p=>p[1]);
   const xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);
@@ -603,7 +603,8 @@ function drawSection(m){
   s+=`<text x="${X(xmax)+8}" y="${Y(0)+3}" font-size="10" fill="var(--muted)" font-family="IBM Plex Sans,sans-serif">x</text><text x="${X(0)+3}" y="${Y(ymax)-8}" font-size="10" fill="var(--muted)" font-family="IBM Plex Sans,sans-serif">y</text>`;
   // cotas: h a la izquierda
   const top=Y(ymax), bot=Y(ymin);
-  if(m.tipo!=='C') s+=dimV(ymax,ymin,X(xmin),X(xmin)-26,'h = '+fmt(m.h,1));
+  const hasHf=m.tipo==='T'||m.tipo==='L';
+  if(m.tipo!=='C') s+=dimV(ymax,ymin,X(xmin),X(xmin)-(hasHf?44:26),'h = '+fmt(m.h,1));
   if(m.tipo==='C'){
     s+=dimH(xmin,xmax,bot,bot+22,'D = '+fmt(m.h,1));
     const n=m.bars.length; if(n){ s+=T(X(xmax)+10,Y(ymax)+12,`${n}ø${m.bars[0].f}`,false,'start'); s+=T(X(xmax)+10,Y(ymax)+26,`rec ${fmt(+$('cR').value,1)}`,false,'start'); }
@@ -621,17 +622,19 @@ function drawSection(m){
     s+=dimH(xmin,xmax,Y(yF),sup?top-22:bot+22,'bf = '+fmt(m.bf,1));
     s+=dimH(web[0],web[1],Y(yW),sup?bot+22:top-22,'bw = '+fmt(m.b,1));
     const yF2=sup?ymax-m.hf:ymin+m.hf;
-    s+=dimV(yF,yF2,X(xmax),X(xmax)+18,'hf = '+fmt(m.hf,1));
+    s+=dimV(yF,yF2,X(xmin),X(xmin)-18,'hf = '+fmt(m.hf,1));
   }
   // profundidad de capas (di desde la fibra superior) a la derecha
   const used=m.tipo==='C'?[]:layers.map((L,i)=>({L,i})).filter(o=>o.L.n>0);
   const xr=X(xmax)+(m.tipo==='R'?16:40);
   const grp=[]; used.forEach(o=>{ const g=grp.find(g=>Math.abs(g.d-o.L.d)<1e-6); if(g) g.items.push(o); else grp.push({d:o.L.d,items:[o]}); });
+  grp.sort((a,b)=>a.d-b.d); let lyPrev=-1e9;
   grp.forEach(g=>{
-    const yy=Y(m.yTop-g.d);
-    s+=`<line x1="${X(xmax)+2}" y1="${yy}" x2="${xr-2}" y2="${yy}" stroke="var(--steel)" stroke-width=".8" stroke-dasharray="2 2"/>`;
+    const yy=Y(m.yTop-g.d), ly=Math.max(yy,lyPrev+28); lyPrev=ly;
+    s+=`<polyline points="${X(xmax)+2},${yy} ${xr-14},${yy} ${xr-4},${ly}" fill="none" stroke="var(--steel)" stroke-width=".8" stroke-dasharray="2 2"/>`;
+    const yy0=yy; { const yy=ly;
     s+=T(xr,yy+3.5,`${g.items.map(o=>'d'+(o.i+1)).join(',')}=${fmt(g.d,1)}`,false,'start');
-    s+=`<text x="${xr}" y="${yy+14}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="var(--muted)">${g.items.map(({L})=>L.n+'ø'+L.f).join('+')}</text>`;
+    s+=`<text x="${xr}" y="${yy+14}" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="var(--muted)">${g.items.map(({L})=>L.n+'ø'+L.f).join('+')}</text>`; }
   });
   for(const q of m.bars){ const r=Math.max(1.6,q.f/20*sc); s+=`<circle cx="${X(q.x)}" cy="${Y(q.y)}" r="${r}" fill="var(--steel)" stroke="var(--ink)" stroke-width=".6"/>`; }
   svg.innerHTML=s;

@@ -158,7 +158,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
       <h2>Sección y materiales</h2>
       <div class="fields">
         <label>Tipo de sección
-          <select id="tipo"><option value="R">Rectangular</option><option value="T">T</option><option value="L">L</option><option value="X">Cruz</option><option value="U" class="only-fc">U (tabique)</option><option value="Z" class="only-fc">Z (tabique)</option><option value="C">Circular</option></select>
+          <select id="tipo"><option value="R">Rectangular</option><option value="T">T</option><option value="L">L</option><option value="X">Cruz</option><option value="U">U (tabique)</option><option value="Z">Z (tabique)</option><option value="C">Circular</option></select>
         </label>
         <label class="tl onlyTL">Posición del ala
           <select id="ala"><option value="sup">Arriba</option><option value="inf">Abajo</option></select>
@@ -719,7 +719,7 @@ function render(){
   if(m.tipo==='U'&&(m.bf<=2*m.b||m.hf>=m.h)) ck.push(['warn','U mal definida: requiere bf > 2·bw y hf < h']);
   const rmin=m.crit==='IC103'?0.008:0.01, rmax=m.crit==='IC103'?18/m.fyM:0.08;
   if(tab==='fc'){
-  const ic=m.crit==='IC103', sfc=Math.sqrt(m.fcM), bw=m.b;
+  const ic=m.crit==='IC103', sfc=Math.sqrt(m.fcM), bw=m.tipo==='U'?2*m.b:m.b;
   // ¿viga o columna? Pu de compresión máxima contra 0,10·f'c·Ag (t = MPa·cm²/100)
   const Pmax=Math.max(0,...loads.map(L=>+L.P||0)), Plim=0.10*m.fcM*m.Ag/100, esViga=Pmax<Plim;
   $('ctrlTit').textContent=esViga?'Controles de viga':'Controles de columna';
@@ -991,7 +991,7 @@ function drawMphi(m){
   const row=(t,a,b,c,d,ca='',cb='')=>`<tr><td style="font-family:var(--sans)">${t}</td><td class="num">${a}</td><td class="num">${b}</td><td class="num">${ca}</td><td class="num">${c}</td><td class="num">${d}</td><td class="num">${cb}</td></tr>`;
   const P1=Bp, N1=Bn;
   // cuantía de flexión con área efectiva, según reglamento elegido
-  const reg=$('regFl').value, bw = mfAx==='x' ? m.b : m.h, sfc=Math.sqrt(m.fcM), fyM=m.fyM;
+  const reg=$('regFl').value, bw = mfAx==='x' ? (m.tipo==='U'?2*m.b:m.b) : m.h, sfc=Math.sqrt(m.fcM), fyM=m.fyM;
   const ety=m.fyM===420?0.002:m.fy/m.Es;
   // Mn seccional (P = 0) con las barras traccionadas multiplicadas por k
   const MnK=(th,idx,k)=>{ const mm={...m,bars:m.bars.map((q,i)=>idx.has(i)?{...q,A:q.A*k}:q)};
@@ -1004,7 +1004,7 @@ function drawMphi(m){
     const d=Math.max(...tr.map(q=>q.s)), Ase=tr.reduce((a,q)=>a+q.A*q.s/d,0), Ast=tr.reduce((a,q)=>a+q.A,0), Asc=cp.reduce((a,q)=>a+q.A,0);
     const db=tr.reduce((a,q)=>a+q.A*q.s,0)/Ast; const rho=reg==='IC103'?Ase/(bw*d):Ast/(bw*db), et=0.003*(d/c-1);
     // ¿el ala queda del lado traccionado? (T/L flexionando en x)
-    const alaTracc = m.tipo!=='R' && mfAx==='x' && ((m.ala==='sup')===(sgn<0));
+    const alaTracc = m.tipo!=='R' && mfAx==='x' && (m.tipo==='Z' || (m.ala==='sup')===(sgn<0));   // en Z siempre hay un ala del lado traccionado
     let rmin, rmax, fmin, fmax, McrIC=null, rsimp=null, fsimp='';
     if(reg==='IC103'){
       // procedimiento general [2.2-12]/[2.2-13]: Mn ≥ 1,5·Mcr, Mcr = 0,6√f’c·Ig/yt (sección bruta sin armadura)
@@ -1059,7 +1059,7 @@ for(const k of ['mfP','mfEcu','mfE0','mfFr']) $(k).addEventListener('input',()=>
 $('mfX').onclick=()=>{mfAx='x'; setTab('mfX',true); setTab('mfY',false); render();};
 $('mfY').onclick=()=>{mfAx='y'; setTab('mfX',false); setTab('mfY',true); render();};
 let tab='fl'; try{ tab=localStorage.getItem('ib-tab')||'fl'; }catch(e){}
-function setMainTab(t){ tab=t; document.body.dataset.tab=t; if(t==='fl'&&['U','Z'].includes($('tipo').value)){ $('tipo').value='R'; syncTipo(); renderLayerRows(); } $('tabFl').setAttribute('aria-selected',t==='fl'); $('tabFc').setAttribute('aria-selected',t==='fc'); try{localStorage.setItem('ib-tab',t);}catch(e){} render(); }
+function setMainTab(t){ tab=t; document.body.dataset.tab=t; $('tabFl').setAttribute('aria-selected',t==='fl'); $('tabFc').setAttribute('aria-selected',t==='fc'); try{localStorage.setItem('ib-tab',t);}catch(e){} render(); }
 $('tabFl').onclick=()=>setMainTab('fl'); $('tabFc').onclick=()=>setMainTab('fc');
 document.body.dataset.tab=tab;
 (async()=>{ try{ const dl=await window.claude?.use?.('downloads'); if(!dl) return; const b=$('dlHtml'); b.hidden=false;

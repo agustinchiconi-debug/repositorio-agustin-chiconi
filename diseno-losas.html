@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-<title>Diseño de losas cruzadas</title>
+<title>Diseño de Losas Cruzadas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +36,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--display);font-size:
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
 .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--rule);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px))}
 .bar-in{max-width:1180px;margin-inline:auto;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.bar h1{font-size:16px;font-weight:800;margin:0 auto 0 0;letter-spacing:.01em}
+.bar .ttl{margin:0 auto 0 0}
+.bar h1{font-size:18px;font-weight:800;margin:0;letter-spacing:.01em;line-height:1.25}
+.bar .author{margin:1px 0 0;font-size:12px;font-weight:500;letter-spacing:.03em;color:var(--muted)}
 .bar h1 small{font-weight:500;color:var(--muted);margin-left:8px;font-size:13px}
 button,.btn{font-family:var(--display);font-size:13.5px;font-weight:600;border-radius:7px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);padding:7px 12px;cursor:pointer}
 button:hover{border-color:var(--accent)}
@@ -121,7 +123,7 @@ details.pc[open] .pcb::after{content:"Ocultar ▴"}
 </style>
 
 <header class="bar"><div class="bar-in">
-  <h1>Diseño de losas cruzadas<small>NZS 3101 · CIRSOC 201-25 · IC 103 P-II 2021 · Llopiz</small></h1>
+  <div class="ttl"><h1>Diseño de Losas Cruzadas de H°A°<small>NZS 3101 · CIRSOC 201-25 · IC 103 P-II 2021</small></h1><p class="author">Ing. Agustín Chiconi</p></div>
   <button id="bOpen" type="button">Abrir proyecto</button>
   <input id="fOpen" type="file" accept=".json,application/json" hidden>
   <button id="bSave" type="button">Guardar proyecto</button>
@@ -175,7 +177,7 @@ details.pc[open] .pcb::after{content:"Ocultar ▴"}
 
 <section class="step" id="s2">
   <h2><span class="n">2</span>Espesor mínimo</h2>
-  <p class="sub">CIRSOC 201-25, Tabla 8.3.1.2 con α<sub>fm</sub> del panel (Llopiz 4.4.5.3). Si h cumple, no hace falta calcular flechas.</p>
+  <p class="sub">CIRSOC 201-25, Tabla 8.3.1.2 con α<sub>fm</sub> del panel. Si h cumple, no hace falta calcular flechas.</p>
   <div class="card"><div class="tbl" id="tH"></div></div>
 </section>
 
@@ -229,7 +231,7 @@ details.pc[open] .pcb::after{content:"Ocultar ▴"}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";
-/* ---------- Tabla 14.1 NZS 3101:1995 (Llopiz T4, Tabla 3) ---------- */
+/* ---------- Tabla 14.1 NZS 3101:1995 ---------- */
 const RC=[1.0,1.1,1.2,1.3,1.4,1.5,1.75,2.0];
 const NZ={
 1:{n:"Panel interior",xn:[.032,.037,.043,.047,.051,.053,.060,.065],xp:[.024,.028,.032,.036,.039,.041,.045,.049],yn:.032,yp:.024},
@@ -374,7 +376,7 @@ function compute(){
   if(!(lx>0&&ly>0&&h>0&&fc>0&&fy>0)){R.err.push("Faltan datos de geometría o materiales.");return R;}
   if(lx>ly)R.err.push("l<sub>x</sub> tiene que ser la luz menor: intercambiá l<sub>x</sub> y l<sub>y</sub>.");
   const r=ly/lx; R.r=r;
-  if(r>2)R.warn.push("l<sub>y</sub>/l<sub>x</sub> > 2: la losa trabaja en una dirección (Llopiz 4.4.6.2 (k)). Los coeficientes se toman con r = 2 solo como referencia.");
+  if(r>2)R.warn.push("l<sub>y</sub>/l<sub>x</sub> > 2: la losa trabaja en una dirección. Los coeficientes se toman con r = 2 solo como referencia.");
   const b=1000;
   R.beta1=fc<=28?0.85:Math.max(0.65,0.85-0.05*(fc-28)/7);
   // bordes y caso
@@ -478,7 +480,7 @@ function buildMemo(R){
   const M=[]; const H1=t=>M.push({t:"h1",s:t}),H2=t=>M.push({t:"h2",s:t}),P=t=>M.push({t:"p",s:t}),E=t=>M.push({t:"eq",s:t}),V=(ok,t)=>M.push({t:"v",ok,s:t}),TB=(head,rows)=>M.push({t:"tbl",head,rows});
   const {lx,ly,h}=S.geo,{fc,fy,rec}=S.mat;
   H1("1. Datos");
-  P(`Se diseña la losa ${S.proj.losa||""} de la obra ${S.proj.obra||""}: losa maciza apoyada en vigas o tabiques en sus cuatro bordes, con carga uniforme. Se usan los coeficientes de la tabla 14.1 del NZS 3101:1995 (apuntes del Ing. C. R. Llopiz, Unidad 4) y los requisitos del CIRSOC 201-25 y del INPRES-CIRSOC 103 Parte II 2021.`);
+  P(`Se diseña la losa ${S.proj.losa||""} de la obra ${S.proj.obra||""}: losa maciza apoyada en vigas o tabiques en sus cuatro bordes, con carga uniforme. Se usan los coeficientes de la tabla 14.1 del NZS 3101:1995 y los requisitos del CIRSOC 201-25 y del INPRES-CIRSOC 103 Parte II 2021.`);
   TB(["Dato","Valor"],[["Luz libre menor l_{x}",f(lx)+" m"],["Luz libre mayor l_{y}",f(ly)+" m"],["Espesor h",f(h/10,1)+" cm"],["Hormigón f'_{c}",f(fc,0)+" MPa"],["Acero f_{y}",f(fy,0)+" MPa"],["Recubrimiento",f(rec,0)+" mm"],["Carga permanente adicional",f(S.cargas.D/10,3)+" t/m²"],["Sobrecarga L",f(S.cargas.L/10,3)+" t/m²"],["Bordes",EDGES.map(([k])=>k+": "+(S.bordes[k].c==="C"?"continuo":"discontinuo")).join(" · ")]]);
   E(`l_{y}/l_{x} = ${f(ly)}/${f(lx)} = ${f(R.r,3)}`);
   V(R.r<=2,R.r<=2?`Como l_{y}/l_{x} = ${f(R.r,2)} ≤ 2, la losa trabaja en dos direcciones.`:`Como l_{y}/l_{x} = ${f(R.r,2)} > 2, la losa debe diseñarse en una dirección.`);
@@ -488,7 +490,7 @@ function buildMemo(R){
     E(`h_{mín} = l/${R.owDen}${R.owFy!==1?`·(0,4 + f_{y}/700)`:""} = ${f(lx*1000,0)} mm/${R.owDen}${R.owFy!==1?` × ${f(R.owFy,3)}`:""} = ${f(R.hmin,1)} mm`);
     V(R.hOK,`Como h = ${f(h/10,1)} cm ${R.hOK?"≥":"<"} h_{mín} = ${f(R.hmin/10,2)} cm, ${R.hOK?"verifica y no es necesario calcular flechas.":"no verifica: hay que aumentar h o calcular las flechas (24.2)."}`);}
   else{
-  P("Para cada viga del borde del panel se calcula α_{f}, la relación entre la rigidez a flexión de la viga, con un ala de losa de hasta 4h_{f} por lado limitada a 45° (Llopiz, Fig. 4.30), y la de la franja de losa de ancho ℓ_{2} entre ejes de paneles (Fig. 4.31).");
+  P("Para cada viga del borde del panel se calcula α_{f}, la relación entre la rigidez a flexión de la viga, con un ala de losa de hasta 4h_{f} por lado limitada a 45°, y la de la franja de losa de ancho ℓ_{2} entre ejes de paneles.");
   E("α_{f} = E_{cb}·I_{b} / (E_{cs}·I_{s}) = I_{b}/I_{s}      I_{s} = ℓ_{2}·h^{3}/12");
   EDGES.forEach(([k,name])=>{const a=R.beams[k];H2(`${name}`);
     if(a.alpha===Infinity){P("Apoya sobre un tabique: se toma como apoyo indeformable (α_{f} → ∞).");return;}
@@ -516,7 +518,7 @@ function buildMemo(R){
   H1("4. Solicitaciones");
   if(R.oneWay){
     E(`l_{y}/l_{x} = ${f(ly)} m / ${f(lx)} m = ${f(R.r,2)} > 2`);
-    P(`Como la relación de luces supera 2, la losa trabaja en una dirección (CIRSOC 201-25, cap. 2; Llopiz 4.4.6.2 (k)): la carga baja casi toda por la luz corta. Se analiza una franja de b = 1 m en dirección x como viga de un tramo, ${R.owTxt[2]}.`);
+    P(`Como la relación de luces supera 2, la losa trabaja en una dirección (CIRSOC 201-25, cap. 2): la carga baja casi toda por la luz corta. Se analiza una franja de b = 1 m en dirección x como viga de un tramo, ${R.owTxt[2]}.`);
     H2("Luz corta (dirección x)");
     E(`M_{ux}^{+} = w_{u}·l_{x}^{2}·${R.owTxt[0]} = ${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} × ${R.owTxt[0]} = ${f(R.Mxp/10,2)} t·m/m`);
     if(R.Mxn!=null)E(`M_{ux}^{−} = −w_{u}·l_{x}^{2}·${R.owTxt[1]} = −${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} × ${R.owTxt[1]} = −${f(R.Mxn/10,2)} t·m/m`);
@@ -527,7 +529,7 @@ function buildMemo(R){
     M.push({t:"mark",s:"solic-fin"});
     return M;
   }
-  P(`Panel caso ${R.caso} de la tabla 14.1 del NZS 3101 (Llopiz, Tabla 3): ${NZ[R.caso].n.toLowerCase()}.`);
+  P(`Panel caso ${R.caso} de la tabla 14.1 del NZS 3101: ${NZ[R.caso].n.toLowerCase()}.`);
   E(`l_{y}/l_{x} = ${f(ly)} m / ${f(lx)} m = ${f(R.r,2)}`);
   P(`Tabla 14.1 del NZS 3101. Se resalta la fila del caso ${R.caso} y se encierran en un círculo los coeficientes usados.`);
   M.push({t:"nz",caso:R.caso,r:R.r});
@@ -789,7 +791,7 @@ function update(){
   const R=compute(); LAST=R;
   const m=[...R.err.map(e=>`<div style="background:var(--bad-bg);color:var(--bad)">${e}</div>`),...R.warn.map(e=>`<div style="background:var(--warn-bg);color:var(--warn)">${e}</div>`)];
   $("msg").innerHTML=m.join("");
-  {const ow=$("oneWay");ow.hidden=!R.oneWay;if(R.oneWay)ow.innerHTML=`<b>La losa trabaja en una dirección.</b> l<sub>y</sub>/l<sub>x</sub> = ${f(R.r,2)} &gt; 2 (CIRSOC 201-25, cap. 2; Llopiz 4.4.6.2 (k)): casi toda la carga va por la luz corta. Se calcula una franja de 1 m en dirección x como viga de un tramo, ${R.owTxt[2]}. En dirección y solo va armadura de contracción y temperatura.`;}
+  {const ow=$("oneWay");ow.hidden=!R.oneWay;if(R.oneWay)ow.innerHTML=`<b>La losa trabaja en una dirección.</b> l<sub>y</sub>/l<sub>x</sub> = ${f(R.r,2)} &gt; 2 (CIRSOC 201-25, cap. 2): casi toda la carga va por la luz corta. Se calcula una franja de 1 m en dirección x como viga de un tramo, ${R.owTxt[2]}. En dirección y solo va armadura de contracción y temperatura.`;}
   if(R.err.length&&R.r==null)return;
   // espesor
   $("tH").innerHTML=R.oneWay?`<p class="note" style="margin-top:0">Losa en una dirección: CIRSOC 201-25, Tabla 7.3.1.1, con l = l<sub>x</sub> y ${R.owC===0?"los dos extremos simplemente apoyados (l/20)":R.owC===1?"un extremo continuo (l/24)":"los dos extremos continuos (l/28)"}.</p><dl class="kv"><dt>l<sub>x</sub></dt><dd>${f(S.geo.lx,2)} m</dd><dt>h<sub>mín</sub></dt><dd>${f(R.hmin/10,2)} cm</dd><dt>h adoptado</dt><dd>${f(S.geo.h/10,1)} cm ${pill(R.hOK)}</dd></dl>`:`<table><thead><tr><th>Borde</th><th>Apoyo</th><th class="num">I<sub>b</sub> [10⁶ mm⁴]</th><th class="num">ℓ<sub>2</sub> [m]</th><th class="num">I<sub>s</sub> [10⁶ mm⁴]</th><th class="num">α<sub>f</sub></th></tr></thead><tbody>${EDGES.map(([k])=>{const a=R.beams[k];return `<tr><td>${k} · ${S.bordes[k].c==="C"?"continuo":"discontinuo"}</td><td>${S.bordes[k].t==="T"?"Viga T":S.bordes[k].t==="L"?"Viga L":"Tabique"}</td><td class="num">${a.Ib?f(a.Ib/1e6,1):"–"}</td><td class="num">${a.l2?f(a.l2/1000,2):"–"}</td><td class="num">${a.Is?f(a.Is/1e6,1):"–"}</td><td class="num">${a.alpha===Infinity?"∞":f(a.alpha,2)}</td></tr>`;}).join("")}</tbody></table>

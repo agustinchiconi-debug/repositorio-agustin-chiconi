@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Solicitaciones de Losas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: barra de acciones fija + columna de pasos numerados (datos → espesor → solicitaciones → armaduras → detalles → memoria) */
+:root{
+  --bg:#F1F3F2; --surface:#FFFFFF; --ink:#1B2126; --muted:#5A646B; --rule:#D2D8D5;
+  --accent:#2F5570; --accent-soft:#E2EAF0;
+  --ok:#2E6B3F; --ok-bg:#E3F0E6; --bad:#A8322B; --bad-bg:#F7E2DF; --warn:#9A5B12; --warn-bg:#FBEEDC;
+  --cont:#2F5570; --disc:#9A5B12; --zone:rgba(47,85,112,.10); --zone2:rgba(154,91,18,.16);
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14181B; --surface:#1B2024; --ink:#E4E7E5; --muted:#9BA4AB; --rule:#30373C;
+  --accent:#8FB6D3; --accent-soft:#1F2C36;
+  --ok:#8FD19E; --ok-bg:#1B2E21; --bad:#EE8D84; --bad-bg:#3A2321; --warn:#F0B26A; --warn-bg:#33261A;
+  --cont:#8FB6D3; --disc:#F0B26A; --zone:rgba(143,182,211,.14); --zone2:rgba(240,178,106,.18); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14181B; --surface:#1B2024; --ink:#E4E7E5; --muted:#9BA4AB; --rule:#30373C;
+  --accent:#8FB6D3; --accent-soft:#1F2C36;
+  --ok:#8FD19E; --ok-bg:#1B2E21; --bad:#EE8D84; --bad-bg:#3A2321; --warn:#F0B26A; --warn-bg:#33261A;
+  --cont:#8FB6D3; --disc:#F0B26A; --zone:rgba(143,182,211,.14); --zone2:rgba(240,178,106,.18); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--display);font-size:15px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 80px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--rule);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px))}
+.bar-in{max-width:1180px;margin-inline:auto;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.bar .ttl{margin:0 auto 0 0}
+.bar h1{font-size:18px;font-weight:800;margin:0;letter-spacing:.01em;line-height:1.25}
+.bar .author{margin:1px 0 0;font-size:12px;font-weight:500;letter-spacing:.03em;color:var(--muted)}
+.bar h1 small{font-weight:500;color:var(--muted);margin-left:8px;font-size:13px}
+button,.btn{font-family:var(--display);font-size:13.5px;font-weight:600;border-radius:7px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.wrap{max-width:1180px;margin-inline:auto}
+.msg{max-width:1180px;margin:10px auto 0;font-size:13.5px}
+.msg:empty{display:none}
+.msg div{padding:8px 12px;border-radius:7px;background:var(--accent-soft)}
+section.step{margin-top:28px}
+.step>h2{font-size:21px;font-weight:800;margin:0 0 4px;text-wrap:balance}
+.step>h2 .n{color:var(--accent);margin-right:8px;font-variant-numeric:tabular-nums}
+.step>p.sub{margin:0 0 14px;color:var(--muted);font-size:13.5px;max-width:80ch}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 12px}
+.fields label,.fl{display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted);min-width:0}
+input,select{font-family:var(--mono);font-size:14px;padding:6px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+input[type=checkbox]{width:auto}
+h3{font-size:14px;margin:0 0 10px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--bg)}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.na{background:var(--bg);color:var(--muted)}
+.edges{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.edge{border:1px solid var(--rule);border-radius:8px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.edge b{grid-column:1/-1;font-size:13.5px;display:flex;align-items:center;gap:8px}
+.edge b .tag{color:#fff;border-radius:5px;padding:1px 7px;font-size:12.5px}
+.edge{border-left-width:5px}
+.plan{display:flex;justify-content:center}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start}
+.fig{margin:0;min-width:0;background:var(--bg);border-radius:10px;padding:12px}
+.fig figcaption{font-size:13px;font-weight:700;margin-bottom:6px}
+.plan svg text{font-size:13px}
+.plan svg{max-width:100%;height:auto}
+.plan text{font-family:var(--display);font-size:12px;fill:var(--ink)}
+.plan .lbl{font-family:var(--display);font-weight:700;font-size:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--mono)}
+.layers td select,.layers td input{padding:4px 6px;font-size:13px}
+.layers td:last-child{width:1%}
+.x{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;padding:2px 6px}
+.x:hover{color:var(--bad)}
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.summary .pill{font-size:13px;padding:3px 11px}
+.memo{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:20px clamp(16px,4vw,40px);font-family:var(--body);font-size:16px;line-height:1.6}
+.memo .h1{font-family:var(--display);font-size:19px;font-weight:800;margin:26px 0 8px}
+.memo .h1:first-child{margin-top:0}
+.memo .h2{font-family:var(--display);font-size:15.5px;font-weight:700;margin:18px 0 6px}
+.memo p{margin:0 0 8px;text-align:justify;text-indent:1.5em;max-width:78ch}
+.memo p.v{text-indent:0;font-weight:600}
+.memo .eq{font-family:var(--mono);font-size:14px;background:var(--bg);border-radius:6px;padding:6px 12px;margin:4px 0 8px;overflow-x:auto;white-space:nowrap}
+.memo .ok{color:var(--ok)} .memo .bad{color:var(--bad)}
+.memo table{font-family:var(--display);margin:6px 0 14px}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+textarea{width:100%;min-height:160px;font-family:var(--mono);font-size:12px;background:var(--bg);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:8px}
+@media (max-width:560px){.bar h1 small{display:none}}
+.lt{display:block}
+.v3d{position:relative;border:1px solid var(--rule);border-radius:8px;background:var(--bg);overflow:hidden;aspect-ratio:16/9;max-width:100%;touch-action:none;cursor:grab}
+.v3d canvas{display:block;width:100%;height:100%}
+.v3d .hint{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);pointer-events:none}
+.views{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.views button[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.legend3{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend3 i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.nzt td,.nzt th{padding:3px 6px;font-size:12.5px}.nzt tr.f td{border-top:1px solid var(--rule)}.nzt tr.on td{background:var(--accent-soft);font-weight:600}.circ{display:inline-block;border:2px solid var(--accent);border-radius:50%;padding:0 5px}
+.flxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+.flxgrid table.fl td,.flxgrid table.fl th{padding:4px 6px}.flxgrid table.fl input,.flxgrid table.fl select{width:100%;min-width:52px}
+.fkv{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px}
+.fkv div{display:grid;gap:1px;padding:7px 9px;background:var(--bg);border-radius:6px}.fkv span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.fkv b{font-family:var(--mono);font-weight:500;font-size:14.5px}
+.fck{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px;font-size:13px}.fck li{display:flex;gap:8px;align-items:baseline}
+.fsec{width:100%;height:auto;display:block;margin-top:8px}
+@media (max-width:520px){.flxgrid{grid-template-columns:1fr}}
+details.pc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px}
+details.pc>summary::-webkit-details-marker{display:none}
+details.pc .pcb::after{content:"Mostrar ▾";font-family:var(--display);font-size:13px;font-weight:600;color:var(--accent);border:1px solid var(--rule);border-radius:8px;padding:5px 12px;background:var(--surface)}
+details.pc[open] .pcb::after{content:"Ocultar ▴"}
+</style>
+
+<header class="bar"><div class="bar-in">
+  <div class="ttl"><h1>Solicitaciones de Losas<small>NZS 3101 · CIRSOC 201-25 · IC 103 P-II 2021</small></h1><p class="author">Ing. Agustín Chiconi</p></div>
+  <button id="bOpen" type="button">Abrir proyecto</button>
+  <input id="fOpen" type="file" accept=".json,application/json" hidden>
+  <button id="bSave" type="button">Guardar proyecto</button>
+  <button id="bDocx" class="primary" type="button">Exportar memoria (.docx)</button>
+</div></header>
+<div class="msg" id="msg" role="status"></div>
+<div id="fallback" class="wrap" hidden><div class="card" style="margin-top:12px"><h3>Proyecto en JSON</h3><p class="note">No se pudo ofrecer la descarga en esta vista. Copiá el texto y guardalo como .json.</p><textarea id="fbText" readonly></textarea></div></div>
+
+<main class="wrap">
+
+<section class="step" id="s1">
+  <h2><span class="n">1</span>Datos del panel</h2>
+  <p class="sub">Luces libres entre caras de vigas, con l<sub>x</sub> la menor. El ejemplo cargado es un panel de esquina; reemplazá los valores por los de tu losa.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Proyecto</h3><div class="fields">
+      <label>Obra<input id="p_obra"></label>
+      <label>Losa<input id="p_losa"></label>
+      <label>Autor<input id="p_autor"></label>
+      <label>Fecha<input id="p_fecha"></label>
+    </div></div>
+    <div class="card"><h3>Geometría y materiales</h3><div class="fields">
+      <label>l<sub>x</sub> luz menor [m]<input id="g_lx" type="number" step="0.01"></label>
+      <label>l<sub>y</sub> luz mayor [m]<input id="g_ly" type="number" step="0.01"></label>
+      <label>h espesor [cm]<input id="g_h" type="number" step="1"></label>
+      <label>f'c [MPa]<input id="m_fc" type="number" step="1"></label>
+      <label>fy [MPa]<input id="m_fy" type="number" step="10"></label>
+      <label>Recubrimiento [mm]<input id="m_rec" type="number" step="5"></label>
+    </div></div>
+    <div class="card"><h3>Cargas (sin mayorar)</h3><div class="fields">
+      <label>D total [t/m²]<input id="c_Dt" type="number" step="0.01"></label>
+      <label>L sobrecarga [t/m²]<input id="c_L" type="number" step="0.01"></label>
+    </div>
+    <label class="fl" style="flex-direction:row;align-items:center;gap:8px;margin-top:12px;color:var(--ink)"><input id="diaf" type="checkbox"> La losa funciona como diafragma (IC 103 P-II, 5.3.2: s ≤ 250 mm)</label>
+    <p class="note">D es la carga permanente completa, con el peso propio de la losa incluido. Se toma 1 t = 10 kN.</p></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Bordes y vigas de apoyo</h3>
+    <p class="note" style="margin:-4px 0 10px">Los bordes largos (L1 y L2) apoyan las barras en dirección x; los cortos (C1 y C2), las de dirección y. Para la viga se da su altura total h<sub>v</sub> con la losa incluida. ℓ<sub>2</sub> es el ancho de la franja de losa para I<sub>s</sub>, entre ejes de paneles (vacío = automático).</p>
+    <div class="edges" id="edges"></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Esquema 3D</h3>
+    <div class="views" role="group" aria-label="Vista">
+      <button type="button" data-view="iso" aria-pressed="true">3D</button>
+      <button type="button" data-view="planta" aria-pressed="false">Planta</button>
+      <button type="button" data-view="ex" aria-pressed="false">Elevación x (desde C1)</button>
+      <button type="button" data-view="ey" aria-pressed="false">Elevación y (desde L1)</button>
+    </div>
+    <div class="v3d" id="v3d"><span class="hint">Arrastrá para girar · rueda para acercar</span></div>
+    <div class="legend3"><span><i style="background:#B9C3CA"></i>Losa del panel</span><span><i style="background:#2F6FB0"></i><i style="background:#2A8C7A"></i><i style="background:#B07A12"></i><i style="background:#7A5BB5"></i>Vigas L1 · L2 · C1 · C2</span><span><i style="background:#8FA0AA;opacity:.45"></i>Losa vecina (borde continuo)</span><span><i style="background:#4A5A64"></i>Columnas</span></div>
+  </div>
+</section>
+
+<section class="step" id="s2">
+  <h2><span class="n">2</span>Espesor mínimo</h2>
+  <p class="sub">CIRSOC 201-25, Tabla 8.3.1.2 con α<sub>fm</sub> del panel. Si h cumple, no hace falta calcular flechas.</p>
+  <div class="card"><div class="tbl" id="tH"></div></div>
+</section>
+
+<section class="step" id="s3">
+  <h2><span class="n">3</span>Solicitaciones</h2>
+  <div id="oneWay" hidden style="background:var(--warn-bg);color:var(--warn);border:1.5px solid currentColor;border-radius:10px;padding:12px 16px;margin:6px 0 14px;font-family:var(--display);font-size:15px;line-height:1.45"></div>
+  <p class="sub">M = β·w<sub>u</sub>·l<sub>x</sub>² [t·m/m] con los coeficientes de la tabla 14.1 del NZS 3101:1995, en las dos direcciones con la luz menor. Los valores son de la franja central (3/4 del ancho) y no se redistribuyen.</p>
+  <div class="grid g2">
+    <div class="card" style="grid-column:1/-1"><h3 style="display:flex;align-items:center;gap:10px">Planta del panel<span style="margin-left:auto;display:flex;gap:6px;align-items:center;text-transform:none;font-weight:500"><button type="button" id="rotL" aria-label="Rotar 90° antihorario">⟲ 90°</button><button type="button" id="rotR" aria-label="Rotar 90° horario">⟳ 90°</button><span id="rotLbl" style="min-width:3em;color:var(--muted)">0°</span></span></h3><div class="figs"><figure class="fig"><figcaption>Coeficientes β por dirección</figcaption><div class="plan" id="planB"></div></figure><figure class="fig"><figcaption>Diagramas de momento</figcaption><div class="plan" id="planM"></div><p class="note" style="text-align:center;margin:4px 0 0">t·m/m · azul: positivo · ocre: negativo</p></figure></div></div>
+    <div class="card" style="grid-column:1/-1"><h3>Cálculo de las solicitaciones</h3><div class="memo" id="solic" style="border:0;padding:0;font-size:15px"></div>
+    <div hidden><div class="tbl" id="tM"></div><dl class="kv" id="kvLoads"></dl></div></div>
+  </div>
+</section>
+
+<section class="step" id="s4" hidden>
+  <h2><span class="n">4</span>Flexión por dirección</h2>
+  <p class="sub">Franja de 1 m de ancho. Como en el html de flexión: d<sub>i</sub> se mide desde la fibra superior al eje de la capa; cada capa es ø c/s. M<sub>n</sub>⁺ (comprime arriba) y M<sub>n</sub>⁻ (comprime abajo) por compatibilidad de deformaciones, con todas las capas trabajando.</p>
+  <div class="flxgrid"><div class="card" id="fxx"></div><div class="card" id="fxy"></div></div>
+  <div class="card" style="margin-top:14px"><h3>Líneas de análisis</h3>
+    <p class="note" style="margin-top:0">Los cortes <b>1-1, 2-2…</b> analizan la flexión en x y se ubican a una distancia x medida desde el borde L1. Los cortes <b>A-A, B-B…</b> analizan la flexión en y y se ubican a una distancia y medida desde el borde C1. Se dibujan en la planta de momentos. En cada corte se toma el momento de la franja central en esa posición, la armadura de la dirección y, si hace falta, un refuerzo propio del corte.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" id="lnAddX">+ Corte en x (1-1)</button><button type="button" id="lnAddY">+ Corte en y (A-A)</button></div>
+    <div id="lnBox"></div>
+  </div>
+  <div hidden><div class="card"><div class="tbl"><table class="layers"><thead><tr><th>Cara</th><th>Dir.</th><th>ø [mm]</th><th>s [mm]</th><th>Zona</th><th class="num">A<sub>s</sub> [cm²/m]</th><th></th></tr></thead><tbody id="lay"></tbody></table></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="bAdd" type="button">+ Agregar capa</button><button id="bBasic" type="button">Malla básica ø8 c/20 en ambas caras</button></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Verificación por sección</h3><div class="summary" id="sum"></div><div class="tbl" id="tV"></div>
+  <p class="note">Las d salen de la cara y la dirección con el ø mayor de cada capa. Las barras de distintas capas en la misma cara y dirección se toman en un mismo nivel. La separación equivalente es s = 1000/Σ(1000/s<sub>i</sub>).</p></div>
+</div>
+</section>
+
+<section class="step" id="s5" hidden>
+  <h2><span class="n">5</span>Detalles</h2>
+  <p class="sub">Esquinas, corte, longitudes de barras y descarga sobre las vigas.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Esquinas</h3><div class="tbl" id="tC"></div></div>
+    <div class="card"><h3>Corte y temperatura</h3><div class="tbl" id="tS"></div></div>
+    <div class="card"><h3>Longitudes por capa</h3><div class="tbl" id="tL"></div></div>
+    <div class="card"><h3>Carga sobre las vigas</h3><div class="tbl" id="tB"></div></div>
+  </div>
+</section>
+
+<section class="step" id="s6">
+  <details class="pc"><summary><h2 style="display:inline"><span class="n">4</span> Proceso de cálculo</h2><span class="pcb"></span></summary>
+  <p class="sub">Es el mismo texto que sale en la memoria .docx.</p>
+  <div class="memo" id="memo"></div></details>
+</section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ---------- Tabla 14.1 NZS 3101:1995 ---------- */
+const RC=[1.0,1.1,1.2,1.3,1.4,1.5,1.75,2.0];
+const NZ={
+1:{n:"Panel interior",xn:[.032,.037,.043,.047,.051,.053,.060,.065],xp:[.024,.028,.032,.036,.039,.041,.045,.049],yn:.032,yp:.024},
+2:{n:"Un borde corto discontinuo",xn:[.037,.043,.048,.051,.055,.057,.064,.068],xp:[.028,.032,.036,.039,.041,.044,.048,.052],yn:.037,yp:.028},
+3:{n:"Un borde largo discontinuo",xn:[.037,.044,.052,.057,.063,.067,.077,.085],xp:[.028,.033,.039,.044,.047,.051,.059,.065],yn:.037,yp:.028},
+4:{n:"Dos bordes adyacentes discontinuos",xn:[.047,.053,.060,.065,.071,.075,.084,.091],xp:[.035,.040,.045,.049,.053,.056,.063,.069],yn:.047,yp:.035},
+5:{n:"Dos bordes cortos discontinuos",xn:[.045,.049,.052,.056,.059,.060,.065,.069],xp:[.035,.037,.040,.043,.044,.045,.049,.052],yn:null,yp:.035},
+6:{n:"Dos bordes largos discontinuos",xn:null,xp:[.035,.043,.051,.057,.063,.068,.080,.088],yn:.045,yp:.035},
+7:{n:"Tres bordes discontinuos (un borde largo continuo)",xn:[.057,.064,.071,.076,.080,.084,.091,.097],xp:[.043,.048,.053,.057,.060,.064,.069,.073],yn:null,yp:.043},
+8:{n:"Tres bordes discontinuos (un borde corto continuo)",xn:null,xp:[.043,.051,.059,.065,.071,.076,.087,.096],yn:.057,yp:.043},
+9:{n:"Cuatro bordes discontinuos",xn:null,xp:[.056,.064,.072,.079,.085,.089,.100,.107],yn:null,yp:.056}};
+const EDGES=[["L1","Borde largo L1 (izq.)","x"],["L2","Borde largo L2 (der.)","x"],["C1","Borde corto C1 (inf.)","y"],["C2","Borde corto C2 (sup.)","y"]];
+const DIAMS=[6,8,10,12,16,20,25];
+const ECOL={L1:"#2F6FB0",L2:"#2A8C7A",C1:"#B07A12",C2:"#7A5BB5"};
+
+/* ---------- Estado inicial (ejemplo) ---------- */
+const DEFAULT={v:1,
+ proj:{obra:"Ejemplo",losa:"L1 · panel de esquina",autor:"Agustín Chiconi",fecha:new Date().toLocaleDateString("es-AR")},
+ geo:{lx:5.20,ly:7.00,h:170}, mat:{fc:25,fy:420,rec:25}, cargas:{Dt:5.38,L:1.0}, diaf:false,
+ bordes:{L1:{c:"D",t:"L",bw:200,hv:500,l2:""},L2:{c:"C",t:"T",bw:200,hv:500,l2:""},C1:{c:"D",t:"L",bw:200,hv:500,l2:""},C2:{c:"C",t:"T",bw:200,hv:500,l2:""}},
+ lines:[{dir:"x",pos:1.0,ref:[]},{dir:"x",pos:2.6,ref:[]},{dir:"y",pos:3.5,ref:[]}],
+ flx:{x:[{d:2.9,db:8,s:15},{d:14.1,db:8,s:15}],y:[{d:3.7,db:8,s:15},{d:13.3,db:8,s:15}]},
+ capas:[
+  {cara:"inf",dir:"x",db:8,s:150,zona:"toda"},
+  {cara:"inf",dir:"x",db:8,s:300,zona:"centro"},
+  {cara:"inf",dir:"y",db:8,s:150,zona:"toda"},
+  {cara:"sup",dir:"x",db:8,s:150,zona:"toda"},
+  {cara:"sup",dir:"x",db:10,s:300,zona:"apoyos"},
+  {cara:"sup",dir:"y",db:8,s:150,zona:"toda"},
+  {cara:"sup",dir:"y",db:8,s:300,zona:"apoyos"}]};
+let S=JSON.parse(JSON.stringify(DEFAULT));
+
+/* ---------- utilidades ---------- */
+const $=id=>document.getElementById(id);
+const f=(n,d=2)=>(n==null||!isFinite(n))?"–":n.toLocaleString("es-AR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const Ab=db=>Math.PI*db*db/4;
+function interp(arr,r){if(!arr)return null;const x=Math.min(Math.max(r,1),2);for(let i=0;i<RC.length-1;i++){if(x<=RC[i+1]+1e-9){const t=(x-RC[i])/(RC[i+1]-RC[i]);return arr[i]+t*(arr[i+1]-arr[i]);}}return arr[arr.length-1];}
+function zonas(dir){const e=dir==="x"?["L1","L2"]:["C1","C2"];return [["toda","Toda la losa"],["centro","Centro del tramo (franja central)"],["apoyos","Ambos apoyos continuos"],["a1","Apoyo "+e[0]],["a2","Apoyo "+e[1]],["esquinas","Esquinas"]];}
+const zonaTxt=(dir,z)=>(zonas(dir).find(o=>o[0]===z)||[0,z])[1];
+const pill=(ok,t)=>`<span class="pill ${ok===true?"ok":ok===false?"bad":ok==="warn"?"warn":"na"}">${t||(ok===true?"Verifica":ok===false?"No verifica":"–")}</span>`;
+
+/* ---------- cálculo ---------- */
+function beamAlpha(e,key,lx,ly,h){
+  const B=S.bordes[key];
+  if(B.t==="M")return {alpha:Infinity,txt:"tabique"};
+  const bw=+B.bw,hv=+B.hv,hf=h;
+  const ov=Math.min(Math.max(hv-hf,0),4*hf);
+  const nsides=B.t==="T"?2:1;
+  const b=bw+nsides*ov;
+  const Aw=bw*hv,yw=hv/2,Af=(b-bw)*hf,yf=hf/2;
+  const yb=(Aw*yw+Af*yf)/(Aw+Af);
+  const Ib=bw*hv**3/12+Aw*(yw-yb)**2+(b-bw)*hf**3/12+Af*(yf-yb)**2;
+  const lperp=(e==="x"?lx:ly)*1000; // franja transversal a la viga
+  let l2=B.l2!==""&&+B.l2>0?+B.l2*1000:(B.t==="T"?lperp+bw:lperp/2+bw/2);
+  const Is=l2*hf**3/12;
+  return {alpha:Ib/Is,Ib,Is,b,ov,yb,l2,bw,hv,nsides};
+}
+// franja de 1 m (cm, t): Mn+ comprime arriba, Mn- comprime abajo
+function secFx(L,hc,fc,fy,b1,neg){
+  const b=100,fct=fc/100,fyt=fy/100,Es=2000,ety=0.002;
+  const Ly=L.filter(l=>l.db>0&&l.s>0&&l.d>0&&l.d<hc).map(l=>({...l,A:Math.PI*l.db*l.db/400*100/l.s,y:neg?hc-l.d:l.d}));
+  const out={L:Ly,ok:false};if(!Ly.length)return out;
+  const st=c=>{const a=Math.min(b1*c,hc),Cc=0.85*fct*b*a;let N=Cc,M=Cc*a/2;const F=Ly.map(l=>{const e=0.003*(c-l.y)/c;let s=Math.max(-fyt,Math.min(fyt,e*Es));if(l.y<a)s-=0.85*fct;const f=l.A*s;N+=f;M+=f*l.y;return {e,s,f};});return {a,Cc,N,M,F};};
+  let lo=1e-4,hi=10*hc;if(st(lo).N>0||st(hi).N<0)return out;
+  for(let k=0;k<80;k++){const m=(lo+hi)/2;if(st(m).N<0)lo=m;else hi=m;}
+  const c=(lo+hi)/2,r=st(c),dmax=Math.max(...Ly.map(l=>l.y)),et=0.003*(dmax-c)/c;
+  const phi=et>=ety+0.003?0.9:et<=ety?0.65:0.65+0.25*(et-ety)/0.003;
+  const Mtop=-(r.Cc*r.a/2+Ly.reduce((a,l,i)=>a+r.F[i].f*l.y,0))/100;
+  const Mn2=Math.abs(Mtop);
+  const At=Ly.filter(l=>l.y>hc/2),Ast=At.reduce((a,l)=>a+l.A,0),sEq=At.length?1/At.reduce((a,l)=>a+1/l.s,0):null;
+  return {L:Ly,ok:true,c,a:r.a,Cc:r.Cc,F:r.F,dmax,et,ety,phi,Mn:Mn2,phiMn:phi*Mn2,Ast,sEq};
+}
+// momento-curvatura por fibras (Hognestad, sin tracción en el H°), cm y t
+function mphi(L,hc,fc,fy,neg){
+  const b=100,fct=fc/100,fyt=fy/100,Es=2000,e0=0.002,ecu=0.003,ey=fyt/Es;
+  const Ly=L.filter(l=>l.db>0&&l.s>0&&l.d>0&&l.d<hc).map(l=>({A:Math.PI*l.db*l.db/400*100/l.s,y:neg?hc-l.d:l.d}));
+  if(!Ly.length)return null;const dt=Math.max(...Ly.map(l=>l.y));
+  const sc=e=>e<=0?0:e<=e0?fct*(2*e/e0-(e/e0)**2):fct*(1-0.15*(e-e0)/(0.0038-e0));
+  const st=(ec,c)=>{const n=40,dz=Math.min(c,hc)/n;let N=0,M=0;for(let i=0;i<n;i++){const z=(i+.5)*dz,e=ec*(c-z)/c,F=sc(e)*b*dz;N+=F;M+=F*z;}
+    let et=-1;Ly.forEach(l=>{const e=ec*(c-l.y)/c,F=l.A*Math.max(-fyt,Math.min(fyt,e*Es));N+=F;M+=F*l.y;et=Math.max(et,-e);});return {N,M:(N*0-M)/100,et};};
+  const solve=ec=>{let lo=1e-4,hi=5*hc;for(let k=0;k<60;k++){const m=(lo+hi)/2;if(st(ec,m).N<0)lo=m;else hi=m;}const c=(lo+hi)/2,r=st(ec,c);
+    // momento respecto de la fibra comprimida: M = -Σ F·z ; con ΣF=0 es el par interno
+    return {c,ec,phi:ec/c,M:Math.abs(r.M),et:r.et};};
+  const pts=[];for(let i=1;i<=60;i++)pts.push(solve(ecu*i/60));
+  // primera fluencia
+  let y=null;for(let i=0;i<pts.length;i++)if(pts[i].et>=ey){const a=pts[i-1]||{phi:0,M:0,et:0},q=pts[i],u=(ey-a.et)/(q.et-a.et||1);y={phi:a.phi+u*(q.phi-a.phi),M:a.M+u*(q.M-a.M)};break;}
+  const u=pts[pts.length-1];
+  const Ec=4700*Math.sqrt(fc)/100,Ig=b*hc**3/12,fr=0.62*Math.sqrt(fc)/100,Mcr=fr*Ig/(hc/2)/100,phicr=Mcr*100/(Ec*Ig);
+  const phiYp=y?y.phi*u.M/y.M:null,mu=phiYp?u.phi/phiYp:null;
+  return {pts,y,u,Mcr,phicr,phiYp,mu,EIe:y?u.M*100/phiYp:null,Ie:y?u.M*100/phiYp/Ec/Ig:null};
+}
+function mphiSVG(A,B,dir){
+  const W=400,H=230,l=52,r=14,tp=14,bt=40;const all=[A,B].filter(Boolean);if(!all.length)return "";
+  const pmax=Math.max(...all.map(q=>q.u.phi))*1.05,Mmax=Math.max(...all.map(q=>Math.max(q.u.M,q.Mcr)))*1.12;
+  const X=v=>l+v/pmax*(W-l-r),Y=v=>H-bt-v/Mmax*(H-tp-bt);
+  let s=`<svg class="fsec" viewBox="0 0 ${W} ${H}" role="img" aria-label="Momento-curvatura dirección ${dir}">`;
+  const tx=(x,y,t2,a="middle",c="var(--muted)")=>`<text x="${x}" y="${y}" text-anchor="${a}" style="font-family:var(--mono);font-size:10px;fill:${c}">${t2}</text>`;
+  for(let i=0;i<=4;i++){const v=Mmax*i/4,yy=Y(v);s+=`<line x1="${l}" y1="${yy}" x2="${W-r}" y2="${yy}" stroke="var(--rule)" stroke-width=".6"/>`+tx(l-6,yy+3,f(v,2),"end");}
+  for(let i=0;i<=4;i++){const v=pmax*i/4,xx=X(v);s+=`<line x1="${xx}" y1="${tp}" x2="${xx}" y2="${H-bt}" stroke="var(--rule)" stroke-width=".6"/>`+tx(xx,H-bt+14,f(v*1000,2));}
+  s+=tx((l+W-r)/2,H-8,"φ [10⁻³ 1/cm]")+`<text transform="translate(12,${(tp+H-bt)/2}) rotate(-90)" text-anchor="middle" style="font-family:var(--mono);font-size:10px;fill:var(--muted)">M [t·m/m]</text>`;
+  [[A,"var(--accent)","M⁺"],[B,"#7A5BB5","M⁻"]].forEach(([q,col,nm],k)=>{if(!q)return;
+    s+=`<polyline fill="none" stroke="${col}" stroke-width="1" stroke-dasharray="3 3" opacity=".7" points="0,0 ${q.pts.map(p=>X(p.phi)+","+Y(p.M)).join(" ")}" transform="translate(0,0)"/>`.replace("0,0 ",`${X(0)},${Y(0)} `);
+    const tri=[[0,0],[q.phicr,q.Mcr]];if(q.y)tri.push([q.y.phi,q.y.M]);tri.push([q.u.phi,q.u.M]);
+    s+=`<polyline fill="none" stroke="${col}" stroke-width="2.4" points="${tri.map(p=>X(p[0])+","+Y(p[1])).join(" ")}"/>`;
+    if(q.phiYp)s+=`<polyline fill="none" stroke="${col}" stroke-width="1.3" stroke-dasharray="7 4" opacity=".75" points="${X(0)},${Y(0)} ${X(q.phiYp)},${Y(q.u.M)} ${X(q.u.phi)},${Y(q.u.M)}"/>`;
+    tri.slice(1).forEach(p=>s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3.2" fill="${col}"/>`);
+    s+=`<line x1="${W-r-70}" y1="${H-bt-30+k*14}" x2="${W-r-52}" y2="${H-bt-30+k*14}" stroke="${col}" stroke-width="2.4"/>`+tx(W-r-48,H-bt-27+k*14,nm,"start","var(--ink)");});
+  return s+"</svg>";
+}
+function flexDir(L,hc,fc,fy,b1,MuP,MuN){
+  const pos=secFx(L,hc,fc,fy,b1,false),neg=secFx(L,hc,fc,fy,b1,true);
+  const Asmin=0.0018*100*hc,smax=Math.min(2*hc,30),ck=[];
+  const add=(ok,txt)=>ck.push({ok,txt});
+  add(pos.ok&&pos.phiMn>=MuP-1e-9,`φM<sub>n</sub>⁺ = ${f(pos.phiMn||0,2)} ${pos.phiMn>=MuP?"≥":"<"} M<sub>u</sub>⁺ = ${f(MuP,2)} t·m/m`);
+  if(MuN!=null)add(neg.ok&&neg.phiMn>=MuN-1e-9,`φM<sub>n</sub>⁻ = ${f(neg.phiMn||0,2)} ${neg.phiMn>=MuN?"≥":"<"} M<sub>u</sub>⁻ = ${f(MuN,2)} t·m/m`);
+  add((pos.Ast||0)>=Asmin-1e-6,`A<sub>s</sub> inferior = ${f(pos.Ast||0,2)} ${(pos.Ast||0)>=Asmin?"≥":"<"} 0,0018·b·h = ${f(Asmin,2)} cm²/m`);
+  if(MuN!=null)add((neg.Ast||0)>=Asmin-1e-6,`A<sub>s</sub> superior = ${f(neg.Ast||0,2)} ${(neg.Ast||0)>=Asmin?"≥":"<"} ${f(Asmin,2)} cm²/m`);
+  add(pos.sEq!=null&&pos.sEq<=smax+1e-6,`s inferior = ${pos.sEq!=null?f(pos.sEq,1):"–"} ${pos.sEq!=null&&pos.sEq<=smax?"≤":">"} mín(2h; 30) = ${f(smax,1)} cm`);
+  if(MuN!=null)add(neg.sEq!=null&&neg.sEq<=smax+1e-6,`s superior = ${neg.sEq!=null?f(neg.sEq,1):"–"} ${neg.sEq!=null&&neg.sEq<=smax?"≤":">"} ${f(smax,1)} cm`);
+  add(pos.ok&&pos.et>=pos.ety+0.003,`ε<sub>t</sub>⁺ = ${pos.ok?f(pos.et,4):"–"} ${pos.ok&&pos.et>=0.005?"≥":"<"} 0,005 (controlada por tracción)`);
+  if(MuN!=null)add(neg.ok&&neg.et>=neg.ety+0.003,`ε<sub>t</sub>⁻ = ${neg.ok?f(neg.et,4):"–"} ${neg.ok&&neg.et>=0.005?"≥":"<"} 0,005`);
+  return {pos,neg,MuP,MuN,Asmin,smax,ck,ok:ck.every(c=>c.ok)};
+}
+function lineName(L,ln){const same=L.filter(o=>o.dir===ln.dir).sort((a,b)=>a.pos-b.pos);const i=same.indexOf(ln);return ln.dir==="x"?String(i+1):String.fromCharCode(65+i);}
+function muAt(R,dir,pos){ // t·m/m, negativo = tracciona arriba
+  const B=S.bordes,neg=(k,v)=>B[k].c==="C"&&v!=null?-v:0;
+  if(dir==="x"){const u=Math.min(Math.max(pos/S.geo.lx,0),1),m1=neg("L1",R.Mxn),m2=neg("L2",R.Mxn),M0=R.Mxp-(m1+m2)/2;return ((1-u)*m1+u*m2+4*M0*u*(1-u))/10;}
+  const u=Math.min(Math.max(pos/S.geo.ly,0),1),m1=neg("C1",R.Myn),m2=neg("C2",R.Myn),M0=R.Myp-(m1+m2)/2;return ((1-u)*m1+u*m2+4*M0*u*(1-u))/10;}
+function lineCalc(R,ln){
+  const hc=S.geo.h/10,{fc,fy}=S.mat,base=S.flx[ln.dir];
+  const dIn=Math.max(...base.map(l=>+l.d),hc-3),dSup=Math.min(...base.map(l=>+l.d),3);
+  const ref=(ln.ref||[]).map(r=>({d:r.cara==="sup"?dSup:dIn,db:+r.db,s:+r.s,ref:true,cara:r.cara}));
+  const Mu=muAt(R,ln.dir,ln.pos),neg=Mu<0,Q=secFx(base.concat(ref),hc,fc,fy,R.beta1,neg);
+  const Mabs=Math.abs(Mu),ok=Q.ok&&Q.phiMn>=Mabs-1e-9;
+  const d=Q.ok?Q.dmax:(neg?hc-dSup:dIn),fct=fc/100,fyt=fy/100,disc=d*d-2*Mabs*100/(0.9*0.85*fct*100);
+  const Areq=disc>0?0.85*fct*100/fyt*(d-Math.sqrt(disc)):Infinity;
+  return {Mu,neg,Q,ok,Areq,Aprov:Q.ok?Q.Ast:0,falta:Math.max(0,Areq-(Q.ok?Q.Ast:0)),ref};}
+function compute(){
+  const R={err:[],warn:[]};
+  const {lx,ly,h}=S.geo,{fc,fy,rec}=S.mat,{L}=S.cargas;
+  if(!(lx>0&&ly>0&&h>0&&fc>0&&fy>0)){R.err.push("Faltan datos de geometría o materiales.");return R;}
+  if(lx>ly)R.err.push("l<sub>x</sub> tiene que ser la luz menor: intercambiá l<sub>x</sub> y l<sub>y</sub>.");
+  const r=ly/lx; R.r=r;
+  if(r>2)R.warn.push("l<sub>y</sub>/l<sub>x</sub> > 2: la losa trabaja en una dirección. Los coeficientes se toman con r = 2 solo como referencia.");
+  const b=1000;
+  R.beta1=fc<=28?0.85:Math.max(0.65,0.85-0.05*(fc-28)/7);
+  // bordes y caso
+  const B=S.bordes; const nS=(B.C1.c==="D")+(B.C2.c==="D"), nL=(B.L1.c==="D")+(B.L2.c==="D");
+  const CASE={"0,0":1,"1,0":2,"0,1":3,"1,1":4,"2,0":5,"0,2":6,"2,1":7,"1,2":8,"2,2":9}[nS+","+nL];
+  R.caso=CASE; const T=NZ[CASE];
+  if(nS===1&&nL===1){/* ok adyacentes siempre: un corto y un largo son adyacentes */}
+  // espesor
+  R.beams={}; let sa=0; EDGES.forEach(([k,,e])=>{const a=beamAlpha(e,k,lx,ly,h);R.beams[k]=a;sa+=a.alpha;});
+  R.am=sa/4; const ln=ly*1000, beta=r; const fyF=0.8+fy/1400;
+  if(R.am<=0.2){R.hminCase="sin";R.hminRaw=ln*1.0/33*(fy/420);R.hminAbs=120;}
+  else if(R.am<=2){R.hminCase="mid";R.hminRaw=ln*fyF/(36+5*beta*(R.am-0.2));R.hminAbs=120;}
+  else {R.hminCase="alto";R.hminRaw=ln*fyF/(36+9*beta);R.hminAbs=90;}
+  R.weakDisc=EDGES.filter(([k])=>B[k].c==="D"&&R.beams[k].alpha<0.8).map(x=>x[0]);
+  R.hminF=R.weakDisc.length?1.1:1.0;
+  R.hmin=Math.max(R.hminRaw*R.hminF,R.hminAbs); R.hOK=h>=R.hmin-1e-6;
+  // cargas
+  R.D=+S.cargas.Dt||0; R.wu1=1.4*R.D; R.wu2=1.2*R.D+1.6*L; R.wu=Math.max(R.wu1,R.wu2); R.ws=R.D+L;
+  // coeficientes
+  R.bxn=interp(T.xn,r); R.bxp=interp(T.xp,r); R.byn=T.yn; R.byp=T.yp;
+  const k=R.wu*lx*lx; R.k=k;
+  R.Mxp=R.bxp*k; R.Mxn=R.bxn!=null?R.bxn*k:null; R.Myp=R.byp*k; R.Myn=R.byn!=null?R.byn*k:null;
+  // losa en una dirección (l_y/l_x > 2): franja de 1 m en la luz corta como viga de un tramo
+  R.oneWay=r>2;
+  if(R.oneWay){const nC=(B.L1.c==="C")+(B.L2.c==="C");R.owC=nC;
+    const [kp,kn,kv]=nC===0?[1/8,null,0.5]:nC===1?[9/128,1/8,5/8]:[1/24,1/12,0.5];
+    R.owTxt=nC===0?["1/8",null,"simplemente apoyada en los dos bordes largos"]:nC===1?["9/128","1/8","continua en un borde largo y apoyada en el otro"]:["1/24","1/12","continua en los dos bordes largos"];
+    R.bxp=kp;R.bxn=kn;R.byp=0;R.byn=null;R.Mxp=kp*k;R.Mxn=kn!=null?kn*k:null;R.Myp=0;R.Myn=null;R.owV=kv*R.wu*lx;
+    R.warn=R.warn.filter(w=>!w.includes("una dirección"));
+    // espesor mínimo de losa en una dirección (CIRSOC 201-25, Tabla 7.3.1.1)
+    R.owDen=nC===0?20:nC===1?24:28;R.owFy=fy===420?1:0.4+fy/700;R.hminRaw=lx*1000/R.owDen*R.owFy;R.hminF=1;R.hmin=R.hminRaw;R.hOK=h>=R.hmin-1e-6;}
+  // flexión por dirección (capas di desde arriba) -> capas internas "toda la losa"
+  if(!S.flx){const hc=h/10,F={x:[],y:[]};(S.capas||[]).filter(c=>c.zona==="toda").forEach(c=>{const off=c.dir==="x"?rec/10+c.db/20:rec/10+0.8+c.db/20;F[c.dir].push({d:+(c.cara==="sup"?off:hc-off).toFixed(1),db:+c.db,s:+c.s/10});});S.flx=F;}
+  const hc=h/10; S.capas=[];["x","y"].forEach(dir=>S.flx[dir].forEach(l=>S.capas.push({cara:l.d<hc/2?"sup":"inf",dir,db:+l.db,s:(+l.s)*10,zona:"toda"})));
+  R.fx={};["x","y"].forEach(dir=>{R.fx[dir]=flexDir(S.flx[dir],hc,fc,fy,R.beta1,dir==="x"?R.Mxp/10:R.Myp/10,dir==="x"?(R.Mxn!=null?R.Mxn/10:null):(R.Myn!=null?R.Myn/10:null));});
+  // capas
+  const C=S.capas.map((c,i)=>({...c,i,As:Ab(+c.db)*1000/(+c.s)}));
+  R.capas=C;
+  const dbmax=(cara,dir)=>Math.max(0,...C.filter(c=>c.cara===cara&&c.dir===dir).map(c=>+c.db));
+  R.d={}; ["inf","sup"].forEach(cara=>{const dx=dbmax(cara,"x"),dy=dbmax(cara,"y");
+    R.d[cara+"x"]=h-rec-(dx||8)/2; R.d[cara+"y"]=h-rec-(dx||8)-(dy||8)/2;});
+  ["x","y"].forEach(dir=>{const P=R.fx[dir].pos,N=R.fx[dir].neg;if(P.dmax)R.d["inf"+dir]=P.dmax*10;if(N.dmax)R.d["sup"+dir]=N.dmax*10;});
+  const pick=(cara,dir,zs)=>C.filter(c=>c.cara===cara&&c.dir===dir&&zs.includes(c.zona));
+  const sum=L=>L.reduce((a,c)=>a+c.As,0);
+  const seq=L=>L.length?1000/L.reduce((a,c)=>a+1000/(+c.s),0):null;
+  R.Asmin=0.0018*b*h; R.smaxCrit=Math.min(2*h,300); R.smaxOther=Math.min(3*h,300);
+  const flex=(As,d,Mu)=>{const a=As*fy/(0.85*fc*b),c=a/R.beta1,et=c>0?0.003*(d-c)/c:Infinity,ety=fy/200000;
+    let phi=et>=ety+0.003?0.9:et<=ety?0.65:0.65+0.25*(et-ety)/0.003;
+    const Mn=As*fy*(d-a/2)/1e6; let Areq=null;
+    if(Mu>0){const disc=d*d-2*Mu*1e6/(0.9*0.85*fc*b); Areq=disc>0?0.85*fc*b/fy*(d-Math.sqrt(disc)):Infinity;}
+    return {a,c,et,ety,phi,Mn,phiMn:phi*Mn,Areq};};
+  R.flex=flex;
+  // secciones
+  const sec=[];
+  const mk=(o)=>{const L=pick(o.cara,o.dir,o.zs);o.layers=L;o.As=sum(L);o.s=seq(L);o.d=R.d[o.cara+o.dir];Object.assign(o,flex(o.As,o.d,o.Mu||0));return o;};
+  const cx=mk({key:"xp",label:"Tramo, dirección x (inferior)",cara:"inf",dir:"x",zs:["toda","centro"],Mu:R.Mxp,beta:R.bxp,tipo:"flex",smax:R.smaxCrit});
+  const cy=mk({key:"yp",label:"Tramo, dirección y (inferior)",cara:"inf",dir:"y",zs:["toda","centro"],Mu:R.Myp,beta:R.byp,tipo:"flex",smax:R.smaxCrit});
+  sec.push(cx,cy);
+  EDGES.forEach(([ek,ename,dir],idx)=>{
+    const a=(ek==="L1"||ek==="C1")?"a1":"a2"; const zs=["toda","apoyos",a];
+    if(B[ek].c==="C"){const Mu=dir==="x"?R.Mxn:R.Myn;
+      sec.push(mk({key:ek,label:`Apoyo continuo ${ek}, dirección ${dir} (superior)`,cara:"sup",dir,zs,Mu,beta:dir==="x"?R.bxn:R.byn,tipo:"flex",smax:R.smaxCrit,edge:ek}));}
+    else{const o=mk({key:ek,label:`Borde discontinuo ${ek}, dirección ${dir} (superior)`,cara:"sup",dir,zs,Mu:0,tipo:"disc",smax:R.smaxOther,edge:ek});
+      o.req=0.5*(dir==="x"?cx.As:cy.As); sec.push(o);}
+  });
+  sec.forEach(o=>{
+    if(o.tipo==="flex"){o.okM=o.phiMn>=o.Mu-1e-9;o.okMin=o.As>=R.Asmin-1e-6;o.okS=o.s!=null&&o.s<=o.smax+1e-6;o.okT=o.et>=o.ety+0.003;o.ok=o.okM&&o.okMin&&o.okS&&o.okT;}
+    else{o.okReq=o.As>=o.req-1e-6;o.okS=o.s==null?false:o.s<=o.smax+1e-6;o.ok=o.okReq&&o.okS;}
+  });
+  R.sec=sec;
+  // franjas de borde (mínima con capas de toda la losa en la cara inferior)
+  R.edgeStrip=["x","y"].map(dir=>{const L=pick("inf",dir,["toda"]);const As=sum(L),s=seq(L);return {dir,As,s,ok:As>=R.Asmin-1e-6&&s!=null&&s<=R.smaxOther};});
+  // contracción y temperatura
+  const sT=Math.min(5*h,450,S.diaf?250:Infinity);
+  R.temp=["x","y"].map(dir=>{const L=C.filter(c=>c.dir===dir&&c.zona==="toda");const As=sum(L);const smaxL=L.length?Math.max(...L.map(c=>+c.s)):null;
+    return {dir,As,ok:As>=0.0018*b*h-1e-6&&smaxL!=null&&smaxL<=sT,smaxL,sT};});
+  // esquinas
+  const MuMax=Math.max(R.Mxp,R.Myp);
+  R.corners=[["L1","C1","inf. izq."],["L1","C2","sup. izq."],["L2","C1","inf. der."],["L2","C2","sup. der."]].map(([a,c,pos])=>{
+    const nd=(B[a].c==="D")+(B[c].c==="D"); const fac=nd===2?1:nd===1?0.5:0;
+    const out={a,c,pos,nd,fac,len:ly/5,layers:[]};
+    if(fac>0){["inf","sup"].forEach(cara=>["x","y"].forEach(dir=>{const d=R.d[cara+dir];const Areq=fac*flex(0,d,MuMax).Areq;
+      const L=pick(cara,dir,["toda","esquinas"]);const As=sum(L);out.layers.push({cara,dir,d,Areq,As,ok:As>=Areq-1e-6});}));
+      out.ok=out.layers.every(l=>l.ok);}
+    return out;});
+  R.MuMax=MuMax;
+  // corte
+  const dS=R.d.infx; R.Vu=R.wu*(lx/2-dS/1000);
+  const rw=Math.max(cx.As/(b*dS),1e-6); R.lams=Math.min(1,Math.sqrt(2/(1+0.004*dS))); R.rw=rw;
+  R.Vc=Math.min(0.66*R.lams*Math.cbrt(rw)*Math.sqrt(fc)*b*dS,0.42*Math.sqrt(fc)*b*dS)/1000; R.phiVc=0.75*R.Vc; R.okV=R.Vu<=R.phiVc;
+  // vigas
+  const m=lx/ly; R.qShort=R.wu*lx/3; R.qLong=R.wu*lx/3*(3-m*m)/2; R.qShortS=R.ws*lx/3; R.qLongS=R.ws*lx/3*(3-m*m)/2; R.m=m;
+  S.lines=[];R.lines=S.lines.map(ln=>({ln,name:lineName(S.lines,ln),...lineCalc(R,ln)})).sort((a,b)=>a.ln.dir===b.ln.dir?a.ln.pos-b.ln.pos:a.ln.dir<b.ln.dir?-1:1);
+  R.allOK=R.hOK&&R.temp.every(t=>t.ok)&&R.edgeStrip.every(t=>t.ok)&&R.corners.every(c=>c.fac===0||c.ok)&&R.okV;
+  return R;
+}
+
+/* ---------- memoria (bloques compartidos HTML / DOCX) ---------- */
+// marcado: _{...} subíndice, ^{...} superíndice
+function buildMemo(R){
+  const M=[]; const H1=t=>M.push({t:"h1",s:t}),H2=t=>M.push({t:"h2",s:t}),P=t=>M.push({t:"p",s:t}),E=t=>M.push({t:"eq",s:t}),V=(ok,t)=>M.push({t:"v",ok,s:t}),TB=(head,rows)=>M.push({t:"tbl",head,rows});
+  const {lx,ly,h}=S.geo,{fc,fy,rec}=S.mat;
+  H1("1. Datos");
+  P(`Se diseña la losa ${S.proj.losa||""} de la obra ${S.proj.obra||""}: losa maciza apoyada en vigas o tabiques en sus cuatro bordes, con carga uniforme. Se usan los coeficientes de la tabla 14.1 del NZS 3101:1995 y los requisitos del CIRSOC 201-25 y del INPRES-CIRSOC 103 Parte II 2021.`);
+  TB(["Dato","Valor"],[["Luz libre menor l_{x}",f(lx)+" m"],["Luz libre mayor l_{y}",f(ly)+" m"],["Espesor h",f(h/10,1)+" cm"],["Hormigón f'_{c}",f(fc,0)+" MPa"],["Acero f_{y}",f(fy,0)+" MPa"],["Recubrimiento",f(rec,0)+" mm"],["Carga permanente adicional",f(S.cargas.D/10,3)+" t/m²"],["Sobrecarga L",f(S.cargas.L/10,3)+" t/m²"],["Bordes",EDGES.map(([k])=>k+": "+(S.bordes[k].c==="C"?"continuo":"discontinuo")).join(" · ")]]);
+  E(`l_{y}/l_{x} = ${f(ly)}/${f(lx)} = ${f(R.r,3)}`);
+  V(R.r<=2,R.r<=2?`Como l_{y}/l_{x} = ${f(R.r,2)} ≤ 2, la losa trabaja en dos direcciones.`:`Como l_{y}/l_{x} = ${f(R.r,2)} > 2, la losa debe diseñarse en una dirección.`);
+
+  H1("2. Espesor mínimo");
+  if(R.oneWay){P(`Como l_{y}/l_{x} = ${f(R.r,2)} > 2, la losa trabaja en una dirección y el espesor mínimo sale de la Tabla 7.3.1.1 del CIRSOC 201-25, con l = l_{x} y ${R.owC===0?"los dos extremos simplemente apoyados":R.owC===1?"un extremo continuo":"los dos extremos continuos"}:`);
+    E(`h_{mín} = l/${R.owDen}${R.owFy!==1?`·(0,4 + f_{y}/700)`:""} = ${f(lx*1000,0)} mm/${R.owDen}${R.owFy!==1?` × ${f(R.owFy,3)}`:""} = ${f(R.hmin,1)} mm`);
+    V(R.hOK,`Como h = ${f(h/10,1)} cm ${R.hOK?"≥":"<"} h_{mín} = ${f(R.hmin/10,2)} cm, ${R.hOK?"verifica y no es necesario calcular flechas.":"no verifica: hay que aumentar h o calcular las flechas (24.2)."}`);}
+  else{
+  P("Para cada viga del borde del panel se calcula α_{f}, la relación entre la rigidez a flexión de la viga, con un ala de losa de hasta 4h_{f} por lado limitada a 45°, y la de la franja de losa de ancho ℓ_{2} entre ejes de paneles.");
+  E("α_{f} = E_{cb}·I_{b} / (E_{cs}·I_{s}) = I_{b}/I_{s}      I_{s} = ℓ_{2}·h^{3}/12");
+  EDGES.forEach(([k,name])=>{const a=R.beams[k];H2(`${name}`);
+    if(a.alpha===Infinity){P("Apoya sobre un tabique: se toma como apoyo indeformable (α_{f} → ∞).");return;}
+    P(`Viga ${a.nsides===2?"interior (sección T)":"de borde (sección L)"}: b_{w} = ${f(a.bw,0)} mm, h_{v} = ${f(a.hv,0)} mm, ala de ${f(a.ov,0)} mm por lado = mín(h_{v} − h_{f}; 4h_{f}), ancho total b = ${f(a.b,0)} mm. Baricentro a ${f(a.yb,1)} mm de la cara superior (Steiner).`);
+    E(`I_{b} = ${f(a.Ib/1e6,1)}·10^{6} mm^{4}      I_{s} = ${f(a.l2,0)} × ${f(h,0)}^{3}/12 = ${f(a.Is/1e6,1)}·10^{6} mm^{4}`);
+    E(`α_{f} = ${f(a.Ib/1e6,1)}/${f(a.Is/1e6,1)} = ${f(a.alpha,2)}`);});
+  E(`α_{fm} = Σα_{f}/4 = ${R.am===Infinity?"∞":f(R.am,2)}`);
+  if(R.hminCase==="alto"){P("Como α_{fm} > 2,0, rige (CIRSOC 201-25, Tabla 8.3.1.2):");E(`h ≥ ℓ_{n}·(0,8 + f_{y}/1400)/(36 + 9β) ≥ 90 mm`);}
+  else if(R.hminCase==="mid"){P("Como 0,2 < α_{fm} ≤ 2,0, rige (CIRSOC 201-25, Tabla 8.3.1.2):");E(`h ≥ ℓ_{n}·(0,8 + f_{y}/1400)/(36 + 5β(α_{fm} − 0,2)) ≥ 120 mm`);}
+  else {P("Como α_{fm} ≤ 0,2, se trata como losa sin vigas interiores (Tabla 8.3.1.1): h ≥ ℓ_{n}/33 ≥ 120 mm.");}
+  P(`Donde ℓ_{n} = ${f(ly*1000,0)} mm es la luz libre mayor y β = ${f(R.r,3)} la relación de luces libres.`);
+  E(`h_{mín} = ${f(R.hminRaw,1)} mm${R.hminF>1?` × 1,10 = ${f(R.hminRaw*1.1,1)} mm`:""}`);
+  if(R.hminF>1)P(`Los bordes discontinuos ${R.weakDisc.join(", ")} tienen α_{f} < 0,80, por lo que el espesor se aumenta un 10 % (8.3.1.2.1).`);
+  V(R.hOK,`Como h = ${f(h/10,1)} cm ${R.hOK?"≥":"<"} h_{mín} = ${f(R.hmin/10,2)} cm, ${R.hOK?"verifica y no es necesario calcular flechas.":"no verifica: hay que aumentar h o calcular las flechas (24.2)."}`);}
+
+  H1("3. Cargas");
+  M.push({t:"mark",s:"solic-ini"});
+  E(`D = ${f(R.D/10,3)} t/m²`);
+  E(`L = ${f(S.cargas.L/10,3)} t/m²`);
+  P("Combinaciones de cargas (CIRSOC 201-25, 5.3.1):");
+  E(`w_{u1} = 1,4·D = 1,4 × ${f(R.D/10,3)} t/m² = ${f(R.wu1/10,3)} t/m²`);
+  E(`w_{u2} = 1,2·D + 1,6·L = 1,2 × ${f(R.D/10,3)} t/m² + 1,6 × ${f(S.cargas.L/10,3)} t/m² = ${f(R.wu2/10,3)} t/m²`);
+  V(true,`w_{u} = ${f(R.wu/10,3)} t/m²`);
+
+  H1("4. Solicitaciones");
+  if(R.oneWay){
+    E(`l_{y}/l_{x} = ${f(ly)} m / ${f(lx)} m = ${f(R.r,2)} > 2`);
+    P(`Como la relación de luces supera 2, la losa trabaja en una dirección (CIRSOC 201-25, cap. 2): la carga baja casi toda por la luz corta. Se analiza una franja de b = 1 m en dirección x como viga de un tramo, ${R.owTxt[2]}.`);
+    H2("Luz corta (dirección x)");
+    E(`M_{ux}^{+} = w_{u}·l_{x}^{2}·${R.owTxt[0]} = ${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} × ${R.owTxt[0]} = ${f(R.Mxp/10,2)} t·m/m`);
+    if(R.Mxn!=null)E(`M_{ux}^{−} = −w_{u}·l_{x}^{2}·${R.owTxt[1]} = −${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} × ${R.owTxt[1]} = −${f(R.Mxn/10,2)} t·m/m`);
+    else P("Los dos bordes largos son discontinuos: no hay momento negativo en dirección x. Igual conviene colocar arriba armadura para el empotramiento parcial en las vigas.");
+    E(`V_{u,máx} = ${R.owC===1?"5/8":"1/2"}·w_{u}·l_{x} = ${R.owC===1?"0,625":"0,5"} × ${f(R.wu/10,3)} t/m² × ${f(lx)} m = ${f(R.owV/10,2)} t/m`);
+    H2("Luz larga (dirección y)");
+    P("No se calculan momentos en dirección y: va la armadura de contracción y temperatura (0,0018·b·h, CIRSOC 201-25, 24.4.3), y en los bordes cortos apoyados conviene una armadura superior para el empotramiento parcial.");
+    M.push({t:"mark",s:"solic-fin"});
+    return M;
+  }
+  P(`Panel caso ${R.caso} de la tabla 14.1 del NZS 3101: ${NZ[R.caso].n.toLowerCase()}.`);
+  E(`l_{y}/l_{x} = ${f(ly)} m / ${f(lx)} m = ${f(R.r,2)}`);
+  P(`Tabla 14.1 del NZS 3101. Se resalta la fila del caso ${R.caso} y se encierran en un círculo los coeficientes usados.`);
+  M.push({t:"nz",caso:R.caso,r:R.r});
+  const it=(arr,nom)=>{const r=Math.min(Math.max(R.r,1),2);let i=RC.findIndex((c,j)=>j<RC.length-1&&r<=RC[j+1]+1e-9);if(i<0)i=RC.length-2;
+    const r0=RC[i],r1=RC[i+1],b0=arr[i],b1=arr[i+1],db=b1-b0,val=b0+db*(r-r0)/(r1-r0);
+    if(Math.abs(r-r0)<1e-9){E(`l_{y}/l_{x} = ${f(r0,2)} → ${nom} = ${f(b0,3)}`);return;}
+    E(`l_{y}/l_{x} = ${f(r0,2)} → ${nom} = ${f(b0,3)}      l_{y}/l_{x} = ${f(r1,2)} → ${nom} = ${f(b1,3)}      Δβ = ${f(db,3)}`);
+    E(`${nom} = ${f(b0,3)} + ${f(db,3)} × ${f(r-r0,2)}/${f(r1-r0,2)} = ${f(val,3)}`);};
+  H2("Luz corta (dirección x)");
+  it(NZ[R.caso].xp,"β_{sx}^{+}"); if(NZ[R.caso].xn)it(NZ[R.caso].xn,"β_{sx}^{−}");
+  E(`M_{ux}^{+} = β_{sx}^{+}·w_{u}·l_{x}^{2} = ${f(R.bxp,3)} × ${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} = ${f(R.Mxp/10,2)} t·m/m`);
+  if(R.Mxn!=null)E(`M_{ux}^{−} = −β_{sx}^{−}·w_{u}·l_{x}^{2} = −${f(R.bxn,3)} × ${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} = −${f(R.Mxn/10,2)} t·m/m`);
+  else P("No hay bordes largos continuos: no hay momento negativo en dirección x.");
+  H2("Luz larga (dirección y)");
+  E(`β_{sy}^{+} = ${f(R.byp,3)}${R.byn!=null?`      β_{sy}^{−} = ${f(R.byn,3)}`:""}   (no dependen de l_{y}/l_{x})`);
+  E(`M_{uy}^{+} = β_{sy}^{+}·w_{u}·l_{x}^{2} = ${f(R.byp,3)} × ${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} = ${f(R.Myp/10,2)} t·m/m`);
+  if(R.Myn!=null)E(`M_{uy}^{−} = −β_{sy}^{−}·w_{u}·l_{x}^{2} = −${f(R.byn,3)} × ${f(R.wu/10,3)} t/m² × (${f(lx)} m)^{2} = −${f(R.Myn/10,2)} t·m/m`);
+  else P("No hay bordes cortos continuos: no hay momento negativo en dirección y.");
+  P("En las dos direcciones se usa la luz menor l_{x}. Los momentos son de la franja central (3/4 del ancho) y no se redistribuyen; en las franjas de borde de 1/8 va la armadura mínima.");
+  M.push({t:"mark",s:"solic-fin"});
+
+  return M;
+}
+function lenTxt(c){
+  const {lx,ly}=S.geo; const l=c.dir==="x"?lx:ly; const ed=c.dir==="x"?["L1","L2"]:["C1","C2"]; const B=S.bordes;
+  if(c.zona==="esquinas")return `Cuadrado de ${f(ly/5)} m de lado desde la esquina, en las dos direcciones.`;
+  if(c.cara==="inf"){const parts=ed.map(e=>B[e].c==="C"?`${e}: pasa ${f(0.15*l)} m al panel vecino`:`${e}: anclaje ≥ 0,15 m en la viga`);
+    const base=c.zona==="centro"?`Franja central de ${f(0.75*(c.dir==="x"?ly:lx))} m de ancho; `:"";
+    return base+`luz ${f(l)} m; `+parts.join("; ");}
+  const which=c.zona==="toda"?ed:c.zona==="apoyos"?ed.filter(e=>B[e].c==="C"):c.zona==="a1"?[ed[0]]:c.zona==="a2"?[ed[1]]:[];
+  if(c.zona==="toda")return `Corre de borde a borde (${f(l)} m) y se ancla en las vigas.`;
+  if(c.zona==="centro")return `Superior en el tramo (poco habitual).`;
+  return which.map(e=>B[e].c==="C"?`${e}: desde la cara, todas ${f(0.15*l)} m y ≥ 50 % hasta ${f(0.30*l)} m`:`${e}: ${f(0.10*l)} m desde el apoyo`).join("; ")||"Sin apoyo en esa zona.";
+}
+function mk2html(s){return esc(s).replace(/_\{([^}]*)\}/g,"<sub>$1</sub>").replace(/\^\{([^}]*)\}/g,"<sup>$1</sup>");}
+function nzData(b){
+  const r=Math.min(Math.max(b.r,1),2);let i=RC.findIndex((c,j)=>j<RC.length-1&&r<=RC[j+1]+1e-9);if(i<0)i=RC.length-2;
+  const sel=Math.abs(r-RC[i])<1e-9?[i]:Math.abs(r-RC[i+1])<1e-9?[i+1]:[i,i+1];
+  const head=["Caso","β"].concat(RC.map(c=>f(c,c%1?2:1).replace(/,?0+$/,"")||"1"),["β_{sy} (luz larga)"]);
+  const rows=[];for(let c=1;c<=9;c++){const d=NZ[c];[["−","xn","yn"],["+","xp","yp"]].forEach(([sg,kx,ky],k)=>{
+    const on=c===b.caso;rows.push({on,first:k===0,cells:[k===0?String(c):"",sg].concat(RC.map((_,j)=>({v:d[kx]?f(d[kx][j],3):"–",o:on&&!!d[kx]&&sel.includes(j)})),[{v:d[ky]!=null?f(d[ky],3):"–",o:on&&d[ky]!=null}])});});}
+  return {head,rows};}
+const NZC={1:"TBLR",2:"TBL",3:"TLR",4:"TL",5:"TB",6:"LR",7:"T",8:"L",9:""};
+function nzSk(c,on){const s=NZC[c],x0=6,y0=5,W=40,H=20,col=on?"var(--accent)":"var(--ink)";let o=`<svg width="52" height="30" viewBox="0 0 52 30" aria-hidden="true"><rect x="${x0}" y="${y0}" width="${W}" height="${H}" fill="${on?"var(--accent-soft)":"none"}" stroke="${col}" stroke-width="1.3"/>`;
+  const hz=(y,d)=>{for(let x=x0;x<=x0+W;x+=4)o+=`<line x1="${x}" y1="${y}" x2="${x+2.5}" y2="${y+d*4}" stroke="${col}" stroke-width=".9"/>`;},vt=(x,d)=>{for(let y=y0;y<=y0+H;y+=4)o+=`<line x1="${x}" y1="${y}" x2="${x+d*4}" y2="${y+2.5}" stroke="${col}" stroke-width=".9"/>`;};
+  if(s.includes("T"))hz(y0,-1);if(s.includes("B"))hz(y0+H,1);if(s.includes("L"))vt(x0,-1);if(s.includes("R"))vt(x0+W,1);return o+"</svg>";}
+function memoHTML(M){return M.map(b=>{
+  if(b.t==="nz"){const {head,rows}=nzData(b);return `<div class="tbl nzt"><table><thead><tr>${head.map((h,i)=>`<th${i>1?' class="num"':""}>${mk2html(h)}</th>`).join("")}</tr><tr><th></th><th></th><th colspan="${RC.length}" class="num" style="text-align:center">l<sub>y</sub>/l<sub>x</sub> → β<sub>sx</sub> (luz corta)</th><th></th></tr><tr><th colspan="99" style="font-weight:400;text-align:left">Esquema: lados largos arriba y abajo; rayado = borde continuo.</th></tr></thead><tbody>${rows.map(r=>`<tr class="${r.on?"on":""} ${r.first?"f":""}">${r.cells.map((c,i)=>i===0?(r.first?`<td rowspan="2" style="vertical-align:middle;white-space:nowrap"><b>${c}</b> ${nzSk(+c,r.on)}</td>`:""):typeof c==="string"?`<td>${c}</td>`:`<td class="num">${c.o?`<span class="circ">${c.v}</span>`:c.v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;}
+  if(b.t==="mark")return "";
+  if(b.t==="h1")return `<div class="h1">${mk2html(b.s)}</div>`;
+  if(b.t==="h2")return `<div class="h2">${mk2html(b.s)}</div>`;
+  if(b.t==="p")return `<p>${mk2html(b.s)}</p>`;
+  if(b.t==="eq")return `<div class="eq">${mk2html(b.s)}</div>`;
+  if(b.t==="v")return `<p class="v ${b.ok?"ok":"bad"}">${mk2html(b.s)}</p>`;
+  if(b.t==="tbl")return `<div class="tbl"><table><thead><tr>${b.head.map(h=>`<th>${mk2html(h)}</th>`).join("")}</tr></thead><tbody>${b.rows.map(r=>`<tr>${r.map(c=>`<td>${mk2html(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}).join("");}
+
+/* ---------- render ---------- */
+function bindInputs(){
+  const c=S.cargas;if(c.Dt==null){const g=c.g??25;c.Dt=g*S.geo.h/1000+(+c.D||0)+(c.items||[]).reduce((a,it)=>a+(it.m==="vol"?(+it.g||0)*(+it.e||0):(+it.q||0)),0)/100;}
+  const map={p_obra:["proj","obra"],p_losa:["proj","losa"],p_autor:["proj","autor"],p_fecha:["proj","fecha"],g_lx:["geo","lx",1],g_ly:["geo","ly",1],g_h:["geo","h",1],m_fc:["mat","fc",1],m_fy:["mat","fy",1],m_rec:["mat","rec",1],c_Dt:["cargas","Dt",1],c_L:["cargas","L",1]};
+  Object.entries(map).forEach(([id,[a,k,num]])=>{const el=$(id);const sc=id==="g_h"||id.startsWith("c_")?10:1;el.value=num?+(S[a][k]/sc).toFixed(4):S[a][k];el.oninput=()=>{S[a][k]=num?parseFloat(el.value)*sc:el.value;update();};});
+  $("diaf").checked=!!S.diaf;$("diaf").onchange=()=>{S.diaf=$("diaf").checked;update();};
+  $("edges").innerHTML=EDGES.map(([k,name])=>{const B=S.bordes[k];return `<div class="edge" style="border-left-color:${ECOL[k]}"><b><span class="tag" style="background:${ECOL[k]}">${k}</span>${name.replace(/^Borde (largo|corto) \w\d /,"Borde $1 ")}</b>
+   <label class="fl">Condición<select id="e_${k}_c"><option value="C">Continuo</option><option value="D">Discontinuo</option></select></label>
+   <label class="fl">Apoyo<select id="e_${k}_t"><option value="T">Viga interior (T)</option><option value="L">Viga de borde (L)</option><option value="M">Tabique</option></select></label>
+   <label class="fl">b<sub>w</sub> [mm]<input id="e_${k}_bw" type="number" step="10"></label>
+   <label class="fl">h<sub>v</sub> [mm]<input id="e_${k}_hv" type="number" step="10"></label>
+   <label class="fl" style="grid-column:1/-1">ℓ<sub>2</sub> franja de losa [m]<input id="e_${k}_l2" type="number" step="0.05" placeholder="automático"></label></div>`;}).join("");
+  EDGES.forEach(([k])=>["c","t","bw","hv","l2"].forEach(p=>{const el=$(`e_${k}_${p}`);el.value=S.bordes[k][p];el.oninput=()=>{S.bordes[k][p]=(p==="c"||p==="t"||(p==="l2"&&el.value===""))?el.value:parseFloat(el.value);update();};}));
+  renderLayers();
+  document.querySelectorAll(".fields label,.edge label.fl").forEach(l=>{if(l.querySelector(":scope>.lt"))return;const sp=document.createElement("span");sp.className="lt";
+    [...l.childNodes].forEach(n=>{if(!(n.nodeType===1&&/^(INPUT|SELECT)$/.test(n.tagName)))sp.appendChild(n);});l.insertBefore(sp,l.firstChild);});
+}
+function renderLayers(){
+  $("lay").innerHTML=S.capas.map((c,i)=>`<tr>
+   <td><select data-i="${i}" data-k="cara" aria-label="Cara"><option value="inf">Inferior</option><option value="sup">Superior</option></select></td>
+   <td><select data-i="${i}" data-k="dir" aria-label="Dirección"><option value="x">x (luz corta)</option><option value="y">y (luz larga)</option></select></td>
+   <td><select data-i="${i}" data-k="db" aria-label="Diámetro">${DIAMS.map(d=>`<option value="${d}">${d}</option>`).join("")}</select></td>
+   <td><input data-i="${i}" data-k="s" type="number" step="10" min="50" aria-label="Separación"></td>
+   <td><select data-i="${i}" data-k="zona" aria-label="Zona">${zonas(c.dir).map(([v,t])=>`<option value="${v}">${t}</option>`).join("")}</select></td>
+   <td class="num" id="las${i}"></td>
+   <td><button class="x" type="button" data-del="${i}" aria-label="Quitar capa">×</button></td></tr>`).join("");
+  $("lay").querySelectorAll("[data-k]").forEach(el=>{const c=S.capas[+el.dataset.i];el.value=c[el.dataset.k];
+    el.oninput=()=>{const k=el.dataset.k;c[k]=(k==="db"||k==="s")?parseFloat(el.value):el.value;if(k==="dir"){renderLayers();}update();};});
+  $("lay").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.capas.splice(+b.dataset.del,1);renderLayers();update();});
+}
+function rectDims(){const {lx,ly}=S.geo;const sc=Math.min(250/lx,230/ly);return {w:lx*sc,h:ly*sc};}
+function edgeLine(k,x1,y1,x2,y2){const c=S.bordes[k].c==="C";return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ECOL[k]}" stroke-width="${c?5:2.5}" stroke-linecap="round" ${c?"":'stroke-dasharray="7 6"'}/>`;}
+function hatchEdge(k,x1,y1,x2,y2,nx,ny){if(S.bordes[k].c!=="C")return "";let s="";const L=Math.hypot(x2-x1,y2-y1),n=Math.floor(L/9);for(let i=0;i<=n;i++){const t=i/n,x=x1+(x2-x1)*t,y=y1+(y2-y1)*t;s+=`<line x1="${x}" y1="${y}" x2="${x+nx*7+ny*4}" y2="${y+ny*7-nx*4}" stroke="${ECOL[k]}" stroke-width="1" opacity=".55"/>`;}return s;}
+function pillT(x,y,txt,col,{anchor="middle",solid=false,rot=0}={}){
+  const plain=txt.replace(/<[^>]+>/g,"");const w=plain.length*6.9+16;const x0=anchor==="middle"?x-w/2:anchor==="end"?x-w:x;
+  return `<g${rot?` transform="rotate(${rot} ${x} ${y})"`:""}><rect x="${x0}" y="${y-11}" width="${w}" height="21" rx="10.5" fill="${solid?col:"var(--surface)"}" stroke="${col}" stroke-width="1.3"/><text x="${x0+w/2}" y="${y+4}" text-anchor="middle" style="fill:${solid?"#fff":col};font-family:var(--display);font-weight:700;font-size:12px">${txt}</text></g>`;}
+const SUBT=(a,b)=>`${a}<tspan font-size="9" dy="3">${b}</tspan><tspan dy="-3">`;
+function panelBase(ox,oy,w,h){const B=S.bordes;let s=`<rect x="${ox}" y="${oy}" width="${w}" height="${h}" rx="2" fill="var(--accent-soft)" opacity=".55"/>`;
+  s+=hatchEdge("L1",ox,oy,ox,oy+h,-1,0)+hatchEdge("L2",ox+w,oy,ox+w,oy+h,1,0)+hatchEdge("C2",ox,oy,ox+w,oy,0,-1)+hatchEdge("C1",ox,oy+h,ox+w,oy+h,0,1);
+  s+=edgeLine("L1",ox,oy,ox,oy+h)+edgeLine("L2",ox+w,oy,ox+w,oy+h)+edgeLine("C1",ox,oy+h,ox+w,oy+h)+edgeLine("C2",ox,oy,ox+w,oy);return s;}
+function coefSVG(R){
+  const {w,h}=rectDims();const {VW,VH,oy}=momBox(R),ox=(VW-w)/2;const B=S.bordes;const cx=ox+w/2,cy=oy+h/2;const b3=v=>f(v,3);
+  let s=`<svg viewBox="0 0 ${VW} ${VH}" width="${VW}" role="img" aria-label="Coeficientes β en planta"><defs><marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="var(--accent)"/></marker></defs>`;
+  s+=panelBase(ox,oy,w,h);
+  const ax=w*0.42,ay=h*0.42;
+  s+=`<line x1="${cx-ax}" y1="${cy}" x2="${cx+ax}" y2="${cy}" stroke="var(--accent)" stroke-width="2" marker-start="url(#ar1)" marker-end="url(#ar1)"/>`;
+  s+=`<line x1="${cx}" y1="${cy-ay}" x2="${cx}" y2="${cy+ay}" stroke="var(--accent)" stroke-width="2" marker-start="url(#ar1)" marker-end="url(#ar1)"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="4" fill="var(--accent)"/>`;
+  s+=pillT(cx+ax*0.56,cy-17,SUBT("β","sx")+"⁺ "+b3(R.bxp)+"</tspan>","var(--accent)",{solid:true});
+  s+=pillT(cx-17,cy-ay*0.56,SUBT("β","sy")+"⁺ "+b3(R.byp)+"</tspan>","var(--accent)",{solid:true,rot:-90});
+  const ev=k=>{const v=k[0]==="L"?R.bxn:R.byn;return B[k].c==="C"&&v!=null?"−"+b3(v):"0";};
+  // cada valor de borde va en la dirección de su momento (perpendicular al borde)
+  const ep=(k,x,y,o)=>pillT(x,y,ev(k),ECOL[k],{solid:B[k].c==="C",...o}),pw=k=>ev(k).length*6.9+16;
+  s+=ep("L1",ox-12,cy,{anchor:"end"})+ep("L2",ox+w+12,cy,{anchor:"start"})+ep("C2",cx,oy-10-pw("C2")/2,{rot:-90})+ep("C1",cx,oy+h+10+pw("C1")/2,{rot:-90});
+  s+=`<text x="${cx}" y="${oy+h+pw("C1")+30}" text-anchor="middle" style="fill:var(--muted);font-family:var(--display);font-size:12px">Caso ${R.caso} · l<tspan font-size="9" dy="3">y</tspan><tspan dy="-3">/l</tspan><tspan font-size="9" dy="3">x</tspan><tspan dy="-3"> = ${f(R.r,2)}</tspan></text>`;
+  {const tk=(x,y)=>`<line x1="${x-4}" y1="${y+4}" x2="${x+4}" y2="${y-4}" stroke="var(--ink)" stroke-width="1.3"/>`,ln=(a,b,c,d)=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="var(--ink)" stroke-width=".8"/>`,yc=oy-pw("C2")-26,xc=ox-pw("L1")-30,st='style="fill:var(--ink);font-family:var(--display);font-size:12px;font-weight:600"';
+  s+=`<g>${ln(ox,oy-8,ox,yc-4)+ln(ox+w,oy-8,ox+w,yc-4)+ln(ox,yc,ox+w,yc)+tk(ox,yc)+tk(ox+w,yc)}</g><text x="${ox+w/2}" y="${yc-5}" text-anchor="middle" ${st}>${f(S.geo.lx)} m</text>`;
+  s+=`<g>${ln(ox-10,oy,xc-4,oy)+ln(ox-10,oy+h,xc-4,oy+h)+ln(xc,oy,xc,oy+h)+tk(xc,oy)+tk(xc,oy+h)}</g><text transform="translate(${xc-5},${oy+h/2}) rotate(-90)" text-anchor="middle" ${st}>${f(S.geo.ly)} m</text>`;}
+  return s+"</svg>";
+}
+function curve(m1,mp,m2,n){const M0=mp-(m1+m2)/2;const pts=[];for(let i=0;i<=n;i++){const u=i/n;pts.push([u,(1-u)*m1+u*m2+4*M0*u*(1-u)]);}return pts;}
+function diagPaths(pts,map,base){ // pts [u,m]; map(u,m)->[x,y]
+  const pos=pts.map(([u,m])=>map(u,Math.max(m,0))),neg=pts.map(([u,m])=>map(u,Math.min(m,0)));
+  const b0=map(0,0),b1=map(1,0);const poly=a=>`M${b0[0]},${b0[1]} `+a.map(p=>`L${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ")+` L${b1[0]},${b1[1]} Z`;
+  let s=`<path d="${poly(neg)}" fill="var(--zone2)"/><path d="${poly(pos)}" fill="var(--zone)"/>`;
+  pts.forEach(([u,m],i)=>{if(i%3||i===0||i===pts.length-1)return;const a=map(u,0),b=map(u,m);s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="var(--accent)" stroke-width=".7" opacity=".45"/>`;});
+  s+=`<path d="M`+pts.map(([u,m])=>map(u,m)).map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" L")+`" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  s+=`<line x1="${b0[0]}" y1="${b0[1]}" x2="${b1[0]}" y2="${b1[1]}" stroke="var(--ink)" stroke-width="1.4"/>`;return s;}
+let ROT=0;
+function rotPlan(id){
+  const svg=$(id).querySelector("svg");if(!svg)return;if(!ROT){const bb=svg.getBBox(),pd=10;if(bb.width>20&&bb.height>20)svg.setAttribute("viewBox",`${bb.x-pd} ${bb.y-pd} ${bb.width+2*pd} ${bb.height+2*pd}`),svg.setAttribute("width",bb.width+2*pd);return;}
+  const [,,VW,VH]=svg.getAttribute("viewBox").split(" ").map(Number);
+  const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+  [...svg.childNodes].filter(n=>n.nodeName!=="defs").forEach(n=>g.appendChild(n));svg.appendChild(g);
+  g.setAttribute("transform",`rotate(${ROT} ${VW/2} ${VH/2})`);
+  if(ROT%180){svg.setAttribute("viewBox",`${VW/2-VH/2} ${VH/2-VW/2} ${VH} ${VW}`);svg.setAttribute("width",VH);}
+  // rótulos: valores horizontales, textos nunca cabeza abajo
+  const cs=Math.cos(ROT*Math.PI/180),sn=Math.sin(ROT*Math.PI/180);
+  [...g.children].filter(el=>el.querySelector&&(el.nodeName==="text"||el.querySelector("text"))).forEach(el=>{
+    const own=/rotate\(-90/.test(el.outerHTML)?-90:0;const net=((own+ROT)%360+360)%360;
+    const pill=id!=="planB"&&el.nodeName==="g"&&!!el.querySelector("rect");
+    const corr=pill?-net:(net===90||net===180)?180:0;if(!corr)return;
+    const w=document.createElementNS("http://www.w3.org/2000/svg","g");el.replaceWith(w);w.appendChild(el);
+    const b=w.getBBox(),cx=b.x+b.width/2,cy=b.y+b.height/2;let tx=0,ty=0;
+    if(pill&&net%180){const dx=(cx-VW/2)*cs-(cy-VH/2)*sn,dy=(cx-VW/2)*sn+(cy-VH/2)*cs;
+      const a=(Math.max(b.width,b.height)-Math.min(b.width,b.height))/2;let sx=0,sy=0;
+      if(Math.abs(dx)>Math.abs(dy))sx=Math.sign(dx)*a;else sy=-Math.sign(dy)*a;
+      tx=sx*cs+sy*sn;ty=-sx*sn+sy*cs;}
+    w.setAttribute("transform",`translate(${tx} ${ty}) rotate(${corr} ${cx} ${cy})`);});
+  const bb=svg.getBBox(),pd=10;if(bb.width>20&&bb.height>20)svg.setAttribute("viewBox",`${bb.x-pd} ${bb.y-pd} ${bb.width+2*pd} ${bb.height+2*pd}`),svg.setAttribute("width",bb.width+2*pd);
+}
+function momBox(R){
+  const {w,h}=rectDims();const B=S.bordes;const neg=(k,v)=>B[k].c==="C"&&v!=null?-v:0;
+  const mx1=neg("L1",R.Mxn),mx2=neg("L2",R.Mxn),my2=neg("C2",R.Myn),my1=neg("C1",R.Myn);
+  const mmax=Math.max(R.Mxp,R.Myp,-mx1,-mx2,-my1,-my2,1e-6);const k=62/mmax;
+  const negX=Math.max(-mx1,-mx2)*k,negY=Math.max(-my1,-my2)*k;
+  const ox=64,oy=50;const bx=oy+h+26+negX, by=ox+w+26+negY;return {ox,oy,bx,by,VW:by+R.Myp*k+104,VH:bx+R.Mxp*k+50};}
+function momSVG(R){
+  const {w,h}=rectDims();const B=S.bordes;const neg=(k,v)=>B[k].c==="C"&&v!=null?-v:0;
+  const mx1=neg("L1",R.Mxn),mx2=neg("L2",R.Mxn),my2=neg("C2",R.Myn),my1=neg("C1",R.Myn);
+  const mmax=Math.max(R.Mxp,R.Myp,-mx1,-mx2,-my1,-my2,1e-6);const k=62/mmax;const t2=v=>f(v/10,2);
+  const negX=Math.max(-mx1,-mx2)*k,negY=Math.max(-my1,-my2)*k;
+  const {ox,oy,bx,by,VW,VH}=momBox(R);
+  let s=`<svg viewBox="0 0 ${VW} ${VH}" width="${VW}" role="img" aria-label="Diagramas de momento en planta" data-ox="${ox}" data-oy="${oy}" data-w="${w}" data-h="${h}">`;
+  s+=panelBase(ox,oy,w,h);
+  s+=`<line x1="${ox}" y1="${oy+h/2}" x2="${ox+w}" y2="${oy+h/2}" stroke="var(--accent)" stroke-dasharray="2 5" opacity=".6"/><line x1="${ox+w/2}" y1="${oy}" x2="${ox+w/2}" y2="${oy+h}" stroke="var(--accent)" stroke-dasharray="2 5" opacity=".6"/>`;
+  // proyecciones
+  [[ox,oy+h,ox,bx],[ox+w,oy+h,ox+w,bx],[ox+w,oy,by,oy],[ox+w,oy+h,by,oy+h]].forEach(([a,b,c,d])=>s+=`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="var(--rule)" stroke-dasharray="3 3"/>`);
+  // dirección x (franja central en x), positivo hacia abajo
+  const PX=curve(mx1,R.Mxp,mx2,36);s+=diagPaths(PX,(u,m)=>[ox+u*w,bx+m*k]);
+  const ix=PX.reduce((a,p)=>p[1]>a[1]?p:a);s+=`<circle cx="${ox+ix[0]*w}" cy="${bx+ix[1]*k}" r="3.5" fill="var(--accent)"/>`;
+  s+=pillT(ox+ix[0]*w,bx+ix[1]*k+20,SUBT("M","ux")+"⁺ "+t2(R.Mxp)+" t·m/m</tspan>","var(--accent)",{solid:true});
+  if(mx1)s+=pillT(ox-6,bx+mx1*k,"−"+t2(-mx1)+" t·m/m",ECOL.L1,{anchor:"end",solid:true}); if(mx2)s+=pillT(ox+w+6,bx+mx2*k,"−"+t2(-mx2)+" t·m/m",ECOL.L2,{anchor:"start",solid:true});
+  s+=`<text x="${ox+w/2}" y="${bx-8}" text-anchor="middle" style="fill:var(--muted);font-family:var(--display);font-size:11.5px">Dirección x · l<tspan font-size="8" dy="3">x</tspan><tspan dy="-3"> = ${f(S.geo.lx)} m</tspan></text>`;
+  // dirección y, positivo hacia la derecha
+  const PY=curve(my2,R.Myp,my1,36);s+=diagPaths(PY,(u,m)=>[by+m*k,oy+u*h]);
+  const iy=PY.reduce((a,p)=>p[1]>a[1]?p:a);s+=`<circle cx="${by+iy[1]*k}" cy="${oy+iy[0]*h}" r="3.5" fill="var(--accent)"/>`;
+  s+=pillT(by+iy[1]*k+10,oy+iy[0]*h,SUBT("M","uy")+"⁺ "+t2(R.Myp)+" t·m/m</tspan>","var(--accent)",{solid:true,anchor:"start"});
+  if(my2)s+=pillT(Math.max(by+my2*k,ox+w+14),oy-16,"−"+t2(-my2)+" t·m/m",ECOL.C2,{solid:true,anchor:"start"}); if(my1)s+=pillT(Math.max(by+my1*k,ox+w+14),oy+h+18,"−"+t2(-my1)+" t·m/m",ECOL.C1,{solid:true,anchor:"start"});
+  s+=`<text transform="translate(${by-8},${oy+h-6}) rotate(-90)" style="fill:var(--muted);font-family:var(--display);font-size:11.5px">Dirección y · l<tspan font-size="8" dy="3">y</tspan><tspan dy="-3"> = ${f(S.geo.ly)} m</tspan></text>`;
+  ([]).forEach(L=>{const col="#C2410C",isX=L.ln.dir==="x",tc=v=>`<circle cx="${v[0]}" cy="${v[1]}" r="8" fill="var(--surface)" stroke="${col}" stroke-width="1.4"/><text x="${v[0]}" y="${v[1]+4}" text-anchor="middle" style="fill:${col};font-family:var(--display);font-weight:700;font-size:10.5px">${L.name}</text>`;
+    const M=L.Mu*10;
+    if(isX){const x=ox+Math.min(Math.max(L.ln.pos/S.geo.lx,0),1)*w,yd=bx+M*k;s+=`<line x1="${x}" y1="${oy-4}" x2="${x}" y2="${Math.max(bx,yd)}" stroke="${col}" stroke-width="1.4" stroke-dasharray="6 4"/><circle cx="${x}" cy="${yd}" r="3.5" fill="${col}"/>`;
+      s+=`<line class="lnhit" data-j="${S.lines.indexOf(L.ln)}" x1="${x}" y1="${oy-24}" x2="${x}" y2="${oy+h}" stroke="transparent" stroke-width="16" style="cursor:ew-resize"/><g>${tc([x,oy-14])}</g><g>${tc([x,oy+h-12])}</g><g><text x="${x+5}" y="${yd+(M>=0?-6:14)}" style="fill:${col};font-family:var(--mono);font-size:10px;font-weight:600">${f(L.Mu,2)}</text></g>`;}
+    else{const y=oy+(1-Math.min(Math.max(L.ln.pos/S.geo.ly,0),1))*h,xd=by+M*k;s+=`<line x1="${ox-4}" y1="${y}" x2="${Math.max(by,xd)}" y2="${y}" stroke="${col}" stroke-width="1.4" stroke-dasharray="6 4"/><circle cx="${xd}" cy="${y}" r="3.5" fill="${col}"/>`;
+      s+=`<line class="lnhit" data-j="${S.lines.indexOf(L.ln)}" x1="${ox-24}" y1="${y}" x2="${ox+w}" y2="${y}" stroke="transparent" stroke-width="16" style="cursor:ns-resize"/><g>${tc([ox-14,y])}</g><g>${tc([ox+w-12,y])}</g><g><text x="${xd+(M>=0?6:-6)}" y="${y-5}" text-anchor="${M>=0?"start":"end"}" style="fill:${col};font-family:var(--mono);font-size:10px;font-weight:600">${f(L.Mu,2)}</text></g>`;}
+  });
+  {const tk=(x,y)=>`<line x1="${x-4}" y1="${y+4}" x2="${x+4}" y2="${y-4}" stroke="var(--ink)" stroke-width="1.3"/>`,ln=(a,b,c,d)=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="var(--ink)" stroke-width=".8"/>`,yc=oy-28,xc=ox-34,st='style="fill:var(--ink);font-family:var(--display);font-size:12px;font-weight:600"';
+  s+=`<g>${ln(ox,oy-8,ox,yc-4)+ln(ox+w,oy-8,ox+w,yc-4)+ln(ox,yc,ox+w,yc)+tk(ox,yc)+tk(ox+w,yc)}</g><text x="${ox+w/2}" y="${yc-5}" text-anchor="middle" ${st}>${f(S.geo.lx)} m</text>`;
+  s+=`<g>${ln(ox-10,oy,xc-4,oy)+ln(ox-10,oy+h,xc-4,oy+h)+ln(xc,oy,xc,oy+h)+tk(xc,oy)+tk(xc,oy+h)}</g><text transform="translate(${xc-5},${oy+h/2}) rotate(-90)" text-anchor="middle" ${st}>${f(S.geo.ly)} m</text>`;}
+  return s+"</svg>";
+}
+
+function planSVG(R){
+  const {lx,ly}=S.geo; const W=360,Hm=300; const sc=Math.min(W/lx,Hm/ly); const w=lx*sc,h=ly*sc; const ox=70,oy=40; const VW=w+140,VH=h+80;
+  const B=S.bordes; const st=k=>B[k].c==="C"?`stroke="var(--cont)" stroke-width="4"`:`stroke="var(--disc)" stroke-width="3" stroke-dasharray="9 6"`;
+  let s=`<svg viewBox="0 0 ${VW} ${VH}" width="${VW}" role="img" aria-label="Planta del panel con bordes y momentos">`;
+  s+=`<rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="var(--bg)" stroke="none"/>`;
+  // esquinas
+  const cs=ly/5*sc; R.corners.forEach(c=>{if(!c.fac)return;const x=c.a==="L1"?ox:ox+w-cs,y=c.c==="C2"?oy:oy+h-cs;s+=`<rect x="${x}" y="${y}" width="${cs}" height="${cs}" fill="${c.fac===1?"var(--zone2)":"var(--zone)"}"/>`;});
+  // franjas 1/8
+  [[ox+w/8,oy,ox+w/8,oy+h],[ox+7*w/8,oy,ox+7*w/8,oy+h],[ox,oy+h/8,ox+w,oy+h/8],[ox,oy+7*h/8,ox+w,oy+7*h/8]].forEach(([a,b,c,d])=>s+=`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="var(--rule)" stroke-width="1"/>`);
+  s+=`<line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+h}" ${st("L1")}/><line x1="${ox+w}" y1="${oy}" x2="${ox+w}" y2="${oy+h}" ${st("L2")}/>`;
+  s+=`<line x1="${ox}" y1="${oy+h}" x2="${ox+w}" y2="${oy+h}" ${st("C1")}/><line x1="${ox}" y1="${oy}" x2="${ox+w}" y2="${oy}" ${st("C2")}/>`;
+  const mv=(v)=>v==null?"–":f(v/10,2);
+  s+=`<text class="lbl" x="${ox-8}" y="${oy+h/2-8}" text-anchor="end" style="fill:${ECOL.L1}">L1</text><text x="${ox-8}" y="${oy+h/2+8}" text-anchor="end">${B.L1.c==="C"?mv(R.Mxn):"disc."}</text>`;
+  s+=`<text class="lbl" x="${ox+w+8}" y="${oy+h/2-8}" style="fill:${ECOL.L2}">L2</text><text x="${ox+w+8}" y="${oy+h/2+8}">${B.L2.c==="C"?mv(R.Mxn):"disc."}</text>`;
+  s+=`<text class="lbl" x="${ox+w/2}" y="${oy+h+20}" text-anchor="middle" style="fill:${ECOL.C1}">C1 · ${B.C1.c==="C"?mv(R.Myn):"disc."}</text>`;
+  s+=`<text class="lbl" x="${ox+w/2}" y="${oy-10}" text-anchor="middle" style="fill:${ECOL.C2}">C2 · ${B.C2.c==="C"?mv(R.Myn):"disc."}</text>`;
+  s+=`<text x="${ox+w/2}" y="${oy+h/2-6}" text-anchor="middle">M<tspan font-size="9" dy="3">x</tspan><tspan dy="-3">⁺ = ${mv(R.Mxp)}</tspan></text>`;
+  s+=`<text x="${ox+w/2}" y="${oy+h/2+14}" text-anchor="middle">M<tspan font-size="9" dy="3">y</tspan><tspan dy="-3">⁺ = ${mv(R.Myp)}</tspan></text>`;
+  s+=`<text x="${ox+w/2}" y="${oy+h/2+34}" text-anchor="middle" fill="var(--muted)" style="fill:var(--muted)">t·m/m</text>`;
+  s+=`<text x="${ox+w/2}" y="${VH-6}" text-anchor="middle" style="fill:var(--muted)">l x = ${f(lx)} m · l y = ${f(ly)} m</text>`;
+  return s+"</svg>";
+}
+let LAST=null;
+function flxSVG(dir,R){
+  const L=S.flx[dir],hc=S.geo.h/10,W=380,Hh=150,sc=Math.min((W-140)/100,(Hh-56)/hc),w=100*sc,hh=hc*sc,ox=46,oy=(Hh-hh)/2;
+  let s=`<svg class="fsec" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Franja de 1 m, dirección ${dir}"><rect x="${ox}" y="${oy}" width="${w}" height="${hh}" fill="var(--accent-soft)" stroke="var(--muted)"/>`;
+  const tk=(x,y)=>`<line x1="${x-3}" y1="${y+3}" x2="${x+3}" y2="${y-3}" stroke="var(--ink)" stroke-width="1.1"/>`,T=(x,y,tx,a="start",rot)=>`<text x="${x}" y="${y}" text-anchor="${a}" ${rot?`transform="rotate(-90 ${x} ${y})"`:""} style="font-family:var(--mono);font-size:10.5px;fill:var(--ink)">${tx}</text>`;
+  s+=`<line x1="${ox-24}" y1="${oy}" x2="${ox-24}" y2="${oy+hh}" stroke="var(--muted)" stroke-width=".8"/>`+tk(ox-24,oy)+tk(ox-24,oy+hh)+T(ox-29,oy+hh/2,"h = "+f(hc,1),"middle",true);
+  s+=`<line x1="${ox}" y1="${oy+hh+12}" x2="${ox+w}" y2="${oy+hh+12}" stroke="var(--muted)" stroke-width=".8"/>`+tk(ox,oy+hh+12)+tk(ox+w,oy+hh+12)+T(ox+w/2,oy+hh+24,"b = 100 cm","middle");
+  L.forEach((l,i)=>{if(!(l.d>0&&l.d<hc&&l.s>0))return;const y=oy+l.d*sc,r=Math.max(2,l.db/20*sc);for(let x=l.s/2;x<100;x+=l.s)s+=`<circle cx="${ox+x*sc}" cy="${y}" r="${r}" fill="var(--steel,#A8741F)" stroke="var(--ink)" stroke-width=".5"/>`;
+    s+=`<line x1="${ox+w+2}" y1="${y}" x2="${ox+w+12}" y2="${y}" stroke="#A8741F" stroke-dasharray="2 2"/>`+T(ox+w+14,y+3.5,`d${i+1}=${f(+l.d,1)}`)+T(ox+w+14,y+(l.d<hc/2?-7:14),`ø${l.db} c/${f(+l.s,0)}`);});
+  return s+"</svg>";}
+function renderFlx(R){["x","y"].forEach(dir=>{
+  const box=$("fx"+dir),F=R.fx[dir],P=F.pos,N=F.neg,L=S.flx[dir],lz=dir==="x"?S.geo.lx:S.geo.ly;
+  const focusId=document.activeElement&&box.contains(document.activeElement)?document.activeElement.id:null,selS=focusId&&document.activeElement.selectionStart;
+  box.innerHTML=`<h3>Dirección ${dir} · ${dir==="x"?"luz corta":"luz larga"} (l<sub>${dir}</sub> = ${f(lz,2)} m)</h3>
+  <div class="tbl"><table class="fl"><thead><tr><th>Capa</th><th>d<sub>i</sub> [cm]</th><th>ø [mm]</th><th>s [cm]</th><th class="num">A<sub>s</sub> [cm²/m]</th><th></th></tr></thead><tbody>
+  ${L.map((l,i)=>`<tr><td>${i+1}</td><td><input id="f${dir}d${i}" type="number" step="0.1" value="${l.d}"></td><td><select id="f${dir}b${i}">${DIAMS.map(d=>`<option ${d==l.db?"selected":""}>${d}</option>`).join("")}</select></td><td><input id="f${dir}s${i}" type="number" step="1" value="${l.s}"></td><td class="num">${f(Math.PI*l.db*l.db/400*100/l.s,2)}</td><td><button class="x" type="button" id="f${dir}x${i}" aria-label="Quitar capa">×</button></td></tr>`).join("")}
+  </tbody></table></div><div style="margin-top:8px"><button type="button" id="f${dir}add">+ Agregar capa</button></div>
+  ${flxSVG(dir,R)}
+  <div class="fkv">${[["M<sub>u</sub>⁺",f(F.MuP,2)+" t·m"],["φM<sub>n</sub>⁺",P.ok?f(P.phiMn,2)+" t·m":"–"],["M<sub>u</sub>⁻",F.MuN!=null?f(F.MuN,2)+" t·m":"–"],["φM<sub>n</sub>⁻",N.ok?f(N.phiMn,2)+" t·m":"–"],
+     ["c⁺ / c⁻",(P.ok?f(P.c,2):"–")+" / "+(N.ok?f(N.c,2):"–")+" cm"],["ε<sub>t</sub>⁺ / ε<sub>t</sub>⁻",(P.ok?f(P.et,4):"–")+" / "+(N.ok?f(N.et,4):"–")],["φ⁺ / φ⁻",(P.ok?f(P.phi,2):"–")+" / "+(N.ok?f(N.phi,2):"–")],["A<sub>s,mín</sub>",f(F.Asmin,2)+" cm²/m"]].map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>
+  <ul class="fck">${F.ck.map(c=>`<li>${pill(c.ok,c.ok?"Verifica":"No verifica")}<span>${c.txt}</span></li>`).join("")}</ul>`;
+  L.forEach((l,i)=>{$(`f${dir}d${i}`).oninput=e=>{l.d=parseFloat(e.target.value);update();};$(`f${dir}s${i}`).oninput=e=>{l.s=parseFloat(e.target.value);update();};$(`f${dir}b${i}`).onchange=e=>{l.db=+e.target.value;update();};$(`f${dir}x${i}`).onclick=()=>{L.splice(i,1);update();};});
+  $(`f${dir}add`).onclick=()=>{const l=L[L.length-1]||{d:S.geo.h/10-3,db:8,s:15};L.push({d:l.d,db:l.db,s:l.s});update();};
+  if(focusId&&$(focusId)){const el=$(focusId);el.focus();try{if(selS!=null)el.setSelectionRange(selS,selS);}catch(e){}}
+});}
+function renderLines(R){
+  const box=$("lnBox");if(!box)return;const fid=document.activeElement&&box.contains(document.activeElement)?document.activeElement.id:null;
+  if(!R.lines.length){box.innerHTML='<p class="note">Sin cortes definidos.</p>';return;}
+  box.innerHTML=R.lines.map(L=>{const ln=L.ln,j=S.lines.indexOf(ln),Q=L.Q,lab=`${L.name}-${L.name}`,dir=ln.dir;
+    return `<div style="border-top:1px solid var(--rule);padding:12px 0">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><b style="font-family:var(--display);font-size:16px;min-width:44px">${lab}</b>
+      <span class="note" style="margin:0">flexión en ${dir}</span>
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px">${dir==="x"?"x desde L1":"y desde C1"} [m]<input id="lnp${j}" type="number" step="0.05" value="${ln.pos}" style="width:80px"></label>
+      <button type="button" class="x" id="lnd${j}" aria-label="Quitar corte">×</button>
+      <span style="margin-left:auto">${pill(L.ok,L.ok?"Verifica":"Necesita refuerzo")}</span></div>
+    <div class="fkv">${[["M<sub>u</sub> en el corte",f(L.Mu,3)+" t·m/m"],["Cara traccionada",L.neg?"superior":"inferior"],["φM<sub>n</sub>",Q.ok?f(Q.phiMn,3)+" t·m/m":"–"],["A<sub>s</sub> colocada",f(L.Aprov,2)+" cm²/m"],["A<sub>s</sub> necesaria",isFinite(L.Areq)?f(L.Areq,2)+" cm²/m":"sección insuficiente"],["Falta",L.falta>0?f(L.falta,2)+" cm²/m":"–"]].map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="note" style="margin:0">Refuerzo del corte:</span>
+      ${(ln.ref||[]).map((r,i)=>`<span style="display:inline-flex;gap:4px;align-items:center"><select id="lrc${j}_${i}"><option value="inf" ${r.cara==="inf"?"selected":""}>Inferior</option><option value="sup" ${r.cara==="sup"?"selected":""}>Superior</option></select><select id="lrb${j}_${i}">${DIAMS.map(d=>`<option ${d==r.db?"selected":""}>${d}</option>`).join("")}</select> c/<input id="lrs${j}_${i}" type="number" step="1" value="${r.s}" style="width:72px;min-width:72px;padding:4px 6px"> cm <button type="button" class="x" id="lrx${j}_${i}" aria-label="Quitar refuerzo">×</button></span>`).join("")}
+      <button type="button" id="lra${j}">+ Refuerzo</button></div></div>`;}).join("");
+  R.lines.forEach(L=>{const ln=L.ln,j=S.lines.indexOf(ln);
+    $(`lnp${j}`).oninput=e=>{ln.pos=parseFloat(e.target.value)||0;update();};$(`lnd${j}`).onclick=()=>{S.lines.splice(j,1);update();};
+    $(`lra${j}`).onclick=()=>{ln.ref=ln.ref||[];ln.ref.push({cara:L.neg?"sup":"inf",db:8,s:30});update();};
+    (ln.ref||[]).forEach((r,i)=>{$(`lrc${j}_${i}`).onchange=e=>{r.cara=e.target.value;update();};$(`lrb${j}_${i}`).onchange=e=>{r.db=+e.target.value;update();};$(`lrs${j}_${i}`).oninput=e=>{r.s=parseFloat(e.target.value);update();};$(`lrx${j}_${i}`).onclick=()=>{ln.ref.splice(i,1);update();};});});
+  if(fid&&$(fid)){const el=$(fid);el.focus();}
+}
+function update(){
+  const R=compute(); LAST=R;
+  const m=[...R.err.map(e=>`<div style="background:var(--bad-bg);color:var(--bad)">${e}</div>`),...R.warn.map(e=>`<div style="background:var(--warn-bg);color:var(--warn)">${e}</div>`)];
+  $("msg").innerHTML=m.join("");
+  {const ow=$("oneWay");ow.hidden=!R.oneWay;if(R.oneWay)ow.innerHTML=`<b>La losa trabaja en una dirección.</b> l<sub>y</sub>/l<sub>x</sub> = ${f(R.r,2)} &gt; 2 (CIRSOC 201-25, cap. 2): casi toda la carga va por la luz corta. Se calcula una franja de 1 m en dirección x como viga de un tramo, ${R.owTxt[2]}. En dirección y solo va armadura de contracción y temperatura.`;}
+  if(R.err.length&&R.r==null)return;
+  // espesor
+  $("tH").innerHTML=R.oneWay?`<p class="note" style="margin-top:0">Losa en una dirección: CIRSOC 201-25, Tabla 7.3.1.1, con l = l<sub>x</sub> y ${R.owC===0?"los dos extremos simplemente apoyados (l/20)":R.owC===1?"un extremo continuo (l/24)":"los dos extremos continuos (l/28)"}.</p><dl class="kv"><dt>l<sub>x</sub></dt><dd>${f(S.geo.lx,2)} m</dd><dt>h<sub>mín</sub></dt><dd>${f(R.hmin/10,2)} cm</dd><dt>h adoptado</dt><dd>${f(S.geo.h/10,1)} cm ${pill(R.hOK)}</dd></dl>`:`<table><thead><tr><th>Borde</th><th>Apoyo</th><th class="num">I<sub>b</sub> [10⁶ mm⁴]</th><th class="num">ℓ<sub>2</sub> [m]</th><th class="num">I<sub>s</sub> [10⁶ mm⁴]</th><th class="num">α<sub>f</sub></th></tr></thead><tbody>${EDGES.map(([k])=>{const a=R.beams[k];return `<tr><td>${k} · ${S.bordes[k].c==="C"?"continuo":"discontinuo"}</td><td>${S.bordes[k].t==="T"?"Viga T":S.bordes[k].t==="L"?"Viga L":"Tabique"}</td><td class="num">${a.Ib?f(a.Ib/1e6,1):"–"}</td><td class="num">${a.l2?f(a.l2/1000,2):"–"}</td><td class="num">${a.Is?f(a.Is/1e6,1):"–"}</td><td class="num">${a.alpha===Infinity?"∞":f(a.alpha,2)}</td></tr>`;}).join("")}</tbody></table>
+  <dl class="kv" style="margin-top:12px"><dt>α<sub>fm</sub></dt><dd>${R.am===Infinity?"∞":f(R.am,2)}</dd><dt>β = l<sub>y</sub>/l<sub>x</sub></dt><dd>${f(R.r,3)}</dd><dt>h<sub>mín</sub></dt><dd>${f(R.hmin/10,2)} cm${R.hminF>1?" (×1,10 por borde discontinuo con α<sub>f</sub> &lt; 0,8)":""}</dd><dt>h adoptado</dt><dd>${f(S.geo.h/10,1)} cm ${pill(R.hOK)}</dd></dl>`;
+  // momentos
+  {const fb=$("planB").closest("figure"),fs=fb.parentElement;fb.hidden=!!R.oneWay;fs.style.gridTemplateColumns=R.oneWay?"1fr":"";$("planM").style.maxWidth="";}
+  $("planB").innerHTML=coefSVG(R);$("planM").innerHTML=momSVG(R);rotPlan("planB");rotPlan("planM");if(R.oneWay){const sv=$("planM").querySelector("svg");if(sv){sv.setAttribute("width","100%");sv.style.maxWidth="760px";sv.style.maxHeight="620px";}}
+  $("tM").innerHTML=`<p class="note" style="margin-top:0">Caso ${R.caso}: ${NZ[R.caso].n}</p><table><thead><tr><th>Momento</th><th class="num">β</th><th class="num">t·m/m</th></tr></thead><tbody>
+   ${[["M<sub>x</sub>⁺ tramo",R.bxp,R.Mxp],["M<sub>x</sub>⁻ bordes L",R.bxn,R.Mxn],["M<sub>y</sub>⁺ tramo",R.byp,R.Myp],["M<sub>y</sub>⁻ bordes C",R.byn,R.Myn]].map(([n,b,M])=>`<tr><td>${n}</td><td class="num">${b==null?"–":f(b,4)}</td><td class="num">${M==null?"–":f(M/10,3)}</td></tr>`).join("")}</tbody></table>`;
+  $("kvLoads").innerHTML=`<dt>D</dt><dd>${f(R.D/10,3)} t/m²</dd><dt>w<sub>u</sub></dt><dd>${f(R.wu/10,3)} t/m² (${R.wu1>=R.wu2?"1,4D":"1,2D + 1,6L"})</dd><dt>w<sub>u</sub>·l<sub>x</sub>²</dt><dd>${f(R.k/10,3)} t·m/m</dd>`;
+  // capas
+  R.capas.forEach(c=>{const el=$("las"+c.i);if(el)el.textContent=f(c.As/100,2);});
+  // verificación
+  $("tV").innerHTML=`<table><thead><tr><th>Sección</th><th class="num">M<sub>u</sub></th><th class="num">A<sub>s</sub> [cm²/m]</th><th class="num">A<sub>s,nec</sub></th><th class="num">d [mm]</th><th class="num">s [mm]</th><th class="num">φM<sub>n</sub></th><th>Estado</th></tr></thead><tbody>${R.sec.map(o=>`<tr><td>${o.label}</td><td class="num">${o.tipo==="flex"?f(o.Mu/10,3):"–"}</td><td class="num">${f(o.As/100,2)}</td><td class="num">${o.tipo==="flex"?f(Math.max(o.Areq,R.Asmin)/100,2):f(o.req/100,2)+"*"}</td><td class="num">${f(o.d,1)}</td><td class="num">${o.s?f(o.s,0):"–"}</td><td class="num">${o.tipo==="flex"?f(o.phiMn/10,3):"–"}</td><td>${pill(o.ok)}${!o.ok?" <span class=\"note\">"+(o.tipo==="flex"?[!o.okM&&"φMn < Mu",!o.okMin&&"As < mín",!o.okS&&"s > "+f(o.smax,0),!o.okT&&"εt"].filter(Boolean).join(" · "):[!o.okReq&&"< 50 % del tramo",!o.okS&&"s > "+f(o.smax,0)].filter(Boolean).join(" · "))+"</span>":""}</td></tr>`).join("")}
+   ${R.edgeStrip.map(t=>`<tr><td>Franja de borde, dirección ${t.dir} (inferior, toda la losa)</td><td class="num">–</td><td class="num">${f(t.As/100,2)}</td><td class="num">${f(R.Asmin/100,2)}</td><td class="num">–</td><td class="num">${t.s?f(t.s,0):"–"}</td><td class="num">–</td><td>${pill(t.ok)}</td></tr>`).join("")}</tbody></table><p class="note">Momentos en t·m/m. A<sub>s,nec</sub> = máx(cálculo; 0,0018bh). * En bordes discontinuos: 50 % de la armadura de tramo colocada.</p>`;
+  const nOK=[R.hOK,...R.temp.map(t=>t.ok),...R.edgeStrip.map(t=>t.ok),...R.corners.filter(c=>c.fac).map(c=>c.ok),R.okV];
+  const bad=nOK.filter(x=>!x).length;
+  renderFlx(R);renderLines(R);
+  $("sum").innerHTML=pill(R.allOK,R.allOK?"El diseño verifica":"Hay "+bad+" "+(bad===1?"punto que no verifica":"puntos que no verifican"))+` <span class="pill na">${nOK.length} controles</span>`;
+  // esquinas
+  $("tC").innerHTML=`<table><thead><tr><th>Esquina</th><th>Req.</th><th>Capas (inf x · inf y · sup x · sup y)</th><th>Estado</th></tr></thead><tbody>${R.corners.map(c=>`<tr><td>${c.pos} (${c.a}–${c.c})</td><td>${c.fac===0?"No":c.fac===1?"Completa":"Mitad"}</td><td class="num">${c.fac?c.layers.map(l=>f(l.As/100,2)+"/"+f(l.Areq/100,2)).join(" · "):"–"}</td><td>${c.fac?pill(c.ok):pill(null,"No requiere")}</td></tr>`).join("")}</tbody></table><p class="note">cm²/m colocado/necesario, para M<sub>u</sub>⁺ máx = ${f(R.MuMax/10,3)} t·m/m en un cuadrado de ${f(S.geo.ly/5)} m (CIRSOC 201-25, 8.7.3). Cuentan las capas de toda la losa y las de zona "esquinas".</p>`;
+  // corte y temperatura
+  $("tS").innerHTML=`<table><tbody><tr><td>V<sub>u</sub> a d de la cara</td><td class="num">${f(R.Vu/10,3)} t/m</td></tr><tr><td>φV<sub>c</sub> (Tabla 22.5.5.1 c)</td><td class="num">${f(R.phiVc/10,3)} t/m</td></tr><tr><td>Corte</td><td>${pill(R.okV)}</td></tr>
+   ${R.temp.map(t=>`<tr><td>Contracción y temp. dir. ${t.dir}: ${f(t.As/100,2)} cm²/m, s máx ${t.smaxL?f(t.smaxL,0):"–"} mm (≤ ${f(t.sT,0)})</td><td>${pill(t.ok)}</td></tr>`).join("")}</tbody></table>`;
+  $("tL").innerHTML=`<table><tbody>${R.capas.map(c=>`<tr><td style="white-space:nowrap">${c.cara==="inf"?"Inf.":"Sup."} ${c.dir} ø${c.db} c/${c.s/10}</td><td>${esc(lenTxt(c))}</td></tr>`).join("")}</tbody></table>`;
+  $("tB").innerHTML=`<table><thead><tr><th>Viga</th><th class="num">Servicio</th><th class="num">Última</th></tr></thead><tbody><tr><td>Cortas (C1, C2), triángulo</td><td class="num">${f(R.qShortS/10,3)}</td><td class="num">${f(R.qShort/10,3)}</td></tr><tr><td>Largas (L1, L2), trapecio</td><td class="num">${f(R.qLongS/10,3)}</td><td class="num">${f(R.qLong/10,3)}</td></tr></tbody></table><p class="note">t/m uniformes equivalentes para el momento, aporte de este panel.</p>`;
+  const MM=buildMemo(R);$("memo").innerHTML=memoHTML(MM);
+  const i0=MM.findIndex(b=>b.s==="solic-ini"),i1=MM.findIndex(b=>b.s==="solic-fin");$("solic").innerHTML=memoHTML(MM.slice(i0,i1).filter(b=>b.t!=="h1"||b.s.startsWith("4")));
+  draw3d();
+  try{localStorage.setItem("losas-borrador",JSON.stringify(S));}catch(e){}
+}
+
+/* ---------- DOCX ---------- */
+function xmlEsc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function runs(s,opt={}){
+  const out=[];const re=/(_\{[^}]*\}|\^\{[^}]*\})/g;let last=0,m;
+  const R=(t,va)=>`<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>${opt.b?"<w:b/>":""}${opt.color?`<w:color w:val="${opt.color}"/>`:""}<w:sz w:val="${opt.sz||24}"/>${va?`<w:vertAlign w:val="${va}"/>`:""}</w:rPr><w:t xml:space="preserve">${xmlEsc(t)}</w:t></w:r>`;
+  while((m=re.exec(s))){if(m.index>last)out.push(R(s.slice(last,m.index)));out.push(R(m[0].slice(2,-1),m[0][0]==="_"?"subscript":"superscript"));last=re.lastIndex;}
+  if(last<s.length)out.push(R(s.slice(last)));return out.join("");}
+const para=(s,{jc="both",ind=true,b=false,sz=24,after=120,color,keep}={})=>`<w:p><w:pPr>${keep?"<w:keepNext/>":""}<w:spacing w:before="0" w:after="${after}" w:line="312" w:lineRule="auto"/>${ind?'<w:ind w:firstLine="709"/>':""}<w:jc w:val="${jc}"/></w:pPr>${runs(s,{b,sz,color})}</w:p>`;
+function docxBody(M){
+  const p=S.proj; let x="";
+  x+=para("MEMORIA DE CÁLCULO",{jc:"center",ind:false,b:true,sz:32,after:60});
+  x+=para(`Losa ${p.losa||""}`,{jc:"center",ind:false,b:true,sz:28,after:60});
+  x+=para(`Obra: ${p.obra||""} · ${p.autor||""} · ${p.fecha||""}`,{jc:"center",ind:false,sz:22,after:360});
+  M.forEach(b=>{
+    if(b.t==="mark")return;
+    if(b.t==="nz"){const {head,rows}=nzData(b);b={t:"tbl",head,rows:rows.map(r=>r.cells.map((c,i)=>typeof c==="string"?(i===0&&r.on?"► "+c:c):(c.o?"("+c.v+")":c.v)))};}
+    if(b.t==="h1")x+=para(b.s,{jc:"left",ind:false,b:true,sz:26,after:120,keep:true});
+    else if(b.t==="h2")x+=para(b.s,{jc:"left",ind:false,b:true,sz:24,after:80,keep:true});
+    else if(b.t==="p")x+=para(b.s);
+    else if(b.t==="eq")x+=para(b.s,{jc:"center",ind:false});
+    else if(b.t==="v")x+=para(b.s,{ind:true,b:true,color:b.ok?"2E6B3F":"A8322B"});
+    else if(b.t==="tbl"){const cell=(t,h)=>`<w:tc><w:tcPr><w:tcW w:w="0" w:type="auto"/>${h?'<w:shd w:val="clear" w:color="auto" w:fill="E2EAF0"/>':""}</w:tcPr>${para(t,{jc:"left",ind:false,b:h,sz:21,after:0})}</w:tc>`;
+      const bd=["top","left","bottom","right","insideH","insideV"].map(k=>`<w:${k} w:val="single" w:sz="4" w:space="0" w:color="999999"/>`).join("");
+      x+=`<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders>${bd}</w:tblBorders><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr>`+
+        `<w:tr>${b.head.map(h=>cell(h,true)).join("")}</w:tr>`+b.rows.map(r=>`<w:tr>${r.map(c=>cell(c,false)).join("")}</w:tr>`).join("")+`</w:tbl>`+para("",{ind:false,after:60});}
+  });
+  return x;
+}
+async function exportDocx(){
+  if(!LAST||LAST.err.length){toast("Corregí los datos antes de exportar.");return;}
+  if(typeof JSZip==="undefined"){toast("No se pudo cargar el generador de Word en esta vista.");return;}
+  const z=new JSZip();
+  z.file("[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`);
+  z.file("_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  z.file("word/_rels/document.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+  z.file("word/styles.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman" w:eastAsia="Times New Roman"/><w:sz w:val="24"/><w:lang w:val="es-AR"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="312" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`);
+  z.file("word/document.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${docxBody(buildMemo(LAST))}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1418" w:right="1134" w:bottom="1418" w:left="1701" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  const blob=await z.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+  await saveFile(fname("Memoria losa","docx"),blob);
+}
+const fname=(pre,ext)=>`${pre} ${(S.proj.losa||"").replace(/[\\/:*?"<>|·]+/g," ").replace(/\s+/g," ").trim()}.${ext}`.replace(/\s+\./,".");
+let DL; const dlP=(window.claude&&window.claude.use)?window.claude.use("downloads").then(d=>DL=d).catch(()=>null):Promise.resolve(null);
+async function saveFile(name,data){
+  await dlP;
+  if(!DL){try{const blob=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(blob),el=document.createElement("a");el.href=u;el.download=name;document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast("Archivo guardado: "+name);return true;}catch(e){toast("No se pudo guardar el archivo.");return false;}}
+  try{await DL.save({filename:name,data});toast("Archivo guardado: "+name);return true;}
+  catch(e){if(e&&e.code==="declined")toast("Descarga cancelada.");else toast("No se pudo guardar el archivo ("+(e&&e.code||"error")+").");return false;}
+}
+function toast(t){$("msg").innerHTML=`<div>${esc(t)}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>update(),4000);}
+
+/* ---------- proyecto JSON ---------- */
+$("bSave").onclick=async()=>{const txt=JSON.stringify(S,null,2);const ok=await saveFile(fname("Losa","json"),txt);
+  if(!ok&&!DL){$("fallback").hidden=false;$("fbText").value=txt;}};
+$("bOpen").onclick=()=>$("fOpen").click();
+$("fOpen").onchange=e=>{const file=e.target.files[0];if(!file)return;const rd=new FileReader();
+  rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!o.geo||!o.bordes||!Array.isArray(o.capas))throw new Error();
+    S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),o);bindInputs();update();toast("Proyecto cargado: "+file.name);}
+    catch(err){toast("El archivo no es un proyecto de losa válido.");}
+    $("fOpen").value="";};rd.readAsText(file);};
+$("bDocx").onclick=exportDocx;
+addEventListener("load",()=>update());document.addEventListener("visibilitychange",()=>{if(!document.hidden)update();});
+// arrastre de cortes en la planta de momentos
+{let drag=null,raf=0;
+ const toPanel=(e)=>{const svg=$("planM").querySelector("svg");if(!svg)return null;const g=ROT?svg.querySelector(":scope>g"):svg;const m=(g.getScreenCTM()||svg.getScreenCTM()).inverse();
+   const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(m);const d=svg.dataset;return {u:(pt.x-+d.ox)/+d.w,v:(pt.y-+d.oy)/+d.h};};
+ $("planM").addEventListener("pointerdown",e=>{const el=e.target.closest(".lnhit");if(!el)return;e.preventDefault();drag=S.lines[+el.dataset.j];document.body.style.userSelect="none";});
+ document.addEventListener("pointermove",e=>{if(!drag)return;const q=toPanel(e);if(!q)return;
+   if(drag.dir==="x")drag.pos=+(Math.min(Math.max(q.u,0),1)*S.geo.lx).toFixed(2);else drag.pos=+(Math.min(Math.max(1-q.v,0),1)*S.geo.ly).toFixed(2);
+   if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});});
+ document.addEventListener("pointerup",()=>{if(drag){drag=null;document.body.style.userSelect="";}});}
+// lectura del momento bajo el cursor
+{const tip=document.createElement("div");tip.id="momTip";tip.style.cssText="position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--surface);font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:6px;white-space:nowrap;display:none;box-shadow:0 2px 8px rgba(0,0,0,.2)";document.body.appendChild(tip);
+ const hide=()=>{tip.style.display="none";};
+ $("planM").addEventListener("pointermove",e=>{const svg=$("planM").querySelector("svg");if(!svg||!LAST)return hide();const g=ROT?svg.querySelector(":scope>g"):svg;
+   const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform((g.getScreenCTM()||svg.getScreenCTM()).inverse()),d=svg.dataset,u=(pt.x-+d.ox)/+d.w,v=(pt.y-+d.oy)/+d.h;
+   let txt=null;
+   if(u>=0&&u<=1&&v>1.02){const x=u*S.geo.lx;txt=`x = ${f(x,2)} m · M<sub>ux</sub> = ${f(muAt(LAST,"x",x),3)} t·m/m`;}
+   else if(v>=0&&v<=1&&u>1.02){const y=(1-v)*S.geo.ly;txt=`y = ${f(y,2)} m (desde C1) · M<sub>uy</sub> = ${f(muAt(LAST,"y",y),3)} t·m/m`;}
+   if(!txt)return hide();tip.innerHTML=txt;tip.style.display="block";tip.style.left=(e.clientX+14)+"px";tip.style.top=(e.clientY+14)+"px";});
+ $("planM").addEventListener("pointerleave",hide);}
+$("lnAddX").onclick=()=>{S.lines=S.lines||[];S.lines.push({dir:"x",pos:+(S.geo.lx/2).toFixed(2),ref:[]});update();};
+$("lnAddY").onclick=()=>{S.lines=S.lines||[];S.lines.push({dir:"y",pos:+(S.geo.ly/2).toFixed(2),ref:[]});update();};
+$("rotL").onclick=()=>{ROT=(ROT+270)%360;$("rotLbl").textContent=ROT+"°";update();};
+$("rotR").onclick=()=>{ROT=(ROT+90)%360;$("rotLbl").textContent=ROT+"°";update();};
+$("bAdd").onclick=()=>{S.capas.push({cara:"inf",dir:"x",db:8,s:200,zona:"centro"});renderLayers();update();};
+$("bBasic").onclick=()=>{S.capas=[{cara:"inf",dir:"x",db:8,s:200,zona:"toda"},{cara:"inf",dir:"y",db:8,s:200,zona:"toda"},{cara:"sup",dir:"x",db:8,s:200,zona:"toda"},{cara:"sup",dir:"y",db:8,s:200,zona:"toda"}];renderLayers();update();};
+
+try{const d=localStorage.getItem("losas-borrador");if(d){const o=JSON.parse(d);if(o&&o.geo&&o.capas)S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),o);}}catch(e){}
+/* ---------- esquema 3D ---------- */
+const V3={view:"iso",theta:-0.75,phi:0.6,zoom:1};
+function init3d(){
+  if(typeof THREE==="undefined"){$("v3d").innerHTML='<span class="hint">No se pudo cargar el visor 3D en esta vista.</span>';return;}
+  const el=$("v3d");V3.r=new THREE.WebGLRenderer({antialias:true,alpha:true});V3.r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));el.prepend(V3.r.domElement);
+  V3.scene=new THREE.Scene();V3.cam=new THREE.OrthographicCamera(-1,1,1,-1,-200,200);
+  V3.scene.add(new THREE.AmbientLight(0xffffff,0.62));const dl=new THREE.DirectionalLight(0xffffff,0.55);dl.position.set(-3,6,4);V3.scene.add(dl);
+  V3.g=new THREE.Group();V3.scene.add(V3.g);
+  let drag=null;el.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,t:V3.theta,p:V3.phi};el.setPointerCapture(e.pointerId);});
+  el.addEventListener("pointermove",e=>{if(!drag)return;V3.theta=drag.t-(e.clientX-drag.x)*0.008;V3.phi=Math.min(Math.PI/2-0.0001,Math.max(-0.3,drag.p+(e.clientY-drag.y)*0.008));setView(null);render3d();});
+  el.addEventListener("pointerup",()=>drag=null);
+  el.addEventListener("wheel",e=>{e.preventDefault();V3.zoom=Math.min(5,Math.max(0.4,V3.zoom*(e.deltaY>0?0.9:1.1)));render3d();},{passive:false});
+  new ResizeObserver(()=>render3d()).observe(el);
+  document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{const v=b.dataset.view;V3.zoom=1;
+    if(v==="iso"){V3.theta=-0.75;V3.phi=0.6;}else if(v==="planta"){V3.theta=0;V3.phi=Math.PI/2-0.0001;}else if(v==="ex"){V3.theta=0;V3.phi=0;}else{V3.theta=-Math.PI/2;V3.phi=0;}
+    setView(v);render3d();});
+}
+function setView(v){document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===v)));}
+function txtSprite(t,col,bg){const c=document.createElement("canvas");c.width=512;c.height=96;const x=c.getContext("2d");x.font="600 52px Archivo, Arial, sans-serif";x.textAlign="center";x.textBaseline="middle";
+  if(bg){const w=Math.min(500,x.measureText(t).width+40);x.fillStyle=bg;x.beginPath();x.roundRect?x.roundRect(256-w/2,10,w,76,18):x.rect(256-w/2,10,w,76);x.fill();col="#ffffff";}
+  x.fillStyle=col;x.fillText(t,256,49);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));s.renderOrder=10;return s;}
+function draw3d(){
+  if(!V3.g)return;const g=V3.g;while(g.children.length){const o=g.children.pop();o.geometry&&o.geometry.dispose();o.material&&o.material.map&&o.material.map.dispose();}
+  const {lx,ly,h}=S.geo;if(!(lx>0&&ly>0&&h>0))return;const H=h/1000;const B=S.bordes;
+  const mat=(c,o=1)=>new THREE.MeshLambertMaterial({color:c,transparent:o<1,opacity:o});
+  const mS=mat(0xB9C3CA),mB=mat(0x6F8796),mN=mat(0x8FA0AA,0.4),mC=mat(0x4A5A64);
+  const box=(x0,x1,y0,y1,z0,z1,m)=>{const geo=new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0);const me=new THREE.Mesh(geo,m);me.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);
+    const ed=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x2B3840,transparent:true,opacity:m===mN?0.25:0.6}));ed.position.copy(me.position);g.add(me);g.add(ed);};
+  const bw=k=>B[k].t==="M"?0.15:(+B[k].bw||200)/1000, hv=k=>B[k].t==="M"?Math.max(1.2,H):Math.max((+B[k].hv||500)/1000,H);
+  const wL1=bw("L1"),wL2=bw("L2"),wC1=bw("C1"),wC2=bw("C2");
+  // planta: x = dirección corta (L1 a la izquierda), z = dirección larga (C1 al frente, C2 al fondo)
+  const X0=-wL1,X1=lx+wL2,Z0=-wC2,Z1=ly+wC1;
+  box(X0,X1,-H,0,Z0,Z1,mS);
+  const mE=k=>mat(new THREE.Color(ECOL[k]).getHex());
+  box(-wL1,0,-hv("L1"),-H,Z0,Z1,mE("L1"));box(lx,lx+wL2,-hv("L2"),-H,Z0,Z1,mE("L2"));
+  box(0,lx,-hv("C1"),-H,ly,ly+wC1,mE("C1"));box(0,lx,-hv("C2"),-H,-wC2,0,mE("C2"));
+  const st=0.004;box(-wL1,0,0,st,0,ly,mE("L1"));box(lx,lx+wL2,0,st,0,ly,mE("L2"));box(0,lx,0,st,ly,ly+wC1,mE("C1"));box(0,lx,0,st,-wC2,0,mE("C2"));
+  const cH=1.5;const cy0=-Math.max(hv("L1"),hv("L2"),hv("C1"),hv("C2"))-cH;
+  [[X0,0,ly,Z1],[lx,X1,ly,Z1],[X0,0,Z0,0],[lx,X1,Z0,0]].forEach(([a,b2,c,d])=>box(a,b2,cy0,-H,c,d,mC));
+  const ext=Math.min(1.2,0.3*lx);
+  if(B.L1.c==="C")box(X0-ext,X0,-H,0,Z0,Z1,mN); if(B.L2.c==="C")box(X1,X1+ext,-H,0,Z0,Z1,mN);
+  if(B.C1.c==="C")box(X0,X1,-H,0,Z1,Z1+ext,mN); if(B.C2.c==="C")box(X0,X1,-H,0,Z0-ext,Z0,mN);
+  const ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim()||"#1B2126";
+  const add=(t,x,y,z,bg)=>{const s=txtSprite(t,ink,bg);s.position.set(x,y,z);g.add(s);};
+  const dz=Z1+ext+0.55, dx=X0-ext-0.55, o=1.25;
+  const lm=new THREE.LineBasicMaterial({color:new THREE.Color(ink),depthTest:false});
+  const seg=(pts)=>{const geo=new THREE.BufferGeometry().setFromPoints(pts.map(q=>new THREE.Vector3(...q)));const L=new THREE.LineSegments(geo,lm);L.renderOrder=9;g.add(L);};
+  const y0=0.02,tk=0.12;
+  // cota en x (luz libre lx), por delante del borde C1
+  seg([[0,y0,ly],[0,y0,dz+0.15],[lx,y0,ly],[lx,y0,dz+0.15],[0,y0,dz],[lx,y0,dz],[-tk,y0,dz+tk],[tk,y0,dz-tk],[lx-tk,y0,dz+tk],[lx+tk,y0,dz-tk]]);
+  add("lx = "+f(lx)+" m",lx/2,0.3,dz+0.4);
+  // cota en y (luz libre ly), a la izquierda del borde L1
+  seg([[0,y0,0],[dx-0.15,y0,0],[0,y0,ly],[dx-0.15,y0,ly],[dx,y0,0],[dx,y0,ly],[dx-tk,y0,-tk],[dx+tk,y0,tk],[dx-tk,y0,ly-tk],[dx+tk,y0,ly+tk]]);
+  add("ly = "+f(ly)+" m",dx-1.1,0.3,ly/2);
+  add("L1 · "+(B.L1.c==="C"?"continuo":"discontinuo"),lx*0.2,0.1,ly/2,ECOL.L1);
+  add("L2 · "+(B.L2.c==="C"?"continuo":"discontinuo"),lx*0.8,0.1,ly/2,ECOL.L2);
+  add("C1 · "+(B.C1.c==="C"?"continuo":"discontinuo"),lx/2,0.1,ly*0.88,ECOL.C1);
+  add("C2 · "+(B.C2.c==="C"?"continuo":"discontinuo"),lx/2,0.1,ly*0.12,ECOL.C2);
+  add("h = "+f(h/10,1)+" cm",lx/2,0.1,ly*0.32);
+  g.position.set(-lx/2,0,-ly/2);V3.span=Math.max(lx,ly)+2*(ext+2.2);V3.cy=cy0/2;render3d();
+}
+function render3d(){
+  if(!V3.r||!V3.g)return;const el=$("v3d");const w=el.clientWidth,h=el.clientHeight;if(!w||!h)return;V3.r.setSize(w,h,false);
+  const s=(V3.span||8)/2/V3.zoom,asp=w/h;const c=V3.cam;
+  c.left=-s*asp;c.right=s*asp;c.top=s;c.bottom=-s;c.updateProjectionMatrix();
+  V3.g.children.forEach(o=>{if(o.isSprite){const k=s*0.075;o.scale.set(k*512/96,k,1);}});
+  const R=50;c.position.set(R*Math.cos(V3.phi)*Math.sin(V3.theta),V3.cy+R*Math.sin(V3.phi),R*Math.cos(V3.phi)*Math.cos(V3.theta));
+  c.up.set(0,1,0);if(V3.phi>1.45)c.up.set(-Math.sin(V3.theta),0,-Math.cos(V3.theta));c.lookAt(0,V3.cy,0);V3.r.render(V3.scene,c);
+}
+
+init3d();
+bindInputs();update();
+</script>
+
+</body>
+</html>

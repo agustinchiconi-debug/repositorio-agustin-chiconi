@@ -122,6 +122,7 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
 .notes{font-size:12px;color:var(--muted);display:grid;gap:4px}
 .notes p{margin:0;max-width:95ch}
 .num{text-align:right}
+#xlsMsg:empty{display:none}
 </style>
 </head>
 <body>
@@ -300,8 +301,10 @@ header p.author{margin:2px 0 0;font-size:12.5px;letter-spacing:.02em;color:var(-
             <button type="button" id="axY" aria-pressed="false">My (flexión en b)</button>
             <button type="button" id="uDes" aria-pressed="true">Mostrar diseño</button>
             <button type="button" id="lbl2" aria-pressed="true">Nombres de casos</button>
+            <button type="button" id="xlsMN" class="membtn">Exportar diagrama M-N a Excel</button>
           </div>
         </div>
+        <p class="hint" id="xlsMsg" aria-live="polite"></p>
         <div id="p2d" class="plot"></div>
         <div class="tbl-wrap">
           <table id="pts">
@@ -1260,6 +1263,103 @@ $('memBtn').onclick=async()=>{ msg('Generando la memoria…');
     else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); msg('Memoria descargada: '+fn); }
     window.__lastDocx=blob;
   }catch(e){ msg('No se pudo generar la memoria: '+e.message); } };
+
+// ---------- diagrama M-N a Excel (.xlsx): puntos de las curvas nominal y de diseño en x e y, con el gráfico al lado ----------
+async function buildXlsMN(){
+  if(!window.JSZip) throw new Error('no se pudo cargar la librería JSZip');
+  const m=model(); if(!m.bars.length) throw new Error('cargá al menos una capa con barras');
+  const E=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const col=i=>{ let s=''; i++; while(i>0){ const r=(i-1)%26; s=String.fromCharCode(65+r)+s; i=Math.floor((i-1)/26); } return s; };
+  const num=v=>Math.round(v*1e4)/1e4;
+  const info=`${optT('crit')}${m.capD?' · diseño por capacidad (φ = 1,00)':''} · f'c = ${fmt(m.fcM,0)} MPa · fy = ${fmt(m.fyM,0)} MPa · Ag = ${fmt(m.Ag,0)} cm² · As = ${fmt(m.As,2)} cm² · φPn,máx = ${fmt(m.cap,1)} t`;
+  // filas: 1 título · 2 datos · 4-9 convención de signos · 11-12 encabezados · 13 en adelante, puntos
+  const HR=11, R0=13;
+  let img=null, imgY=null; try{ const u=await secPNG(); img=u.split(',')[1];
+    // para la hoja My: la sección girada 90° antihorario, así la cara derecha (+x), que comprime My > 0, queda arriba como en la hoja Mx
+    imgY=await new Promise(res=>{ const im=new Image(); im.onload=()=>{ const cv=document.createElement('canvas'); cv.width=im.height; cv.height=im.width; const c=cv.getContext('2d');
+      c.translate(0,cv.height); c.rotate(-Math.PI/2); c.drawImage(im,0,0); res(cv.toDataURL('image/png').split(',')[1]); }; im.onerror=()=>res(null); im.src=u; });
+  }catch(e){}
+  const dirs=[['x','Mx - flexión en h','Mx','Flexión en x (Mx)'],['y','My - flexión en b','My','Flexión en y (My)']];
+  const files=[];
+  // imagen de la sección al lado del diagrama (columna AA), 460 px de lado
+  const secPic=k=>{ const e=460*9525; return `<xdr:oneCellAnchor><xdr:from><xdr:col>26</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${HR-1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:ext cx="${e}" cy="${e}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${k+20}" name="Sección transversal"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId2"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${e}" cy="${e}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:ln w="9525"><a:solidFill><a:srgbClr val="C9CECB"/></a:solidFill></a:ln></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`; };
+  dirs.forEach(([ax,name,Mlab,tit],k)=>{
+    const th1=ax==='x'?Math.PI/2:0, th2=th1+Math.PI;
+    const cur=[
+      {t:'Nominal rama +',p:branch(m,th1,ax,false),h:['Mn [tm]','Pn [t]'],c:'2E5B87',d:'solid'},
+      {t:'Nominal rama −',p:branch(m,th2,ax,false),h:['Mn [tm]','Pn [t]'],c:'2E5B87',d:'dash'},
+      {t:'Diseño rama +',p:branch(m,th1,ax,true),h:['φMn [tm]','φPn [t]'],c:'5E8C3A',d:'solid'},
+      {t:'Diseño rama −',p:branch(m,th2,ax,true),h:['φMn [tm]','φPn [t]'],c:'5E8C3A',d:'dash'}];
+    const rows={}, put=(r,c,v,s)=>{ (rows[r]=rows[r]||{})[c]=typeof v==='number'
+      ? `<c r="${col(c)}${r}" s="${s}"><v>${v}</v></c>`
+      : `<c r="${col(c)}${r}" t="inlineStr" s="${s}"><is><t xml:space="preserve">${E(v)}</t></is></c>`; };
+    put(1,0,'Diagrama de interacción M-N · '+tit,3);
+    put(2,0,info,0);
+    // convención de signos (la misma del HTML) y qué es cada rama en esta hoja
+    put(4,0,'Convención de signos',5);
+    [ 'Pu > 0: compresión · Pu < 0: tracción.',
+      'Mux > 0 (momento positivo): comprime la cara superior y tracciona la inferior · Mux < 0 (momento negativo): comprime la cara inferior y tracciona la superior.',
+      'Muy > 0: comprime la cara derecha (+x) · Muy < 0: comprime la cara izquierda.',
+      `Momentos respecto del baricentro de la sección bruta, a ${fmt(m.yTop,2)} cm de la fibra superior.`,
+      ax==='x' ? 'En esta hoja: rama + = cara superior comprimida (Mx > 0) · rama − = cara inferior comprimida (Mx < 0).'
+               : 'En esta hoja: rama + = cara derecha comprimida (My > 0) · rama − = cara izquierda comprimida (My < 0).'
+    ].forEach((t,i)=>put(5+i,0,t,0));
+    const merges=[];
+    cur.forEach((s,i)=>{ const c0=2*i; put(HR,c0,s.t,1); put(HR,c0+1,'',1); merges.push(`${col(c0)}${HR}:${col(c0+1)}${HR}`);
+      put(HR+1,c0,s.h[0],1); put(HR+1,c0+1,s.h[1],1);
+      s.p.forEach((q,j)=>{ put(R0+j,c0,num(q[0]),2); put(R0+j,c0+1,num(q[1]),2); }); });
+    // solicitaciones (columnas J a L)
+    put(HR,9,'Solicitaciones últimas',1); put(HR,10,'',1); put(HR,11,'',1); merges.push(`J${HR}:L${HR}`);
+    put(HR+1,9,'Caso',1); put(HR+1,10,'Mu'+ax+' [tm]',1); put(HR+1,11,'Pu [t]',1);
+    if(img) put(HR-1,26,ax==='y'&&imgY?'Sección girada 90°: cara derecha (+x) arriba, la comprime My > 0':'Sección transversal (cotas en cm)',5);
+    loads.forEach((L,j)=>{ put(R0+j,9,L.name,4); put(R0+j,10,num(ax==='x'?+L.Mx:+L.My),2); put(R0+j,11,num(+L.P),2); });
+    const sd=Object.keys(rows).map(Number).sort((a,b)=>a-b).map(r=>`<row r="${r}">${Object.keys(rows[r]).map(Number).sort((a,b)=>a-b).map(c=>rows[r][c]).join('')}</row>`).join('');
+    const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetViews><sheetView workbookViewId="0"${k===0?' tabSelected="1"':''}/></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols><col min="1" max="8" width="12.5" customWidth="1"/><col min="9" max="9" width="3" customWidth="1"/><col min="10" max="10" width="20" customWidth="1"/><col min="11" max="12" width="11" customWidth="1"/></cols><sheetData>${sd}</sheetData><mergeCells count="${merges.length}">${merges.map(x=>`<mergeCell ref="${x}"/>`).join('')}</mergeCells><drawing r:id="rId1"/></worksheet>`;
+    // gráfico de dispersión con líneas, igual al del HTML
+    const ref=(c,r1,r2)=>`'${name}'!$${col(c)}$${r1}`+(r2?`:$${col(c)}$${r2}`:'');
+    const cache=(vals)=>`<c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="${vals.length}"/>${vals.map((v,i)=>`<c:pt idx="${i}"><c:v>${v}</c:v></c:pt>`).join('')}</c:numCache>`;
+    const txRef=(c,r,t)=>`<c:tx><c:strRef><c:f>${E(ref(c,r))}</c:f><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>${E(t)}</c:v></c:pt></c:strCache></c:strRef></c:tx>`;
+    const xy=(cx,cy,r1,r2,xs,ys)=>`<c:xVal><c:numRef><c:f>${E(ref(cx,r1,r2))}</c:f>${cache(xs)}</c:numRef></c:xVal><c:yVal><c:numRef><c:f>${E(ref(cy,r1,r2))}</c:f>${cache(ys)}</c:numRef></c:yVal><c:smooth val="0"/>`;
+    let ser=cur.map((s,i)=>{ const r2=R0+s.p.length-1;
+      return `<c:ser><c:idx val="${i}"/><c:order val="${i}"/>${txRef(2*i,HR,s.t)}<c:spPr><a:ln w="22225" cap="rnd"><a:solidFill><a:srgbClr val="${s.c}"/></a:solidFill><a:prstDash val="${s.d}"/><a:round/></a:ln></c:spPr><c:marker><c:symbol val="none"/></c:marker>`+
+        xy(2*i,2*i+1,R0,r2,s.p.map(q=>num(q[0])),s.p.map(q=>num(q[1])))+`</c:ser>`; }).join('');
+    ser+=loads.map((L,j)=>{ const i=cur.length+j, r=R0+j, clr=String(L.color||'#B0118A').replace('#','').toUpperCase();
+      return `<c:ser><c:idx val="${i}"/><c:order val="${i}"/>${txRef(9,r,L.name)}<c:spPr><a:ln><a:noFill/></a:ln></c:spPr><c:marker><c:symbol val="square"/><c:size val="8"/><c:spPr><a:solidFill><a:srgbClr val="${clr}"/></a:solidFill><a:ln w="9525"><a:solidFill><a:srgbClr val="1B2226"/></a:solidFill></a:ln></c:spPr></c:marker>`+
+        `<c:dLbls><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr><c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="900"><a:solidFill><a:srgbClr val="1B2226"/></a:solidFill></a:defRPr></a:pPr><a:endParaRPr lang="es-AR"/></a:p></c:txPr><c:dLblPos val="r"/><c:showLegendKey val="0"/><c:showVal val="0"/><c:showCatName val="0"/><c:showSerName val="1"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>`+
+        xy(10,11,r,r,[num(ax==='x'?+L.Mx:+L.My)],[num(+L.P)])+`</c:ser>`; }).join('');
+    const rich=(t,sz,b)=>`<c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${sz}" b="${b?1:0}"/></a:pPr><a:r><a:rPr lang="es-AR" sz="${sz}" b="${b?1:0}"/><a:t>${E(t)}</a:t></a:r></a:p></c:rich></c:tx>`;
+    const grid='<c:majorGridlines><c:spPr><a:ln w="6350"><a:solidFill><a:srgbClr val="D9DDDA"/></a:solidFill></a:ln></c:spPr></c:majorGridlines>';
+    const axis=(id,cross,pos,t)=>`<c:valAx><c:axId val="${id}"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="${pos}"/>${grid}<c:title>${rich(t,1000,false)}<c:overlay val="0"/></c:title><c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="low"/><c:spPr><a:ln w="9525"><a:solidFill><a:srgbClr val="5B656A"/></a:solidFill></a:ln></c:spPr><c:crossAx val="${cross}"/><c:crosses val="autoZero"/><c:crossBetween val="midCat"/></c:valAx>`;
+    const chart=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><c:roundedCorners val="0"/><c:chart><c:title>${rich('Diagrama de interacción M-N · '+tit,1200,true)}<c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/><c:plotArea><c:layout/><c:scatterChart><c:scatterStyle val="lineMarker"/><c:varyColors val="0"/>${ser}<c:axId val="5001"/><c:axId val="5002"/></c:scatterChart>${axis(5001,5002,'b',Mlab+' [tm]')}${axis(5002,5001,'l','P [t] (compresión +)')}</c:plotArea><c:legend><c:legendPos val="b"/><c:overlay val="0"/></c:legend><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart><c:spPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln><a:noFill/></a:ln></c:spPr></c:chartSpace>`;
+    const drawing=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>13</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${HR-1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>25</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${HR+32}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${k+2}" name="Diagrama M-N ${Mlab}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId1"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>${img?secPic(k):''}</xdr:wsDr>`;
+    files.push({name,sheet,chart,drawing});
+  });
+  const rel=(id,type,target)=>`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/${type}" Target="${target}"/>`;
+  const RELS=b=>`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${b}</Relationships>`;
+  const z=new JSZip();
+  z.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>`+
+    files.map((f,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/drawings/drawing${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/><Override PartName="/xl/charts/chart${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>`).join('')+`</Types>`);
+  z.file('_rels/.rels',RELS(rel('rId1','officeDocument','xl/workbook.xml')));
+  z.file('xl/workbook.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView activeTab="${show.ax==='x'?0:1}"/></bookViews><sheets>${files.map((f,i)=>`<sheet name="${E(f.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets></workbook>`);
+  z.file('xl/_rels/workbook.xml.rels',RELS(files.map((f,i)=>rel('rId'+(i+1),'worksheet','worksheets/sheet'+(i+1)+'.xml')).join('')+rel('rIdSt','styles','styles.xml')));
+  z.file('xl/styles.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.00"/></numFmts><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="13"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8ECEA"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFC9CECB"/></left><right style="thin"><color rgb="FFC9CECB"/></right><top style="thin"><color rgb="FFC9CECB"/></top><bottom style="thin"><color rgb="FFC9CECB"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="6"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`);
+  files.forEach((f,i)=>{ const n=i+1;
+    z.file(`xl/worksheets/sheet${n}.xml`,f.sheet);
+    z.file(`xl/worksheets/_rels/sheet${n}.xml.rels`,RELS(rel('rId1','drawing',`../drawings/drawing${n}.xml`)));
+    z.file(`xl/drawings/drawing${n}.xml`,f.drawing);
+    z.file(`xl/drawings/_rels/drawing${n}.xml.rels`,RELS(rel('rId1','chart',`../charts/chart${n}.xml`)+(img?rel('rId2','image',n===2&&imgY?'../media/seccion_y.png':'../media/seccion.png'):'')));
+    z.file(`xl/charts/chart${n}.xml`,f.chart); });
+  if(img) z.file('xl/media/seccion.png',img,{base64:true});
+  if(img&&imgY) z.file('xl/media/seccion_y.png',imgY,{base64:true});
+  return z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+$('xlsMN').onclick=async()=>{ const st=t=>{ $('xlsMsg').textContent=t; clearTimeout(st.t); st.t=setTimeout(()=>$('xlsMsg').textContent='',5000); };
+  st('Generando el Excel…');
+  try{ const blob=await buildXlsMN(); const fn=((projName||'Seccion').replace(/[\/:*?"<>|]+/g,'-').trim())+' - Diagrama M-N.xlsx';
+    window.__lastXlsx=blob;
+    if(dlCap){ try{ await dlCap.save({filename:fn,data:blob}); st('Excel descargado: '+fn); }catch(e){ st(e&&e.code==='declined'?'Descarga cancelada.':'No se pudo descargar en esta vista.'); } }
+    else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); st('Excel descargado: '+fn); }
+  }catch(e){ st('No se pudo generar el Excel: '+e.message); } };
 
 let tmr=null; function schedule(){ clearTimeout(tmr); tmr=setTimeout(render,250); }
 new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
